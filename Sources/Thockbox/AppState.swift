@@ -456,12 +456,7 @@ final class AppState: ObservableObject {
             return
         }
         outputChangedWhileDisabled = false
-        if let uid = outputDeviceUID,
-           let device = AudioDevices.outputDevices().first(where: { $0.uid == uid }) {
-            engine.setOutputDevice(device.id)
-        } else {
-            engine.setOutputDevice(nil)
-        }
+        engine.setOutputDevice(AudioDevices.id(forUID: outputDeviceUID, in: AudioDevices.outputDevices()))
     }
 
     private func postNotification(title: String, body: String) {

@@ -65,3 +65,22 @@ final class AudioDevicesTests: XCTestCase {
         XCTAssertTrue(devices.contains { $0.id == AudioDevices.defaultOutputDevice() })
     }
 }
+
+final class SavedOutputDeviceTests: XCTestCase {
+    private let devices = [
+        AudioDevices.Device(id: 41, uid: "speakers", name: "MacBook Pro Speakers"),
+        AudioDevices.Device(id: 77, uid: "airpods", name: "AirPods Pro"),
+    ]
+
+    func testSavedDeviceIsFound() {
+        XCTAssertEqual(AudioDevices.id(forUID: "airpods", in: devices), 77)
+    }
+
+    func testDisconnectedDeviceFallsBackToSystemDefault() {
+        XCTAssertNil(AudioDevices.id(forUID: "usb-headset", in: devices))
+    }
+
+    func testNothingSavedMeansSystemDefault() {
+        XCTAssertNil(AudioDevices.id(forUID: nil, in: devices))
+    }
+}

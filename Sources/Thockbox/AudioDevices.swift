@@ -29,6 +29,13 @@ enum AudioDevices {
         }
     }
 
+    /// The device to use for a saved UID. nil (system default) when nothing
+    /// is saved or the saved device isn't connected right now.
+    static func id(forUID uid: String?, in devices: [Device]) -> AudioDeviceID? {
+        guard let uid else { return nil }
+        return devices.first { $0.uid == uid }?.id
+    }
+
     static func defaultOutputDevice() -> AudioDeviceID {
         var address = AudioObjectPropertyAddress(
             mSelector: kAudioHardwarePropertyDefaultOutputDevice,
