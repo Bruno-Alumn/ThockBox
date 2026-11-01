@@ -8,7 +8,7 @@ by Amruth Niranjan and has since gone its own way: lower latency, cleaner
 samples, lower CPU use, more switch sets, and more features.
 
 Native Swift + SwiftUI + AVAudioEngine. No Electron, no network, no analytics,
-no keystroke logging. The whole app bundle is **~1.8 MB**.
+no keystroke logging. The whole app bundle is **~1.9 MB**.
 
 > Thockbox is an independent project, not affiliated with or endorsed by
 > Klack or Henrik Ruscon. If you want the original (it's great), buy it —
@@ -134,6 +134,10 @@ random-choice variants. WAV, MP3, CAF, AIFF, and M4A all work. Then
 make test    # unit tests, then a headless smoke test that plays every pack
 swift build  # debug build
 ```
+
+CI runs the unit tests and builds the app bundle on every push and pull
+request. The audio smoke test needs a sound output device, so run
+`make test` locally before sending changes.
 
 Architecture: `KeyListener` (NSEvent global monitors) → `AppState` (settings,
 routing; keystroke counts in `StatsStore`) → `SoundEngine` (AVAudioEngine:

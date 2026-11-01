@@ -1,0 +1,20 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unit tests
+        run: swift test
+
+      # The audio smoke test (`make test`) needs a sound output device, which
+      # CI runners don't have, so CI stops at building the signed app bundle.
+      - name: Build app bundle
+        run: make bundle
