@@ -158,8 +158,15 @@ tell application "ThockBox"
     set sounds enabled to false
     set sound pack to "cream" -- pack ID or display name
     set sound volume to 0.55 -- 0.0 to 1.0
+    set mute during calls to true
+    get mute reason -- e.g. "Muted in Safari.", or "" when not muted
+    get keystrokes today
 end tell
 ```
+
+Read-only: `automatically muted`, `mute reason`, `keystrokes today` and
+`keystrokes total`. The first time a script controls ThockBox, macOS asks
+whether to allow it.
 
 ## Custom switch sets
 

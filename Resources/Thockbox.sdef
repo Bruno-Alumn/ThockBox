@@ -14,6 +14,21 @@
             <property name="sound volume" code="Tbvo" type="real" access="rw" description="Sound volume from 0.0 to 1.0.">
                 <cocoa key="soundVolume"/>
             </property>
+            <property name="mute during calls" code="Tbmc" type="boolean" access="rw" description="Whether sounds stop while another app uses the microphone (macOS 14.2 or later).">
+                <cocoa key="muteDuringCalls"/>
+            </property>
+            <property name="automatically muted" code="Tbam" type="boolean" access="r" description="Whether sounds are muted right now by a call, the lock screen, a muted app or inactivity.">
+                <cocoa key="automaticallyMuted"/>
+            </property>
+            <property name="mute reason" code="Tbmr" type="text" access="r" description="Why sounds are automatically muted, or empty text when they aren't.">
+                <cocoa key="muteReason"/>
+            </property>
+            <property name="keystrokes today" code="Tbkt" type="integer" access="r" description="Key presses counted today.">
+                <cocoa key="keystrokesToday"/>
+            </property>
+            <property name="keystrokes total" code="Tbka" type="integer" access="r" description="Key presses counted in total.">
+                <cocoa key="keystrokesTotal"/>
+            </property>
         </class-extension>
     </suite>
 </dictionary>
