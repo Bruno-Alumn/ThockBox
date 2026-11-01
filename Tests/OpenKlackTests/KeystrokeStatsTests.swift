@@ -63,3 +63,24 @@ final class KeystrokeStatsTests: XCTestCase {
         XCTAssertEqual(relaunched.total, 7)
     }
 }
+
+final class StatsStoreTests: XCTestCase {
+    func testMenuCountRefreshesOnceAfterABurst() {
+        let suite = "OpenKlackTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = StatsStore(defaults: defaults)
+        var publishes = 0
+        let sub = store.objectWillChange.sink { publishes += 1 }
+        defer { sub.cancel() }
+
+        for _ in 0..<50 { store.record() }
+        XCTAssertEqual(store.shown.today, 0, "no re-render per key press")
+
+        let refreshed = expectation(description: "refreshed")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { refreshed.fulfill() }
+        wait(for: [refreshed], timeout: 2)
+        XCTAssertEqual(store.shown.today, 50)
+        XCTAssertEqual(publishes, 1, "one refresh for the whole burst")
+    }
+}

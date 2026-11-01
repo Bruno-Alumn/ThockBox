@@ -109,7 +109,7 @@ final class AppState: ObservableObject {
 
     // MARK: - Stats
 
-    @Published private(set) var stats: KeystrokeStats
+    let stats: StatsStore
 
     @Published private(set) var accessibilityTrusted = Permissions.isTrusted
 
@@ -139,7 +139,7 @@ final class AppState: ObservableObject {
         notifyOnSwitchChange = defaults.bool(forKey: "notifyOnSwitchChange")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         outputDeviceUID = defaults.string(forKey: "outputDeviceUID")
-        stats = KeystrokeStats(defaults: defaults)
+        stats = StatsStore(defaults: defaults)
     }
 
     // MARK: - Lifecycle

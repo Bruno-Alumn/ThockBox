@@ -56,3 +56,37 @@ struct KeystrokeStats {
         dayFormatter.string(from: date)
     }
 }
+
+/// Keeps the counts out of AppState and publishes them at most twice a
+/// second. Each change to the counts text re-lays out the whole menu, even
+/// while it's closed: publishing per key cost ~2.6 ms CPU per key vs ~0.2.
+final class StatsStore: ObservableObject {
+    /// What the menu shows; trails `stats` by up to `refreshDelay`.
+    @Published private(set) var shown: KeystrokeStats
+    private var stats: KeystrokeStats
+    private var refreshPending = false
+    private let refreshDelay = 0.5
+
+    init(defaults: UserDefaults) {
+        stats = KeystrokeStats(defaults: defaults)
+        shown = stats
+    }
+
+    func record() {
+        stats.record()
+        guard !refreshPending else { return }
+        refreshPending = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + refreshDelay) { [weak self] in
+            guard let self else { return }
+            refreshPending = false
+            shown = stats
+        }
+    }
+
+    func rollOver() {
+        stats.rollOver()
+        shown = stats
+    }
+
+    func flush() { stats.flush() }
+}

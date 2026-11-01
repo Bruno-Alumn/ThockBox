@@ -3,8 +3,8 @@ import SwiftUI
 struct MenuView: View {
     @ObservedObject var state: AppState
     @State private var showAdvanced = false
-    // Cached: enumerating CoreAudio devices inside body would re-run on every
-    // keystroke (stats republish the whole AppState).
+    // Cached: enumerating CoreAudio devices inside body is slow, and body
+    // re-runs on every AppState change.
     @State private var devices: [AudioDevices.Device] = []
 
     var body: some View {
@@ -205,13 +205,22 @@ struct MenuView: View {
 
     private var footer: some View {
         HStack {
-            Text("\(state.stats.today.formatted()) today · \(state.stats.total.formatted()) total")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+            StatsLine(store: state.stats)
             Spacer()
             Button("Quit") { NSApp.terminate(nil) }
                 .controlSize(.small)
         }
+    }
+}
+
+/// Watches only the keystroke counts, so typing doesn't re-render the menu.
+private struct StatsLine: View {
+    @ObservedObject var store: StatsStore
+
+    var body: some View {
+        Text("\(store.shown.today.formatted()) today · \(store.shown.total.formatted()) total")
+            .font(.caption2)
+            .foregroundStyle(.secondary)
     }
 }
 
