@@ -32,13 +32,15 @@ struct MenuView: View {
         }
         .padding(14)
         .frame(width: 280)
+        .tint(.thockCoral)
         .onAppear { state.refreshAccessibilityStatus() }
     }
 
     private var header: some View {
         HStack {
-            Image(systemName: "keyboard.fill")
-                .foregroundStyle(.secondary)
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 20, height: 20)
             Text("Thockbox")
                 .font(.headline)
             Spacer()

@@ -34,9 +34,9 @@ bundle: build
 sounds:
 	uv run --with soundfile,numpy scripts/build_sounds.py
 
-# Re-render Resources/AppIcon.icns from scripts/make_icon.swift.
+# Rebuild Resources/AppIcon.icns (and docs/logo.png) from the logo artwork.
 icon:
-	swift scripts/make_icon.swift Resources/AppIcon.icns
+	swift scripts/make_icon.swift art/logo-source.png Resources/AppIcon.icns docs/logo.png
 
 # Unit tests, then a headless audio smoke test that decodes and plays every pack.
 test: bundle

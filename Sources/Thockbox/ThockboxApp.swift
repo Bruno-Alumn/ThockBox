@@ -15,7 +15,7 @@ struct ThockboxApp: App {
         MenuBarExtra {
             MenuView(state: state)
         } label: {
-            Image(systemName: state.enabled && !state.isAutomaticallyMuted ? "keyboard.fill" : "keyboard")
+            Image(nsImage: state.enabled && !state.isAutomaticallyMuted ? MenuBarIcon.on : MenuBarIcon.off)
         }
         .menuBarExtraStyle(.window)
     }

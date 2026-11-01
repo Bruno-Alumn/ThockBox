@@ -105,6 +105,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .tint(.thockCoral)
         .frame(minWidth: 460, idealWidth: 480, minHeight: 520, idealHeight: 720)
         .onAppear { state.refreshAccessibilityStatus() }
     }

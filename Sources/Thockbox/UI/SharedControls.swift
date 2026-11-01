@@ -34,7 +34,7 @@ struct SwitchList: View {
                         Image(systemName: state.currentPack?.id == pack.id
                               ? "circle.inset.filled" : "circle")
                             .foregroundStyle(state.currentPack?.id == pack.id
-                                             ? Color.accentColor : Color.secondary)
+                                             ? Color.thockCoral : Color.secondary)
                         Text(pack.name)
                         Spacer()
                     }
@@ -70,7 +70,7 @@ struct VolumeControl: View {
                     Button(preset.label) { state.volume = preset.value }
                         .controlSize(.small)
                         .buttonStyle(.bordered)
-                        .tint(abs(state.volume - preset.value) < 0.01 ? .accentColor : nil)
+                        .tint(abs(state.volume - preset.value) < 0.01 ? .thockCoral : nil)
                 }
             }
         }

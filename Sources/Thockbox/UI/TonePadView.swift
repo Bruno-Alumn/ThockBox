@@ -11,9 +11,9 @@ struct TonePadView: View {
             let size = geo.size
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.secondary.opacity(0.12))
+                    .fill(Color.thockTeal.opacity(0.14))
                 RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(Color.secondary.opacity(0.3), lineWidth: 1)
+                    .strokeBorder(Color.thockTeal.opacity(0.35), lineWidth: 1)
                 // Center crosshair
                 Path { p in
                     p.move(to: CGPoint(x: size.width / 2, y: 4))
@@ -21,9 +21,9 @@ struct TonePadView: View {
                     p.move(to: CGPoint(x: 4, y: size.height / 2))
                     p.addLine(to: CGPoint(x: size.width - 4, y: size.height / 2))
                 }
-                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                .stroke(Color.thockTeal.opacity(0.25), lineWidth: 1)
                 Circle()
-                    .fill(Color.accentColor)
+                    .fill(Color.thockCoral)
                     .frame(width: 14, height: 14)
                     .shadow(radius: 1)
                     .position(x: CGFloat(x + 1) / 2 * size.width,
