@@ -1,91 +1,106 @@
 # Thockbox
 
-Satisfying mechanical-keyboard sound with every keystroke — a free, open-source
-macOS menu bar app inspired by [Klack](https://tryklack.com/).
+[![Test](https://github.com/Bruno-Alumn/thockbox/actions/workflows/test.yml/badge.svg)](https://github.com/Bruno-Alumn/thockbox/actions/workflows/test.yml)
 
-Thockbox started as a fork of [OpenKlack](https://github.com/amruth-sn/openklack)
-by Amruth Niranjan and has since gone its own way: lower latency, cleaner
-samples, lower CPU use, more switch sets, and more features.
+Mechanical-keyboard sounds for every keystroke on your Mac. Free, open
+source, and small: a native app of about 1.9 MB that uses almost no CPU
+when you're not typing.
 
-Native Swift + SwiftUI + AVAudioEngine. No Electron, no network, no analytics,
-no keystroke logging. The whole app bundle is **~1.9 MB**.
-
-> Thockbox is an independent project, not affiliated with or endorsed by
-> Klack or Henrik Ruscon. If you want the original (it's great), buy it —
-> it's $4.99.
+<p align="center">
+  <img src="docs/menu-bar.png" alt="Thockbox menu bar panel" width="280">
+  &nbsp;&nbsp;&nbsp;
+  <img src="docs/settings.png" alt="Thockbox settings window" width="380">
+</p>
 
 ## Features
 
-- **Seven switch sets** — Japanese Black, Cream, Milky Yellow, Super Red,
-  Cardboard, Oreo, Holy Panda (see [ATTRIBUTION.md](ATTRIBUTION.md) for what was
-  actually recorded)
-- **Preview button** for the current switch and tone settings
-- **Distinct keydown / keyup sounds**, with dedicated samples for space,
-  return, backspace, and per-row variation across the board
-- **Randomized pitch** on every stroke so no two keystrokes sound identical
-- **Tone Pad** — drag to darken/brighten (EQ tilt) and lower/raise pitch;
-  plus a pitch-randomization amount slider
-- **Volume slider** with Soft / Balanced / Loud presets, independent of
-  system volume
-- **Stereo spread** — keys pan subtly by their physical position on the board
-- **⌘⌃K** global hotkey or **option-click** on the menu bar icon to toggle sounds
-- Mute modifier keys, function-key audibility toggle
-- **Ding on return** (typewriter margin bell), **mouse click sounds**
-- Output device picker (play through any device, independent of default)
-- Haptic feedback (Force Touch trackpads)
-- Keystroke stats (today / all-time), notification on switch change,
-  launch at login
-- **Sleep automation** — mute on screen lock or after 1–60 minutes of inactivity
-- Works with any keyboard — internal, external, whatever
+**Sound**
+- Seven switch sets: Cardboard, Cream, Holy Panda, Japanese Black, Milky
+  Yellow, Oreo and Super Red
+- Separate press and release sounds, with their own samples for Space,
+  Return, Backspace and each row of the keyboard
+- Slight random pitch on every key, so repeated keys don't sound identical
+- Tone Pad: drag to make the sound darker or brighter, and lower or higher
+- Keys pan left to right by where they sit on the keyboard
+- Optional typewriter ding on Return and mouse click sounds
+
+**Control**
+- Turn sounds on or off with ⌘⌃K, or option-click the menu bar icon
+- Volume with Soft, Balanced and Loud presets, separate from system volume
+- Play through any output device, not just the system default
+- Mute modifier keys or function keys
+- Haptic tap on Force Touch trackpads
+- AppleScript support
+
+**Automation**
+- Mute when the screen locks
+- Mute after 1 to 60 minutes without typing
+- Launch at login
+
+## Menu bar and desktop window
+
+Thockbox lives in the menu bar. Click the keyboard icon for the quick
+settings: on/off, switch set, volume and today's keystroke count.
+
+**Settings…** (⌘,) opens the full desktop window with everything else: the
+Tone Pad, key options, automatic mute, output device and general settings.
+While the window is open Thockbox also shows a Dock icon; close the window
+and it goes back to living only in the menu bar. Opening Thockbox again from
+Finder, Launchpad or Spotlight brings the window back.
 
 ## Install
+
+Thockbox builds from source. You need macOS 13 or later and Xcode's
+command-line tools.
 
 ```sh
 git clone https://github.com/Bruno-Alumn/thockbox && cd thockbox
 make            # builds dist/Thockbox.app
-make run        # or: open dist/Thockbox.app
+make run        # opens it
 make zip        # dist/Thockbox-<version>.zip, ready to send to someone
 ```
 
-Requires macOS 13+ to run; Xcode command-line tools to build.
+Move `dist/Thockbox.app` to Applications to keep it.
 
-On first launch, grant **Accessibility** permission
-(System Settings → Privacy & Security → Accessibility). Thockbox uses it
-solely to hear key up/down events and play a sound — nothing is stored or
-transmitted. The code that touches key events is ~120 lines in
-[`KeyListener.swift`](Sources/Thockbox/KeyListener.swift); audit it yourself.
+### Accessibility permission
+
+The first time you open Thockbox, macOS asks for **Accessibility** access
+(System Settings → Privacy & Security → Accessibility). Thockbox needs it to
+hear key presses. The settings window opens on first launch to walk you
+through it.
 
 > **After rebuilding:** the app is ad-hoc signed, and macOS ties the
-> Accessibility grant to the exact binary hash. A rebuilt app shows as
-> "granted" in System Settings but isn't actually trusted. Fix:
-> `tccutil reset Accessibility io.github.bruno-alumn.thockbox`, relaunch, and
-> grant again. (Signing with a real developer identity avoids this —
-> `make bundle CODESIGN_ID="Apple Development: you@example.com"`.)
+> Accessibility grant to the exact build. A rebuilt app can show as allowed
+> in System Settings but still not hear keys. Reset it and grant it again:
+>
+> ```sh
+> tccutil reset Accessibility io.github.bruno-alumn.thockbox
+> ```
+>
+> Signing with a real developer identity avoids this:
+> `make bundle CODESIGN_ID="Apple Development: you@example.com"`.
 
-## Klack parity
+## Privacy
 
-| Klack feature | Thockbox |
+Thockbox only listens for key presses so it can play a sound. It doesn't
+record what you type, store it, or send anything anywhere: there's no
+network code, analytics or tracking. The code that handles key events is
+about 160 lines in [`KeyListener.swift`](Sources/Thockbox/KeyListener.swift)
+if you want to check.
+
+## Performance
+
+Measured on an Apple Silicon Mac (`make bench`):
+
+| | |
 |---|---|
-| 6 switch sound sets | ✅ 7 total (2 are sonic stand-ins — see ATTRIBUTION.md) |
-| Up/down keystroke samples | ✅ (Oreo is down-only; upstream source has no release samples) |
-| Randomized pitching | ✅ |
-| Tone Pad tuning | ✅ (EQ tilt × pitch offset) |
-| Volume presets + slider | ✅ |
-| Toggle hotkey ⌘⌃K | ✅ |
-| Mute modifiers / function keys | ✅ |
-| Ding on return | ✅ (synthesized) |
-| Mouse click sounds | ✅ (synthesized) |
-| Numpad support | ✅ |
-| Output device selection | ✅ |
-| Spatial audio | ◐ per-key stereo panning; no head-tracked 3D |
-| Usage stats | ✅ today + all-time |
-| Switch-change notifications | ✅ |
-| Launch at login | ✅ |
-| Haptic feedback | ✅ |
-| Dynamic menu bar icon | ✅ (filled = on, outline = off) |
-| AppleScript support | ✅ enabled, sound pack, and volume properties |
-| Sleep automation / idle mode | ✅ screen lock + configurable inactivity timeout |
-| Menu bar icon opacity / click actions | ◐ option-click toggles sounds; no opacity setting |
+| Key press to sound rendered | about 5 ms, plus your output device's delay |
+| CPU per key press | about 1 ms |
+| CPU while idle | about 0.6% |
+| App size | about 1.9 MB |
+
+Bluetooth headphones add their own delay (AirPods: about 160 ms). For the
+snappiest sound, use the built-in speakers or wired headphones.
 
 ## AppleScript
 
@@ -99,15 +114,19 @@ end tell
 
 ## Sounds
 
-The catalog is built by [`scripts/build_sounds.py`](scripts/build_sounds.py)
-from MIT-licensed sources ([tplai/kbsim](https://github.com/tplai/kbsim) and
-the [mechvibes](https://github.com/hainguyents13/mechvibes) bundled packs),
-plus two fully synthesized extras. Rebuild it any time with `make sounds`
-(needs [uv](https://docs.astral.sh/uv/)).
+The sound sets come from MIT-licensed sources,
+[tplai/kbsim](https://github.com/tplai/kbsim) and
+[mechvibes](https://github.com/hainguyents13/mechvibes); the ding and mouse
+clicks are synthesized. See [ATTRIBUTION.md](ATTRIBUTION.md) for what each
+set was recorded from. Rebuild them with `make sounds` (needs
+[uv](https://docs.astral.sh/uv/)).
+
+Recordings are trimmed when they load to remove room noise before and after
+each click, so fast typing doesn't build up a background hiss.
 
 ### Adding your own switch set
 
-Drop a folder into `Resources/Sounds/<your-pack>/` containing samples and a
+Add a folder to `Resources/Sounds/<your-pack>/` with your samples and a
 `pack.json`:
 
 ```json
@@ -124,30 +143,39 @@ Drop a folder into `Resources/Sounds/<your-pack>/` containing samples and a
 }
 ```
 
-`default` is required; `space`, `enter`, `backspace`, and `row0`–`row4`
-(top row → bottom row) are optional and fall back to `default`. Arrays are
-random-choice variants. WAV, MP3, CAF, AIFF, and M4A all work. Then
-`make bundle`.
+`default` is required. `space`, `enter`, `backspace` and `row0` to `row4`
+(top row to bottom row) are optional and fall back to `default`. When a list
+has several files, one is picked at random each time. WAV, MP3, CAF, AIFF and
+M4A all work. Run `make bundle` afterwards. A pack with a broken `pack.json`
+or no `default` sounds is skipped, and the reason is logged.
 
 ## Development
 
 ```sh
-make test    # unit tests, then a headless smoke test that plays every pack
+make test    # unit tests, then a smoke test that plays every pack
 make bench   # CPU per key press and idle CPU; fails on a big regression
 swift build  # debug build
 ```
 
-CI runs the unit tests and builds the app bundle on every push and pull
-request. The audio smoke test needs a sound output device, so run
-`make test` locally before sending changes.
+CI runs the unit tests and builds the app on every push and pull request.
+The smoke test needs a sound output device, so run `make test` locally
+before sending changes.
 
-Architecture: `KeyListener` (NSEvent global monitors) → `AppState` (settings,
-routing; keystroke counts in `StatsStore`) → `SoundEngine` (AVAudioEngine:
-8-voice pool → per-voice varispeed → submix → tilt EQ → main mix). Sample
-buffers are fully decoded into memory at pack load, so playback is a single
-`scheduleBuffer` call, and the output runs with a 128-frame buffer: about
-5 ms from key press to rendered audio, plus the output device's own delay.
+How it fits together: `KeyListener` hears key events and passes them to
+`AppState`, which holds the settings and decides what to play. `SoundEngine`
+plays samples through an AVAudioEngine graph (8 voices, each with its own
+pitch shifter, then an EQ for the Tone Pad). Samples are decoded into memory
+when a pack loads, so playing a key is a single buffer schedule. The UI is
+SwiftUI: `MenuView` for the menu bar and `SettingsView` for the window.
+
+## Credits
+
+Thockbox started as a fork of
+[OpenKlack](https://github.com/amruth-sn/openklack) by Amruth Niranjan and
+has since gone its own way. It's inspired by
+[Klack](https://tryklack.com/); it isn't affiliated with or endorsed by Klack
+or Henrik Ruscon. If you'd like the original, it's worth buying.
 
 ## License
 
-MIT — see [LICENSE](LICENSE) and [ATTRIBUTION.md](ATTRIBUTION.md).
+MIT. See [LICENSE](LICENSE) and [ATTRIBUTION.md](ATTRIBUTION.md).
