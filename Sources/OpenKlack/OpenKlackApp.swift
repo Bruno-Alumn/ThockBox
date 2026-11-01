@@ -15,7 +15,7 @@ struct OpenKlackApp: App {
         MenuBarExtra {
             MenuView(state: state)
         } label: {
-            Image(systemName: state.enabled ? "keyboard.fill" : "keyboard")
+            Image(systemName: state.enabled && !state.isAutomaticallyMuted ? "keyboard.fill" : "keyboard")
         }
         .menuBarExtraStyle(.window)
     }

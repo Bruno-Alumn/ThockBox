@@ -68,7 +68,7 @@ struct MenuView: View {
                 Button("Preview") { state.playSwitchPreview() }
                     .controlSize(.mini)
                     .buttonStyle(.borderless)
-                    .disabled(!state.enabled || state.packs.isEmpty)
+                    .disabled(!state.enabled || state.isAutomaticallyMuted || state.packs.isEmpty)
             }
             ForEach(state.packs) { pack in
                 Button {
@@ -171,6 +171,20 @@ struct MenuView: View {
                     Toggle("Haptic feedback", isOn: $state.hapticFeedback)
                     Toggle("Notify on switch change", isOn: $state.notifyOnSwitchChange)
                     Toggle("Launch at login", isOn: $state.launchAtLogin)
+                    Toggle("Mute when screen is locked", isOn: $state.muteWhenLocked)
+                    Picker("Mute after inactivity", selection: $state.idleTimeoutMinutes) {
+                        Text("Off").tag(0)
+                        Text("1 minute").tag(1)
+                        Text("5 minutes").tag(5)
+                        Text("15 minutes").tag(15)
+                        Text("30 minutes").tag(30)
+                        Text("60 minutes").tag(60)
+                    }
+                    if state.isAutomaticallyMuted {
+                        Text("Automatic mute is active.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                     outputDevicePicker
                 }
                 .toggleStyle(.checkbox)

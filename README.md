@@ -31,6 +31,7 @@ no keystroke logging. The whole app bundle is **~2 MB**.
 - Haptic feedback (Force Touch trackpads)
 - Keystroke stats (today / all-time), notification on switch change,
   launch at login
+- **Sleep automation** — mute on screen lock or after 1–60 minutes of inactivity
 - Works with any keyboard — internal, external, whatever
 
 ## Install
@@ -78,7 +79,7 @@ transmitted. The code that touches key events is ~90 lines in
 | Haptic feedback | ✅ |
 | Dynamic menu bar icon | ✅ (filled = on, outline = off) |
 | AppleScript support | ❌ not yet |
-| Sleep automation / idle mode | ❌ not yet |
+| Sleep automation / idle mode | ✅ screen lock + configurable inactivity timeout |
 | Menu bar icon opacity / click actions | ❌ not yet |
 
 ## Sounds
