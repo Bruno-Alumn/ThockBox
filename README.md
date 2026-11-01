@@ -132,6 +132,7 @@ random-choice variants. WAV, MP3, CAF, AIFF, and M4A all work. Then
 
 ```sh
 make test    # unit tests, then a headless smoke test that plays every pack
+make bench   # CPU per key press and idle CPU; fails on a big regression
 swift build  # debug build
 ```
 

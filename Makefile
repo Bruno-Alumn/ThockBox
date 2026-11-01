@@ -6,7 +6,7 @@ BUNDLE := dist/$(APP).app
 # keep the grant across rebuilds.
 CODESIGN_ID ?= -
 
-.PHONY: all build bundle test sounds icon clean run
+.PHONY: all build bundle test bench sounds icon clean run
 
 all: bundle
 
@@ -40,6 +40,13 @@ icon:
 test: bundle
 	swift test
 	$(BUNDLE)/Contents/MacOS/$(APP) --test-audio
+
+# Performance checks: CPU per key press and idle CPU (see scripts/bench).
+bench:
+	mkdir -p .build/bench
+	swiftc -O -suppress-warnings -o .build/bench/thockbox-bench scripts/bench/main.swift \
+		$(filter-out Sources/$(APP)/$(APP)App.swift,$(wildcard Sources/$(APP)/*.swift Sources/$(APP)/UI/*.swift))
+	.build/bench/thockbox-bench Resources/Sounds
 
 run: bundle
 	open $(BUNDLE)

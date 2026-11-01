@@ -281,7 +281,8 @@ final class AppState: ObservableObject {
 
     private var loggedFirstEvent = false
 
-    private func handle(_ event: KeyListener.Event) {
+    /// Internal (not private) so the benchmark can feed it events.
+    func handle(_ event: KeyListener.Event) {
         if !loggedFirstEvent {
             loggedFirstEvent = true
             klog.notice("first input event received — monitors are live")
