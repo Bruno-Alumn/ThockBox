@@ -1,3 +1,4 @@
+import Accelerate
 import AppKit
 import AVFoundation
 import os.log
@@ -212,9 +213,70 @@ final class SoundEngine {
                 klog.error("failed to decode \(url.path, privacy: .public)")
             }
         }
+        // Recordings differ by almost 20 dB from pack to pack. Scale each
+        // pack so a typical key press lands at the same level, so switching
+        // packs doesn't jump in volume. Done once here, so playback is
+        // untouched.
+        let typical = (pack.manifest.keys["default"]?.down ?? []).compactMap { newBuffers["\(pack.id)/\($0)"] }
+        let gain = Self.normalizingGain(for: typical, allPeaks: newBuffers.values.map(Self.samplePeak))
+        if gain != 1 {
+            newBuffers.values.forEach { Self.scale($0, by: gain) }
+        }
         buffers = newBuffers
         currentPack = pack
         packGain = pow(10, (pack.manifest.gainDb ?? 0) / 20)
+        klog.notice("pack \(pack.id, privacy: .public): loudness gain \(20 * log10(gain), format: .fixed(precision: 1), privacy: .public) dB")
+    }
+
+    /// Where a typical key press lands after normalizing: -32 dBFS, about
+    /// where the default pack (Cream) already sits.
+    static let targetLevel: Float = 0.025
+
+    /// The gain that brings the median key press to `targetLevel`, limited
+    /// so no sample in the pack goes above -1 dBFS.
+    static func normalizingGain(for typical: [AVAudioPCMBuffer], allPeaks: [Float]) -> Float {
+        let levels = typical.map(loudestLevel).filter { $0 > 0 }.sorted()
+        guard !levels.isEmpty else { return 1 }
+        let median = levels[levels.count / 2]
+        let ceiling = 0.89 / max(allPeaks.max() ?? 0, 1e-6)
+        return min(targetLevel / median, ceiling)
+    }
+
+    /// RMS of the loudest 10 ms of the first channel: the click itself,
+    /// regardless of how much quiet surrounds it.
+    static func loudestLevel(_ buf: AVAudioPCMBuffer) -> Float {
+        guard let data = buf.floatChannelData?[0] else { return 0 }
+        let frames = Int(buf.frameLength)
+        let window = max(1, Int(buf.format.sampleRate * 0.01))
+        guard frames >= window else { return 0 }
+        var best: Float = 0
+        var start = 0
+        while start + window <= frames {
+            var rms: Float = 0
+            vDSP_rmsqv(data + start, 1, &rms, vDSP_Length(window))
+            best = max(best, rms)
+            start += window / 2
+        }
+        return best
+    }
+
+    static func samplePeak(_ buf: AVAudioPCMBuffer) -> Float {
+        guard let data = buf.floatChannelData else { return 0 }
+        var peak: Float = 0
+        for ch in 0..<Int(buf.format.channelCount) {
+            var channelPeak: Float = 0
+            vDSP_maxmgv(data[ch], 1, &channelPeak, vDSP_Length(buf.frameLength))
+            peak = max(peak, channelPeak)
+        }
+        return peak
+    }
+
+    static func scale(_ buf: AVAudioPCMBuffer, by gain: Float) {
+        guard let data = buf.floatChannelData else { return }
+        var gain = gain
+        for ch in 0..<Int(buf.format.channelCount) {
+            vDSP_vsmul(data[ch], 1, &gain, data[ch], 1, vDSP_Length(buf.frameLength))
+        }
     }
 
     private static func decode(url: URL, to format: AVAudioFormat) -> AVAudioPCMBuffer? {
