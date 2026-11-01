@@ -57,7 +57,8 @@ Oreo and Super Red.
 ## Menu bar and settings window
 
 The menu bar panel holds the everyday controls: on and off, switch set,
-volume, and today's keystroke count.
+volume, a switch to mute the app you were just using, and today's keystroke
+count. When sounds are muted automatically, the panel says why.
 
 **Settings…** (⌘,) opens the settings window with everything else, including
 the Tone Pad, key options, automatic mute and output device. While the window
