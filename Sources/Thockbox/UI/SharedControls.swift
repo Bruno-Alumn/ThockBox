@@ -184,7 +184,7 @@ struct UpdateStatusView: View {
         case .available(let release): "Version \(release.version) is available."
         case .downloading: "Downloading…"
         case .installing: "Installing…"
-        case .failed(let message): message
+        case .failed(let message), .installFailed(_, let message): message
         }
     }
 
@@ -196,6 +196,12 @@ struct UpdateStatusView: View {
             HStack {
                 Button("Release Notes") { NSWorkspace.shared.open(release.pageURL) }
                 Button("Install and Relaunch") { Task { await updater.install(release) } }
+                    .buttonStyle(.borderedProminent)
+            }
+        case .installFailed(let release, _):
+            HStack {
+                Button("Try Again") { Task { await updater.install(release) } }
+                Button("Download from GitHub") { NSWorkspace.shared.open(release.pageURL) }
                     .buttonStyle(.borderedProminent)
             }
         default:

@@ -75,6 +75,9 @@ final class Updater: ObservableObject {
         case downloading
         case installing
         case failed(String)
+        /// Installing didn't work; the release is kept so the user can
+        /// retry or download it by hand.
+        case installFailed(Release, String)
     }
 
     @Published private(set) var status: Status = .idle
@@ -86,8 +89,10 @@ final class Updater: ObservableObject {
     }
 
     var availableRelease: Release? {
-        if case .available(let release) = status { return release }
-        return nil
+        switch status {
+        case .available(let release), .installFailed(let release, _): return release
+        default: return nil
+        }
     }
 
     private let defaults: UserDefaults
@@ -188,7 +193,11 @@ final class Updater: ObservableObject {
             let newApp = try unpack(zip, in: work, expecting: release.version)
 
             let keepsGrant = Self.satisfiesOwnRequirement(newApp)
-            _ = try FileManager.default.replaceItemAt(target, withItemAt: newApp)
+            do {
+                _ = try FileManager.default.replaceItemAt(target, withItemAt: newApp)
+            } catch CocoaError.fileWriteNoPermission {
+                throw UpdateError("ThockBox doesn't have permission to replace itself in \(target.deletingLastPathComponent().lastPathComponent).")
+            }
             klog.notice("updated to \(release.version, privacy: .public), keeps grant: \(keepsGrant, privacy: .public)")
             // macOS keeps the Accessibility grant when the new build is
             // signed by the same identity. If it isn't (an ad-hoc build, or
@@ -201,7 +210,7 @@ final class Updater: ObservableObject {
             relaunch(target)
         } catch {
             klog.error("update failed: \(error.localizedDescription, privacy: .public)")
-            status = .failed((error as? UpdateError)?.message ?? "The update couldn't be installed.")
+            status = .installFailed(release, (error as? UpdateError)?.message ?? "The update couldn't be installed.")
         }
     }
 
