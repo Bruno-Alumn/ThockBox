@@ -24,11 +24,14 @@ struct ThockboxApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppState.shared.startUp()
+        Updater.shared.startUp()
         // Show the settings window once, on the very first launch (it walks
-        // through the Accessibility grant); after that start in the menu bar.
+        // through the Accessibility grant), and right after an update, which
+        // may need the grant again. Otherwise start in the menu bar.
         let defaults = UserDefaults.standard
-        if !defaults.bool(forKey: "hasShownSettingsWindow") {
+        if !defaults.bool(forKey: "hasShownSettingsWindow") || defaults.bool(forKey: "showSettingsAfterUpdate") {
             defaults.set(true, forKey: "hasShownSettingsWindow")
+            defaults.set(false, forKey: "showSettingsAfterUpdate")
             MainWindow.shared.show()
         }
     }

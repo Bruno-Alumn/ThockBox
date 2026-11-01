@@ -9,7 +9,7 @@ ZIP := dist/$(NAME)-$(VERSION).zip
 # keep the grant across rebuilds.
 CODESIGN_ID ?= -
 
-.PHONY: all build bundle zip test bench sounds icon clean run
+.PHONY: all build bundle zip release test bench sounds icon clean run
 
 all: bundle
 
@@ -59,6 +59,11 @@ zip: bundle
 	rm -f $(ZIP)
 	ditto -c -k --keepParent --sequesterRsrc $(BUNDLE) $(ZIP)
 	@echo "$(ZIP)"
+
+# Publish the zip as GitHub release v<version>. The app's updater looks for
+# the newest release and its ThockBox-<version>.zip asset.
+release: zip
+	gh release create v$(VERSION) $(ZIP) --title "ThockBox $(VERSION)" --generate-notes
 
 clean:
 	rm -rf .build dist/$(NAME).app dist/$(NAME)-*.zip

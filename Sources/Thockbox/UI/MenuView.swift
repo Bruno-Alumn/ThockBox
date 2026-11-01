@@ -4,12 +4,16 @@ import SwiftUI
 /// settings window (SettingsView), opened with "Settings…".
 struct MenuView: View {
     @ObservedObject var state: AppState
+    @ObservedObject var updater = Updater.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
             if !state.accessibilityTrusted {
                 PermissionBanner()
+            }
+            if let release = updater.availableRelease {
+                UpdateBanner(release: release)
             }
             Divider()
             VStack(alignment: .leading, spacing: 4) {

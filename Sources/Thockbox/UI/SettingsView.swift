@@ -4,6 +4,7 @@ import SwiftUI
 /// panel (MenuView) keeps only the quick ones.
 struct SettingsView: View {
     @ObservedObject var state: AppState
+    @ObservedObject var updater = Updater.shared
 
     var body: some View {
         Form {
@@ -101,6 +102,17 @@ struct SettingsView: View {
                 LabeledContent("Keystrokes") {
                     StatsLine(store: state.stats)
                         .foregroundStyle(.secondary)
+                }
+            }
+
+            Section {
+                Toggle("Check for updates automatically", isOn: $updater.checksAutomatically)
+                UpdateStatusView(updater: updater)
+            } header: {
+                Text("Updates")
+            } footer: {
+                if updater.availableRelease != nil {
+                    Text("After updating, macOS may ask you to allow Accessibility access again.")
                 }
             }
         }

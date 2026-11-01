@@ -36,8 +36,9 @@ release sounds. Keys are panned by their
 position on the keyboard and pitched slightly differently each time, so
 typing sounds like a real board rather than one sample on repeat.
 
-It is written in Swift with AppKit, SwiftUI and AVAudioEngine. There is no
-network code, no analytics and no keystroke logging.
+It is written in Swift with AppKit, SwiftUI and AVAudioEngine. There are no
+analytics and no keystroke logging. The only network request is the update
+check.
 
 ## Features
 
@@ -48,7 +49,7 @@ network code, no analytics and no keystroke logging.
 | Per-row samples, panned by key position | Choose any output device | Launch at login |
 | Tone Pad for darker or brighter sound | Mute modifier or function keys | AppleScript control |
 | Random pitch variation | Haptic feedback on Force Touch trackpads | |
-| Optional Return ding and mouse clicks | Keystroke counts, today and total | |
+| Optional Return ding and mouse clicks | Keystroke counts, today and total | Updates from GitHub releases |
 
 Switch sets: Cardboard, Cream, Holy Panda, Japanese Black, Milky Yellow,
 Oreo and Super Red.
@@ -101,6 +102,17 @@ ThockBox uses key events only to choose and play a sound. It does not record,
 store or transmit what you type. The code that receives key events is in
 [`KeyListener.swift`](Sources/Thockbox/KeyListener.swift) and is short enough
 to read in a few minutes.
+
+Once a day ThockBox asks the GitHub API for the latest release. The request
+contains nothing but the app version. Turn it off in Settings → Updates.
+
+## Updates
+
+When a newer release is out, the menu bar panel says so, and Settings →
+Updates offers **Install and Relaunch**. ThockBox downloads the release zip,
+checks that it is a correctly signed ThockBox of that version, replaces the
+installed copy and reopens. Release builds are ad-hoc signed, so macOS asks
+for Accessibility access again after each update.
 
 ## Performance
 
@@ -161,6 +173,7 @@ make test     # unit tests, then a smoke test that plays every pack
 make bench    # CPU per key press and idle CPU, fails on a large regression
 make icon     # rebuild the app icon from art/logo-source.png
 make sounds   # rebuild the bundled sound sets (requires uv)
+make release  # publish dist/ThockBox-<version>.zip as a GitHub release (requires gh)
 ```
 
 CI runs the unit tests and builds the app on every push and pull request. The

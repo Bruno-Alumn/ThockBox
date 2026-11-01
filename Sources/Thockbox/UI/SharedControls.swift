@@ -143,3 +143,63 @@ enum VolumePreset: CaseIterable {
         }
     }
 }
+
+/// The menu bar panel's notice that a newer release is out. Opens the
+/// settings window, where the update is installed.
+struct UpdateBanner: View {
+    let release: Release
+
+    var body: some View {
+        Button {
+            MainWindow.shared.show()
+        } label: {
+            Label("ThockBox \(release.version) is available", systemImage: "arrow.down.circle.fill")
+                .font(.caption.bold())
+                .foregroundStyle(Color.thockCoral)
+        }
+        .buttonStyle(.borderless)
+        .help("Open Settings to install the update")
+    }
+}
+
+/// The settings window's update row: current version, check status, and
+/// the button that matches it.
+struct UpdateStatusView: View {
+    @ObservedObject var updater: Updater
+
+    var body: some View {
+        LabeledContent {
+            controls
+        } label: {
+            Text("Version \(AppVersion.current)")
+            Text(statusText)
+        }
+    }
+
+    private var statusText: String {
+        switch updater.status {
+        case .idle: "Checks GitHub for new releases."
+        case .checking: "Checking…"
+        case .upToDate: "You're up to date."
+        case .available(let release): "Version \(release.version) is available."
+        case .downloading: "Downloading…"
+        case .installing: "Installing…"
+        case .failed(let message): message
+        }
+    }
+
+    @ViewBuilder private var controls: some View {
+        switch updater.status {
+        case .checking, .downloading, .installing:
+            ProgressView().controlSize(.small)
+        case .available(let release):
+            HStack {
+                Button("Release Notes") { NSWorkspace.shared.open(release.pageURL) }
+                Button("Install and Relaunch") { Task { await updater.install(release) } }
+                    .buttonStyle(.borderedProminent)
+            }
+        default:
+            Button("Check Now") { Task { await updater.check(userInitiated: true) } }
+        }
+    }
+}
