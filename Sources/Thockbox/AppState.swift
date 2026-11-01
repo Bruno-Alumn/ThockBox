@@ -24,7 +24,11 @@ final class AppState: ObservableObject {
         didSet {
             defaults.set(volume, forKey: "volume")
             engine.volume = volume
-            scheduleVolumePreview()
+            if let device = activeOutputUID {
+                volumeByDevice[device] = volume
+                defaults.set(volumeByDevice, forKey: "volumeByDevice")
+            }
+            if !restoringVolume { scheduleVolumePreview() }
         }
     }
     @Published var selectedPackID: String {
@@ -123,6 +127,7 @@ final class AppState: ObservableObject {
     @Published var outputDeviceUID: String? {
         didSet {
             defaults.set(outputDeviceUID, forKey: "outputDeviceUID")
+            outputRouteChanged()
             applyOutputDevice()
         }
     }
@@ -145,6 +150,12 @@ final class AppState: ObservableObject {
     private var idleMode = IdleMode()
     private var screenLocked = false
     private var microphoneMonitor: MicrophoneMonitor?
+    /// Each output device keeps its own volume, as macOS does for system
+    /// volume: headphones usually want less than speakers.
+    private var volumeByDevice: [String: Float]
+    private(set) var activeOutputUID: String?
+    private var restoringVolume = false
+    private var outputListeners: [SystemAudioListener] = []
     /// The app in front, not counting ThockBox itself: opening the menu bar
     /// panel or settings window leaves it pointing at the app you came from.
     @Published private(set) var frontApp: FrontApp?
@@ -181,6 +192,7 @@ final class AppState: ObservableObject {
             .flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) } ?? .standard
         idleTimeoutMinutes = max(0, defaults.integer(forKey: "idleTimeoutMinutes"))
         outputDeviceUID = defaults.string(forKey: "outputDeviceUID")
+        volumeByDevice = defaults.dictionary(forKey: "volumeByDevice") as? [String: Float] ?? [:]
         stats = StatsStore(defaults: defaults)
     }
 
@@ -197,6 +209,8 @@ final class AppState: ObservableObject {
             screenLocked = session["CGSSessionScreenIsLocked"] as? Bool ?? false
         }
         updateMicrophoneMonitor()
+        outputRouteChanged()
+        outputListeners = SystemAudioListener.outputRoute { [weak self] in self?.outputRouteChanged() }
         setFrontApp(NSWorkspace.shared.frontmostApplication)
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
@@ -526,6 +540,25 @@ final class AppState: ObservableObject {
         } catch {
             klog.error("engine start failed: \(error, privacy: .public)")
         }
+    }
+
+    /// The device sound actually goes to: the picked one while it's
+    /// connected, otherwise the system default.
+    private func outputRouteChanged() {
+        let devices = AudioDevices.outputDevices()
+        let picked = devices.first { $0.uid == outputDeviceUID }
+        let current = picked ?? devices.first { $0.id == AudioDevices.defaultOutputDevice() }
+        setActiveOutput(uid: current?.uid)
+    }
+
+    /// Switches to `uid`'s saved volume, or saves the current volume for a
+    /// device seen for the first time. Internal so tests can call it.
+    func setActiveOutput(uid: String?) {
+        guard let uid, uid != activeOutputUID else { return }
+        activeOutputUID = uid
+        restoringVolume = true
+        volume = volumeByDevice[uid] ?? volume
+        restoringVolume = false
     }
 
     private func applyOutputDevice() {

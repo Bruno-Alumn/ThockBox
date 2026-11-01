@@ -107,3 +107,29 @@ final class AudioDeviceMonitor {
         return noErr
     }
 }
+
+/// Calls back on the main queue when a system-wide audio property changes,
+/// such as the default output device.
+final class SystemAudioListener {
+    private var address: AudioObjectPropertyAddress
+    private let block: AudioObjectPropertyListenerBlock
+
+    init(_ selector: AudioObjectPropertySelector, onChange: @escaping () -> Void) {
+        address = AudioObjectPropertyAddress(mSelector: selector,
+                                             mScope: kAudioObjectPropertyScopeGlobal,
+                                             mElement: kAudioObjectPropertyElementMain)
+        block = { _, _ in onChange() }
+        AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, block)
+    }
+
+    deinit {
+        AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, block)
+    }
+
+    /// Fires when the default output changes or a device comes or goes.
+    static func outputRoute(onChange: @escaping () -> Void) -> [SystemAudioListener] {
+        [kAudioHardwarePropertyDefaultOutputDevice, kAudioHardwarePropertyDevices].map {
+            SystemAudioListener($0, onChange: onChange)
+        }
+    }
+}
