@@ -189,6 +189,23 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertEqual(state.frontApp, FrontApp(id: "com.example.game", name: "Game"))
     }
 
+    func testEachOutputDeviceKeepsItsOwnVolume() {
+        let state = AppState(defaults: defaults)
+        state.setActiveOutput(uid: "speakers")
+        state.volume = 0.8
+        state.setActiveOutput(uid: "headphones")
+        XCTAssertEqual(state.volume, 0.8, "a new device starts at the current volume")
+        state.volume = 0.2
+        state.setActiveOutput(uid: "speakers")
+        XCTAssertEqual(state.volume, 0.8)
+        state.setActiveOutput(uid: "headphones")
+        XCTAssertEqual(state.volume, 0.2)
+
+        let relaunched = AppState(defaults: defaults)
+        relaunched.setActiveOutput(uid: "speakers")
+        XCTAssertEqual(relaunched.volume, 0.8, "saved across launches")
+    }
+
     func testAutomaticMuteReportsWhy() {
         let state = AppState(defaults: defaults)
         state.muteWhenLocked = true
