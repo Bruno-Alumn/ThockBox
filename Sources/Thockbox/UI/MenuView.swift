@@ -44,13 +44,7 @@ struct MenuView: View {
                     Spacer()
                     Toggle("Mute in \(app.name)", isOn: Binding(
                         get: { state.mutedApps.contains(app.id) },
-                        set: { mute in
-                            if mute {
-                                state.mutedApps.append(app.id)
-                            } else {
-                                state.mutedApps.removeAll { $0 == app.id }
-                            }
-                        }))
+                        set: { state.setMuted($0, appID: app.id) }))
                         .toggleStyle(.switch)
                         .controlSize(.mini)
                         .labelsHidden()

@@ -226,7 +226,7 @@ struct MutedAppsList: View {
                 Text(url.map { $0.deletingPathExtension().lastPathComponent } ?? id)
                 Spacer()
                 Button {
-                    state.mutedApps.removeAll { $0 == id }
+                    state.setMuted(false, appID: id)
                 } label: {
                     Image(systemName: "minus.circle.fill")
                 }
@@ -245,8 +245,8 @@ struct MutedAppsList: View {
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
         panel.prompt = "Mute"
         guard panel.runModal() == .OK else { return }
-        let ids = panel.urls.compactMap { Bundle(url: $0)?.bundleIdentifier }
-        state.mutedApps += ids.filter { !state.mutedApps.contains($0) }
+        panel.urls.compactMap { Bundle(url: $0)?.bundleIdentifier }
+            .forEach { state.setMuted(true, appID: $0) }
     }
 }
 
