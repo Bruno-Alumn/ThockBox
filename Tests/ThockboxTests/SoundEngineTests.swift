@@ -8,6 +8,30 @@ final class SoundEngineTests: XCTestCase {
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("Resources/Sounds"))
 
+    /// Bundled packs differ by ~19 dB as recorded; after loading, a typical
+    /// key press in each lands at the same level, without clipping.
+    func testPacksLoadAtTheSameLoudness() {
+        let engine = SoundEngine()
+        for pack in Self.packs {
+            engine.load(pack: pack)
+            let typical = (pack.manifest.keys["default"]?.down ?? []).compactMap { engine.buffers["\(pack.id)/\($0)"] }
+            let levels = typical.map(SoundEngine.loudestLevel).sorted()
+            let db = 20 * log10(levels[levels.count / 2] / SoundEngine.targetLevel)
+            XCTAssertEqual(db, 0, accuracy: 0.5, pack.id)
+            XCTAssertLessThan(engine.buffers.values.map(SoundEngine.samplePeak).max() ?? 0, 0.9, pack.id)
+        }
+    }
+
+    func testNormalizingGainStopsShortOfClipping() throws {
+        let format = try XCTUnwrap(AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 1))
+        let quiet = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 4_800))
+        quiet.frameLength = 4_800
+        for i in 0..<4_800 { quiet.floatChannelData![0][i] = i % 2 == 0 ? 0.001 : -0.001 }
+        XCTAssertEqual(SoundEngine.normalizingGain(for: [quiet], allPeaks: [0.001]), 25, accuracy: 0.01)
+        // A loud sample elsewhere in the pack caps the boost at -1 dBFS.
+        XCTAssertEqual(SoundEngine.normalizingGain(for: [quiet], allPeaks: [0.089]), 10, accuracy: 0.01)
+    }
+
     /// Every file a pack lists gets decoded (and trimmed) once.
     func testLoadDecodesEveryFileEachPackLists() throws {
         XCTAssertFalse(Self.packs.isEmpty)
