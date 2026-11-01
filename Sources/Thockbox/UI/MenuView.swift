@@ -37,6 +37,25 @@ struct MenuView: View {
                 sectionTitle("Volume")
                 VolumeControl(state: state)
             }
+            if let app = state.frontApp {
+                HStack {
+                    Text("Mute in \(app.name)")
+                        .font(.caption)
+                    Spacer()
+                    Toggle("Mute in \(app.name)", isOn: Binding(
+                        get: { state.mutedApps.contains(app.id) },
+                        set: { mute in
+                            if mute {
+                                state.mutedApps.append(app.id)
+                            } else {
+                                state.mutedApps.removeAll { $0 == app.id }
+                            }
+                        }))
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
+                        .labelsHidden()
+                }
+            }
             Divider()
             footer
         }

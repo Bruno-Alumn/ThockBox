@@ -170,6 +170,13 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertNil(state.automaticMute, "removing the app unmutes")
     }
 
+    func testOwnWindowsDontChangeTheFrontApp() {
+        let state = AppState(defaults: defaults)
+        state.setFrontApp(id: "com.example.game", name: "Game")
+        state.setFrontApp(id: Bundle.main.bundleIdentifier, name: "ThockBox")
+        XCTAssertEqual(state.frontApp, FrontApp(id: "com.example.game", name: "Game"))
+    }
+
     func testAutomaticMuteReportsWhy() {
         let state = AppState(defaults: defaults)
         state.muteWhenLocked = true

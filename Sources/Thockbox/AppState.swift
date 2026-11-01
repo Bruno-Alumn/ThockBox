@@ -139,7 +139,9 @@ final class AppState: ObservableObject {
     private var idleMode = IdleMode()
     private var screenLocked = false
     private var microphoneMonitor: MicrophoneMonitor?
-    private var frontApp: (id: String, name: String)?
+    /// The app in front, not counting ThockBox itself: opening the menu bar
+    /// panel or settings window leaves it pointing at the app you came from.
+    @Published private(set) var frontApp: FrontApp?
 
     /// The app uses `shared` (standard defaults); tests pass their own store.
     init(defaults: UserDefaults = .standard) {
@@ -465,7 +467,8 @@ final class AppState: ObservableObject {
 
     /// Called when another app comes to the front (and by tests).
     func setFrontApp(id: String?, name: String?) {
-        frontApp = id.map { ($0, name ?? $0) }
+        guard id != Bundle.main.bundleIdentifier else { return }
+        frontApp = id.map { FrontApp(id: $0, name: name ?? $0) }
         updateAutomaticMute()
     }
 
@@ -550,6 +553,11 @@ final class AppState: ObservableObject {
         return URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
             .appendingPathComponent("Resources/Sounds")
     }
+}
+
+struct FrontApp: Equatable {
+    let id: String
+    let name: String
 }
 
 /// The reasons sounds can be muted without the user turning them off.
