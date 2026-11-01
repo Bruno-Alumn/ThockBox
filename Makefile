@@ -17,6 +17,8 @@ bundle: build
 	rm -rf $(BUNDLE)
 	mkdir -p $(BUNDLE)/Contents/MacOS $(BUNDLE)/Contents/Resources
 	cp $(BUILD)/$(APP) $(BUNDLE)/Contents/MacOS/
+	# Local symbols are only for debugging; dropping them halves the binary.
+	strip -x $(BUNDLE)/Contents/MacOS/$(APP)
 	cp Resources/Info.plist $(BUNDLE)/Contents/
 	cp -R Resources/Sounds $(BUNDLE)/Contents/Resources/Sounds
 	cp Resources/AppIcon.icns $(BUNDLE)/Contents/Resources/
