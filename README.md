@@ -32,9 +32,10 @@
 ThockBox sits in the menu bar and plays a switch sound for every key you
 type. It ships with seven switch sets, with samples per keyboard row and
 separate ones for Space, Return and Backspace. Most sets also have their own
-release sounds. Keys are panned by their
-position on the keyboard and pitched slightly differently each time, so
-typing sounds like a real board rather than one sample on repeat.
+release sounds. Keys are panned by their position on the keyboard and pitched
+slightly differently each time, so typing sounds like a real board rather
+than one sample on repeat. Every set plays at the same loudness, so switching
+sets doesn't change the volume.
 
 It is written in Swift with AppKit, SwiftUI and AVAudioEngine. There are no
 analytics and no keystroke logging. The only network request is the update
@@ -60,11 +61,26 @@ The menu bar panel holds the everyday controls: on and off, switch set,
 volume, a switch to mute the app you were just using, and today's keystroke
 count. When sounds are muted automatically, the panel says why.
 
-**Settings…** (⌘,) opens the settings window with everything else, including
-the Tone Pad, key options, automatic mute and output device. While the window
-is open ThockBox appears in the Dock; closing the window returns it to the
-menu bar. Opening ThockBox from Finder, Launchpad or Spotlight while it is
-running also brings up the window.
+**Settings…** (⌘,) opens the settings window with everything else: the Tone
+Pad, the toggle shortcut and other key options, automatic mute, muted apps,
+the output device, launch at login, a chart of the last week's keystrokes,
+and updates. While the window is open ThockBox appears in the Dock; closing
+the window returns it to the menu bar. Opening ThockBox from Finder,
+Launchpad or Spotlight while it is running also brings up the window.
+
+### Automatic mute
+
+ThockBox can go quiet on its own and come back when the reason goes away:
+
+- **During calls:** while another app uses the microphone (macOS 14.2 or
+  later). "Hey Siri" and Voice Control are ignored, since they listen all
+  the time.
+- **When the screen locks.**
+- **In muted apps:** while one of the apps you picked is in front.
+- **After inactivity:** after 1 to 60 minutes without typing. The next key
+  press wakes it.
+
+The menu bar panel shows which one is active.
 
 ## Installation
 
