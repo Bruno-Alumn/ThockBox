@@ -76,6 +76,10 @@ struct SettingsView: View {
 
             Section {
                 Toggle("Mute when the screen is locked", isOn: $state.muteWhenLocked)
+                if MicrophoneMonitor.isSupported {
+                    Toggle("Mute while another app uses the microphone", isOn: $state.muteDuringCalls)
+                        .help("Keeps key sounds out of calls and recordings")
+                }
                 Picker("Mute after inactivity", selection: $state.idleTimeoutMinutes) {
                     Text("Off").tag(0)
                     Text("1 minute").tag(1)
@@ -87,7 +91,9 @@ struct SettingsView: View {
             } header: {
                 Text("Automatic mute")
             } footer: {
-                if state.isAutomaticallyMuted {
+                if state.isAutomaticallyMuted && state.muteDuringCalls && state.microphoneInUse {
+                    Text("Muted while another app uses the microphone.")
+                } else if state.isAutomaticallyMuted {
                     Text("Automatic mute is on right now. Press any key to wake it.")
                 }
             }

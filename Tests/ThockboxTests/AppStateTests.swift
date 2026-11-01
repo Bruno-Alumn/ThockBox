@@ -141,4 +141,18 @@ final class AutoMuteTests: XCTestCase {
         state.muteWhenLocked = true
         XCTAssertTrue(state.isAutomaticallyMuted)
     }
+
+    func testMicrophoneMutesOnlyWhenEnabledAndUntilItStops() {
+        let state = AppState(defaults: defaults)
+        state.setMicrophoneInUse(true)
+        XCTAssertFalse(state.isAutomaticallyMuted, "mute-during-calls is off")
+
+        state.muteDuringCalls = true
+        state.setMicrophoneInUse(true)
+        XCTAssertTrue(state.isAutomaticallyMuted)
+        state.handle(.keyDown(keycode: 0, isRepeat: false, flags: []))
+        XCTAssertTrue(state.isAutomaticallyMuted, "typing doesn't end a call mute")
+        state.setMicrophoneInUse(false)
+        XCTAssertFalse(state.isAutomaticallyMuted)
+    }
 }
