@@ -1,7 +1,7 @@
 import Foundation
 
 /// Sound class a physical key belongs to. Packs map these to sample files.
-enum KeyClass: String, Codable, CaseIterable {
+enum KeyClass: String {
     case space, enter, backspace
     case row0, row1, row2, row3, row4
     case `default`

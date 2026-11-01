@@ -114,7 +114,6 @@ final class AppState: ObservableObject {
     @Published private(set) var accessibilityTrusted = Permissions.isTrusted
 
     private let defaults = UserDefaults.standard
-    private var dingBuffersLoaded = false
 
     private init() {
         defaults.register(defaults: [
