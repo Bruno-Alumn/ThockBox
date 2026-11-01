@@ -384,8 +384,11 @@ final class SoundEngine {
         voice.player.volume = gain
         voice.generation &+= 1
         let generation = voice.generation
+        // .dataRendered, not .dataPlayedBack: the voice is free once its sound
+        // has been rendered, and tracking playback out to the speakers cost
+        // ~40% of the per-key CPU (`make bench`: ~1,700 -> ~1,100 us/key).
         voice.player.scheduleBuffer(buffer, at: nil, options: .interrupts,
-                                    completionCallbackType: .dataPlayedBack) { [weak voice] _ in
+                                    completionCallbackType: .dataRendered) { [weak voice] _ in
             DispatchQueue.main.async {
                 guard let voice, voice.generation == generation else { return }
                 voice.isSounding = false

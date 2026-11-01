@@ -11,7 +11,7 @@ import AppKit
 import SwiftUI
 
 let sounds = URL(fileURLWithPath: CommandLine.arguments[1])
-let maxMicrosPerKey = 2_500.0   // ~1,700 µs today, including playing the sound
+let maxMicrosPerKey = 1_800.0   // ~1,050 µs today, including playing the sound
 let maxIdlePercent = 2.0        // ~0.6% today
 
 func cpuSeconds() -> Double {
