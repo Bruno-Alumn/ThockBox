@@ -12,6 +12,9 @@ struct MenuView: View {
             if !state.accessibilityTrusted {
                 PermissionBanner()
             }
+            if let app = state.secureInputApp {
+                SecureInputBanner(app: app)
+            }
             if state.enabled, let mute = state.automaticMute {
                 Label(mute.message, systemImage: mute.symbol)
                     .font(.caption)

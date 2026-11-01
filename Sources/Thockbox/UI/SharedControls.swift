@@ -21,6 +21,26 @@ struct PermissionBanner: View {
     }
 }
 
+/// Shown while another app holds Secure Input, which keeps key presses
+/// from reaching ThockBox.
+struct SecureInputBanner: View {
+    let app: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label("Key sounds paused", systemImage: "lock.shield")
+                .font(.caption.bold())
+            Text("\(app) has secure input on, so macOS isn't passing key presses to other apps. That's normal in a password field. If it stays on, quit and reopen \(app).")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 6).fill(Color.secondary.opacity(0.1)))
+    }
+}
+
 struct SwitchList: View {
     @ObservedObject var state: AppState
 
