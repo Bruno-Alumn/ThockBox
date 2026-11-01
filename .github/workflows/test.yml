@@ -18,3 +18,8 @@ jobs:
       # CI runners don't have, so CI stops at building the signed app bundle.
       - name: Build app bundle
         run: make bundle
+
+      # Launch the built app, interface and all, and fail on runaway CPU or
+      # memory. The unit tests don't run the app's SwiftUI scene.
+      - name: Launch check
+        run: scripts/launch_check.sh dist/ThockBox.app
