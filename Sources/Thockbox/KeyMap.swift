@@ -1,3 +1,4 @@
+import Carbon.HIToolbox
 import Foundation
 
 /// Sound class a physical key belongs to. Packs map these to sample files.
@@ -57,15 +58,34 @@ enum KeyMap {
         for code: UInt16 in [114, 115, 116, 119, 121] {
             t[code] = KeyInfo(keyClass: .row1, x: 1.0)
         }
-        // Numpad
+        // Numpad (95: JIS keypad comma)
         for code: UInt16 in [65, 67, 69, 71, 75, 78, 81, 82, 83, 84, 85,
-                             86, 87, 88, 89, 91, 92] {
+                             86, 87, 88, 89, 91, 92, 95] {
             t[code] = KeyInfo(keyClass: .row2, x: 1.0)
         }
+        // JIS: ¥ after ^ in the number row, _ after / in the bottom letter
+        // row, and 英数 / かな either side of the space bar.
+        t[93] = KeyInfo(keyClass: .row0, x: 0.93)
+        t[94] = KeyInfo(keyClass: .row3, x: 0.95)
+        t[102] = KeyInfo(keyClass: .row4, x: 0.35)
+        t[104] = KeyInfo(keyClass: .row4, x: 0.65)
         return t
     }()
 
-    static func info(for keycode: UInt16) -> KeyInfo {
-        table[keycode] ?? KeyInfo(keyClass: .default, x: 0.5)
+    /// ISO keyboards (most of Europe) report their two extra keys as 10 and
+    /// 50: § above Tab and the key between left Shift and Z. On ANSI, 50 is
+    /// ` at the left of the number row.
+    private static let isoSection = KeyInfo(keyClass: .row0, x: 0)
+    private static let isoShiftKey = KeyInfo(keyClass: .row3, x: 0.05)
+
+    static func info(for keycode: UInt16, iso: Bool? = nil) -> KeyInfo {
+        if keycode == 10 { return isoSection }
+        if keycode == 50, iso ?? isISOKeyboard { return isoShiftKey }
+        return table[keycode] ?? KeyInfo(keyClass: .default, x: 0.5)
+    }
+
+    /// The keyboard last typed on. Only asked for keycode 50.
+    private static var isISOKeyboard: Bool {
+        KBGetLayoutType(Int16(LMGetKbdType())) == kKeyboardISO
     }
 }
