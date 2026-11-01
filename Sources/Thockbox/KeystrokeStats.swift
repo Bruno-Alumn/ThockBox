@@ -6,6 +6,8 @@ struct KeystrokeStats {
     private(set) var today: Int
     private(set) var total: Int
     private var stamp: String
+    /// Finished days, "yyyy-MM-dd" → count. Kept for 30 days.
+    private var history: [String: Int]
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults, now: Date = Date()) {
@@ -13,6 +15,7 @@ struct KeystrokeStats {
         today = defaults.integer(forKey: "statsToday")
         total = defaults.integer(forKey: "statsTotal")
         stamp = defaults.string(forKey: "statsTodayStamp") ?? ""
+        history = defaults.dictionary(forKey: "statsHistory") as? [String: Int] ?? [:]
         rollOver(now: now)
     }
 
@@ -21,6 +24,12 @@ struct KeystrokeStats {
     mutating func rollOver(now: Date = Date()) {
         let day = Self.dayStamp(now)
         guard day != stamp else { return }
+        if !stamp.isEmpty, today > 0 {
+            history[stamp] = today
+            let cutoff = Self.dayStamp(now.addingTimeInterval(-30 * 86_400))
+            history = history.filter { $0.key >= cutoff }
+            defaults.set(history, forKey: "statsHistory")
+        }
         stamp = day
         today = 0
         defaults.set(day, forKey: "statsTodayStamp")
@@ -42,6 +51,24 @@ struct KeystrokeStats {
     func flush() {
         defaults.set(today, forKey: "statsToday")
         defaults.set(total, forKey: "statsTotal")
+    }
+
+    struct Day: Identifiable {
+        let date: Date
+        let count: Int
+        var id: Date { date }
+    }
+
+    /// The last seven days, oldest first, ending with today. Days without
+    /// typing count as zero.
+    func lastWeek(now: Date = Date()) -> [Day] {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: now)
+        return (0..<7).reversed().compactMap { back in
+            guard let date = calendar.date(byAdding: .day, value: -back, to: start) else { return nil }
+            let key = Self.dayStamp(date)
+            return Day(date: date, count: key == stamp ? today : history[key] ?? 0)
+        }
     }
 
     private static let dayFormatter: DateFormatter = {

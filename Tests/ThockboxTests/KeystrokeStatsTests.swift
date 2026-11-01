@@ -62,6 +62,25 @@ final class KeystrokeStatsTests: XCTestCase {
         XCTAssertEqual(relaunched.today, 7)
         XCTAssertEqual(relaunched.total, 7)
     }
+    func testFinishedDaysAreKeptForTheWeekChart() {
+        var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
+        for _ in 0..<5 { stats.record(now: day("2026-11-01")) }
+        for _ in 0..<2 { stats.record(now: day("2026-11-03")) }
+        stats.flush()
+
+        let week = KeystrokeStats(defaults: defaults, now: day("2026-11-03")).lastWeek(now: day("2026-11-03"))
+        XCTAssertEqual(week.count, 7)
+        XCTAssertEqual(week.map(\.count), [0, 0, 0, 0, 5, 0, 2], "Nov 1, an idle Nov 2, then today")
+    }
+
+    func testHistoryDropsDaysOlderThanAMonth() {
+        var stats = KeystrokeStats(defaults: defaults, now: day("2026-09-01"))
+        stats.record(now: day("2026-09-01"))
+        stats.record(now: day("2026-11-01"))
+        let saved = defaults.dictionary(forKey: "statsHistory") as? [String: Int] ?? [:]
+        XCTAssertNil(saved["2026-09-01"])
+    }
+
 }
 
 final class StatsStoreTests: XCTestCase {
@@ -83,4 +102,5 @@ final class StatsStoreTests: XCTestCase {
         XCTAssertEqual(store.shown.today, 50)
         XCTAssertEqual(publishes, 1, "one refresh for the whole burst")
     }
+
 }

@@ -118,6 +118,7 @@ struct SettingsView: View {
                     StatsLine(store: state.stats)
                         .foregroundStyle(.secondary)
                 }
+                KeystrokeChart(store: state.stats)
             }
 
             Section {

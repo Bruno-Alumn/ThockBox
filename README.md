@@ -49,7 +49,7 @@ check.
 | Per-row samples, panned by key position | Choose any output device | Mute in apps you choose |
 | Tone Pad for darker or brighter sound | Mute modifier or function keys | AppleScript control |
 | Random pitch variation | Haptic feedback on Force Touch trackpads | Launch at login |
-| Optional Return ding and mouse clicks | Keystroke counts, today and total | Updates from GitHub releases |
+| Optional Return ding and mouse clicks | Keystroke counts, with a chart of the last week | Updates from GitHub releases |
 
 Switch sets: Cardboard, Cream, Holy Panda, Japanese Black, Milky Yellow,
 Oreo and Super Red.
