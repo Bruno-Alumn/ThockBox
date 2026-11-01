@@ -90,3 +90,55 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(counted(state), 0)
     }
 }
+
+final class AutoMuteTests: XCTestCase {
+    private var suite = ""
+    private var defaults: UserDefaults!
+
+    override func setUp() {
+        suite = "ThockboxTests.\(UUID().uuidString)"
+        defaults = UserDefaults(suiteName: suite)
+    }
+
+    override func tearDown() {
+        defaults.removePersistentDomain(forName: suite)
+    }
+
+    func testIdleTimeoutMutesAndTypingUnmutes() {
+        let state = AppState(defaults: defaults)
+        state.idleTimeoutMinutes = 1
+        state.updateAutomaticMute(now: Date().addingTimeInterval(30))
+        XCTAssertFalse(state.isAutomaticallyMuted, "not idle yet")
+        state.updateAutomaticMute(now: Date().addingTimeInterval(61))
+        XCTAssertTrue(state.isAutomaticallyMuted)
+
+        state.handle(.keyDown(keycode: 0, isRepeat: false, flags: []))
+        XCTAssertFalse(state.isAutomaticallyMuted, "a key press ends idle mute")
+    }
+
+    func testIdleMuteIsOffByDefault() {
+        let state = AppState(defaults: defaults)
+        state.updateAutomaticMute(now: Date().addingTimeInterval(86_400))
+        XCTAssertFalse(state.isAutomaticallyMuted)
+    }
+
+    func testScreenLockMutesOnlyWhenEnabled() {
+        let state = AppState(defaults: defaults)
+        state.setScreenLocked(true)
+        XCTAssertFalse(state.isAutomaticallyMuted, "mute-when-locked is off")
+        state.setScreenLocked(false)
+
+        state.muteWhenLocked = true
+        state.setScreenLocked(true)
+        XCTAssertTrue(state.isAutomaticallyMuted)
+        state.setScreenLocked(false)
+        XCTAssertFalse(state.isAutomaticallyMuted)
+    }
+
+    func testTurningMuteWhenLockedOnWhileLockedMutesRightAway() {
+        let state = AppState(defaults: defaults)
+        state.setScreenLocked(true)
+        state.muteWhenLocked = true
+        XCTAssertTrue(state.isAutomaticallyMuted)
+    }
+}

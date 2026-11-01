@@ -171,14 +171,12 @@ final class AppState: ObservableObject {
         distributed.addObserver(
             forName: NSNotification.Name("com.apple.screenIsLocked"), object: nil, queue: .main
         ) { [weak self] _ in
-            self?.screenLocked = true
-            self?.updateAutomaticMute()
+            self?.setScreenLocked(true)
         }
         distributed.addObserver(
             forName: NSNotification.Name("com.apple.screenIsUnlocked"), object: nil, queue: .main
         ) { [weak self] _ in
-            self?.screenLocked = false
-            self?.updateAutomaticMute()
+            self?.setScreenLocked(false)
         }
         updateIdleTimer()
 
@@ -420,9 +418,16 @@ final class AppState: ObservableObject {
         idleTimer = timer
     }
 
-    private func updateAutomaticMute() {
+    /// Called from the screen lock/unlock notifications (and by tests).
+    func setScreenLocked(_ locked: Bool) {
+        screenLocked = locked
+        updateAutomaticMute()
+    }
+
+    /// `now` is a parameter so tests can check the idle timeout without waiting.
+    func updateAutomaticMute(now: Date = Date()) {
         let muted = (muteWhenLocked && screenLocked)
-            || idleMode.isIdle(timeoutMinutes: idleTimeoutMinutes)
+            || idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes)
         guard muted != isAutomaticallyMuted else { return }
         isAutomaticallyMuted = muted
         syncEngineState()
