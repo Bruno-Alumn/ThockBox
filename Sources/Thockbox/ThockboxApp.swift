@@ -24,6 +24,20 @@ struct ThockboxApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppState.shared.startUp()
+        // Show the settings window once, on the very first launch (it walks
+        // through the Accessibility grant); after that start in the menu bar.
+        let defaults = UserDefaults.standard
+        if !defaults.bool(forKey: "hasShownSettingsWindow") {
+            defaults.set(true, forKey: "hasShownSettingsWindow")
+            MainWindow.shared.show()
+        }
+    }
+
+    /// Opening Thockbox again (Finder, Launchpad, Spotlight, Dock) while it's
+    /// running brings up the settings window.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        MainWindow.shared.show()
+        return true
     }
 
     func applicationWillTerminate(_ notification: Notification) {
