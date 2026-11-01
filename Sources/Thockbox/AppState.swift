@@ -98,6 +98,13 @@ final class AppState: ObservableObject {
             updateAutomaticMute()
         }
     }
+    /// Bundle IDs of apps that ThockBox stays quiet in while they're in front.
+    @Published var mutedApps: [String] {
+        didSet {
+            defaults.set(mutedApps, forKey: "mutedApps")
+            updateAutomaticMute()
+        }
+    }
     @Published var idleTimeoutMinutes: Int {
         didSet {
             defaults.set(idleTimeoutMinutes, forKey: "idleTimeoutMinutes")
@@ -132,6 +139,7 @@ final class AppState: ObservableObject {
     private var idleMode = IdleMode()
     private var screenLocked = false
     private var microphoneMonitor: MicrophoneMonitor?
+    private var frontApp: (id: String, name: String)?
 
     /// The app uses `shared` (standard defaults); tests pass their own store.
     init(defaults: UserDefaults = .standard) {
@@ -160,6 +168,7 @@ final class AppState: ObservableObject {
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
+        mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
         idleTimeoutMinutes = max(0, defaults.integer(forKey: "idleTimeoutMinutes"))
         outputDeviceUID = defaults.string(forKey: "outputDeviceUID")
         stats = StatsStore(defaults: defaults)
@@ -178,6 +187,12 @@ final class AppState: ObservableObject {
             screenLocked = session["CGSSessionScreenIsLocked"] as? Bool ?? false
         }
         updateMicrophoneMonitor()
+        setFrontApp(NSWorkspace.shared.frontmostApplication)
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            self?.setFrontApp(note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)
+        }
         updateAutomaticMute()
         syncEngineState()
 
@@ -444,6 +459,16 @@ final class AppState: ObservableObject {
         updateAutomaticMute()
     }
 
+    private func setFrontApp(_ app: NSRunningApplication?) {
+        setFrontApp(id: app?.bundleIdentifier, name: app?.localizedName)
+    }
+
+    /// Called when another app comes to the front (and by tests).
+    func setFrontApp(id: String?, name: String?) {
+        frontApp = id.map { ($0, name ?? $0) }
+        updateAutomaticMute()
+    }
+
     private func updateMicrophoneMonitor() {
         guard muteDuringCalls else {
             microphoneMonitor = nil
@@ -463,6 +488,8 @@ final class AppState: ObservableObject {
             reason = .call
         } else if muteWhenLocked && screenLocked {
             reason = .screenLocked
+        } else if let frontApp, mutedApps.contains(frontApp.id) {
+            reason = .app(frontApp.name)
         } else if idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes) {
             reason = .idle
         } else {
@@ -529,12 +556,14 @@ final class AppState: ObservableObject {
 enum AutomaticMute: Equatable {
     case call
     case screenLocked
+    case app(String)
     case idle
 
     var message: String {
         switch self {
         case .call: "Muted while another app uses the microphone."
         case .screenLocked: "Muted while the screen is locked."
+        case .app(let name): "Muted in \(name)."
         case .idle: "Muted after inactivity. Press any key to wake it."
         }
     }
@@ -543,6 +572,7 @@ enum AutomaticMute: Equatable {
         switch self {
         case .call: "mic.fill"
         case .screenLocked: "lock.fill"
+        case .app: "app.fill"
         case .idle: "moon.zzz.fill"
         }
     }

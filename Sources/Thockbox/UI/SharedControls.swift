@@ -203,3 +203,43 @@ struct UpdateStatusView: View {
         }
     }
 }
+
+/// The apps ThockBox stays quiet in, with Add and Remove.
+struct MutedAppsList: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        ForEach(state.mutedApps, id: \.self) { id in
+            let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)
+            HStack {
+                if let url {
+                    Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                        .resizable()
+                        .frame(width: 18, height: 18)
+                }
+                Text(url.map { $0.deletingPathExtension().lastPathComponent } ?? id)
+                Spacer()
+                Button {
+                    state.mutedApps.removeAll { $0 == id }
+                } label: {
+                    Image(systemName: "minus.circle.fill")
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+                .help("Remove")
+            }
+        }
+        Button("Add App…", action: chooseApps)
+    }
+
+    private func chooseApps() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.applicationBundle]
+        panel.allowsMultipleSelection = true
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.prompt = "Mute"
+        guard panel.runModal() == .OK else { return }
+        let ids = panel.urls.compactMap { Bundle(url: $0)?.bundleIdentifier }
+        state.mutedApps += ids.filter { !state.mutedApps.contains($0) }
+    }
+}

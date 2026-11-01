@@ -156,6 +156,20 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertFalse(state.isAutomaticallyMuted)
     }
 
+    func testMutedAppMutesOnlyWhileInFront() {
+        let state = AppState(defaults: defaults)
+        state.setFrontApp(id: "com.example.game", name: "Game")
+        XCTAssertNil(state.automaticMute)
+
+        state.mutedApps = ["com.example.game"]
+        XCTAssertEqual(state.automaticMute, .app("Game"))
+        state.setFrontApp(id: "com.apple.TextEdit", name: "TextEdit")
+        XCTAssertNil(state.automaticMute)
+        state.setFrontApp(id: "com.example.game", name: "Game")
+        state.mutedApps = []
+        XCTAssertNil(state.automaticMute, "removing the app unmutes")
+    }
+
     func testAutomaticMuteReportsWhy() {
         let state = AppState(defaults: defaults)
         state.muteWhenLocked = true
