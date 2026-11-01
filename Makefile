@@ -44,10 +44,12 @@ sounds:
 icon:
 	swift scripts/make_icon.swift art/logo-source.png Resources/AppIcon.icns docs/logo.png
 
-# Unit tests, then a headless audio smoke test that decodes and plays every pack.
+# Unit tests, a headless audio smoke test that decodes and plays every pack,
+# then a check that the launched app settles down (scripts/launch_check.sh).
 test: bundle
 	swift test
 	$(BUNDLE)/Contents/MacOS/$(APP) --test-audio
+	scripts/launch_check.sh $(BUNDLE)
 
 # Performance checks: CPU per key press and idle CPU (see scripts/bench).
 bench:

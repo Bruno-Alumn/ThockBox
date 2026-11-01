@@ -154,6 +154,8 @@ enum Permissions {
 
     @discardableResult
     static func requestIfNeeded() -> Bool {
+        // `make test` launches a copy for a health check; no prompt for it.
+        if CommandLine.arguments.contains("--health-check") { return isTrusted }
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         return AXIsProcessTrustedWithOptions(options)
     }
