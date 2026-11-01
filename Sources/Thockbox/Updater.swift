@@ -31,6 +31,20 @@ struct Release: Decodable, Equatable {
         tagName.hasPrefix("v") ? String(tagName.dropFirst()) : tagName
     }
 
+    /// The notes as a few plain lines for Settings. GitHub's generated
+    /// notes are "* Title by @user in <PR link>" under a heading, with a
+    /// "Full Changelog" link at the end; this keeps just the titles.
+    var notesPreview: String? {
+        let lines = (notes ?? "").components(separatedBy: .newlines).compactMap { raw -> String? in
+            var line = raw.trimmingCharacters(in: .whitespaces)
+            guard !line.isEmpty, !line.hasPrefix("#"), !line.hasPrefix("**Full Changelog**") else { return nil }
+            if let by = line.range(of: " by @", options: .backwards) { line = String(line[..<by.lowerBound]) }
+            if line.hasPrefix("* ") || line.hasPrefix("- ") { line = "• " + line.dropFirst(2) }
+            return line
+        }
+        return lines.isEmpty ? nil : lines.joined(separator: "\n")
+    }
+
     /// The app archive made by `make zip` (ThockBox-<version>.zip).
     var appArchive: Asset? {
         assets.first { $0.name.hasPrefix("ThockBox") && $0.name.hasSuffix(".zip") }
