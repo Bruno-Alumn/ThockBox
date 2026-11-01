@@ -198,17 +198,21 @@ final class AppState: ObservableObject {
         }
         klog.notice("startup: trusted=\(self.accessibilityTrusted, privacy: .public) packs=\(self.packs.count, privacy: .public) device=\(self.outputDeviceUID ?? "default", privacy: .public)")
 
-        // Monitors registered before the Accessibility grant never deliver
-        // events, and re-registering in-process isn't enough — the app has to
-        // relaunch. Poll for the grant and relaunch ourselves when it lands.
-        if !accessibilityTrusted {
-            Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] timer in
-                guard self != nil else { return timer.invalidate() }
-                if Permissions.isTrusted {
-                    timer.invalidate()
-                    klog.notice("accessibility granted — relaunching")
-                    Self.relaunch()
-                }
+        // Monitors registered without Accessibility access don't recover
+        // in-process. Watch both directions so a revoked then restored grant
+        // gets the same fresh process as a grant made on first launch.
+        var wasTrusted = accessibilityTrusted
+        Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] timer in
+            guard let self else { return timer.invalidate() }
+            let trusted = Permissions.isTrusted
+            self.accessibilityTrusted = trusted
+            guard trusted != wasTrusted else { return }
+            wasTrusted = trusted
+            if trusted {
+                klog.notice("accessibility granted — relaunching")
+                Self.relaunch()
+            } else {
+                klog.notice("accessibility revoked")
             }
         }
     }
