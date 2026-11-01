@@ -26,11 +26,14 @@ final class SoundEngine {
         /// Bumped per scheduled buffer so a stale completion (from a buffer
         /// that was interrupted by a newer one) doesn't bypass a live sound.
         var generation = 0
+        var isSounding = false
     }
 
     private var voices: [Voice] = []
     private var nextVoice = 0
-    private let voiceCount = 20
+    /// Trimmed key samples last ≤ ~130 ms, so even fast typing keeps only a
+    /// few voices busy; idle voices still cost CPU (8: ~0.8%, 20: ~1.2%).
+    private let voiceCount = 8
     private var outputDeviceID: AudioDeviceID?
     private var shouldRun = false
     private var isSleeping = false
@@ -365,8 +368,14 @@ final class SoundEngine {
 
     private func play(buffer: AVAudioPCMBuffer, cents: Float, pan: Float, gain: Float) {
         guard engine.isRunning else { return }
-        let voice = voices[nextVoice]
-        nextVoice = (nextVoice + 1) % voiceCount
+        // Prefer a silent voice; only cut one off (the next in turn) when
+        // every voice is busy, e.g. under a long ding.
+        let index = (0..<voiceCount).lazy
+            .map { (self.nextVoice + $0) % self.voiceCount }
+            .first { !self.voices[$0].isSounding } ?? nextVoice
+        let voice = voices[index]
+        nextVoice = (index + 1) % voiceCount
+        voice.isSounding = true
         voice.varispeed.rate = pow(2, cents / 1_200)
         voice.varispeed.bypass = false
         voice.player.pan = pan
@@ -377,6 +386,7 @@ final class SoundEngine {
                                     completionCallbackType: .dataPlayedBack) { [weak voice] _ in
             DispatchQueue.main.async {
                 guard let voice, voice.generation == generation else { return }
+                voice.isSounding = false
                 voice.varispeed.bypass = true
                 voice.player.pan = 0
             }
