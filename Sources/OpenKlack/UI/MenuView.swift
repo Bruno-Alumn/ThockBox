@@ -6,6 +6,7 @@ struct MenuView: View {
     // Cached: enumerating CoreAudio devices inside body would re-run on every
     // keystroke (stats republish the whole AppState).
     @State private var devices: [AudioDevices.Device] = []
+    @State private var deviceMonitor: AudioDeviceMonitor?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -26,7 +27,14 @@ struct MenuView: View {
         }
         .padding(14)
         .frame(width: 300)
-        .onAppear { state.refreshAccessibilityStatus() }
+        .onAppear {
+            state.refreshAccessibilityStatus()
+            devices = AudioDevices.outputDevices()
+            deviceMonitor = AudioDeviceMonitor {
+                DispatchQueue.main.async { devices = AudioDevices.outputDevices() }
+            }
+        }
+        .onDisappear { deviceMonitor = nil }
     }
 
     private var header: some View {
