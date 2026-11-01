@@ -12,7 +12,13 @@ struct ThockboxApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra(isInserted: $state.showMenuBarIcon) {
+        // SwiftUI writes isInserted back on every scene update. Passing
+        // same-value writes through would publish a change, update the scene
+        // again and loop: 94% CPU and over 1 GB of memory within minutes.
+        MenuBarExtra(isInserted: Binding(
+            get: { state.showMenuBarIcon },
+            set: { if $0 != state.showMenuBarIcon { state.showMenuBarIcon = $0 } }
+        )) {
             MenuView(state: state)
         } label: {
             Image(nsImage: state.enabled && !state.isAutomaticallyMuted ? MenuBarIcon.on : MenuBarIcon.off)
