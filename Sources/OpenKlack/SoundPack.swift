@@ -43,10 +43,27 @@ struct SoundPack: Identifiable {
             return []
         }
         var packs: [SoundPack] = []
-        for dir in entries {
+        // Sorted so that, with duplicate ids, the same folder always wins.
+        for dir in entries.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
             let manifestURL = dir.appendingPathComponent("pack.json")
-            guard let data = try? Data(contentsOf: manifestURL),
-                  let manifest = try? JSONDecoder().decode(SoundPackManifest.self, from: data) else {
+            // Folders without a manifest (e.g. _extras) aren't packs.
+            guard fm.fileExists(atPath: manifestURL.path) else { continue }
+            let name = dir.lastPathComponent
+            let manifest: SoundPackManifest
+            do {
+                manifest = try JSONDecoder().decode(SoundPackManifest.self,
+                                                    from: Data(contentsOf: manifestURL))
+            } catch {
+                klog.error("skipping pack \(name, privacy: .public): bad pack.json: \(error, privacy: .public)")
+                continue
+            }
+            // Without default press sounds most keys would be silent.
+            guard manifest.keys[KeyClass.default.rawValue]?.down.isEmpty == false else {
+                klog.error("skipping pack \(name, privacy: .public): no \"default\" sounds")
+                continue
+            }
+            guard !packs.contains(where: { $0.id == manifest.id }) else {
+                klog.error("skipping pack \(name, privacy: .public): duplicate id \(manifest.id, privacy: .public)")
                 continue
             }
             packs.append(SoundPack(manifest: manifest, url: dir))

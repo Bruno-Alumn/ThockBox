@@ -209,7 +209,7 @@ final class SoundEngine {
             if let buf = Self.decode(url: url, to: format) {
                 newBuffers["\(pack.id)/\(rel)"] = Self.trimNoise(buf)
             } else {
-                NSLog("OpenKlack: failed to decode \(url.path)")
+                klog.error("failed to decode \(url.path, privacy: .public)")
             }
         }
         buffers = newBuffers
