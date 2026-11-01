@@ -29,6 +29,9 @@ final class SoundEngine {
     private var voices: [Voice] = []
     private var nextVoice = 0
     private let voiceCount = 20
+    private var outputDeviceID: AudioDeviceID?
+    private var shouldRun = false
+    private var isSleeping = false
 
     /// Decoded buffers keyed by "<packId>/<relativePath>".
     private var buffers: [String: AVAudioPCMBuffer] = [:]
@@ -84,10 +87,20 @@ final class SoundEngine {
             self?.restart()
         }
         NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.willSleepNotification, object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            self.isSleeping = true
+            self.engine.stop()
+        }
+        NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification, object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self, !self.engine.isRunning else { return }
+            guard let self else { return }
+            self.isSleeping = false
+            guard !self.engine.isRunning else { return }
             self.restart()
         }
     }
@@ -95,6 +108,7 @@ final class SoundEngine {
     /// Re-negotiate the mixer→output connection (the hardware format may have
     /// changed) and get every voice playing again.
     private func restart() {
+        guard shouldRun, !isSleeping else { return }
         engine.stop()
         let hwFormat = engine.outputNode.outputFormat(forBus: 0)
         if hwFormat.sampleRate > 0 {
@@ -106,6 +120,9 @@ final class SoundEngine {
             try engine.start()
         } catch {
             klog.error("engine restart failed: \(error, privacy: .public)")
+            if outputDeviceID != nil {
+                setOutputDevice(nil)
+            }
             return
         }
         reviveVoices()
@@ -113,6 +130,7 @@ final class SoundEngine {
     }
 
     func start() throws {
+        shouldRun = true
         guard !engine.isRunning else { return }
         requestLowLatencyIO()
         try engine.start()
@@ -161,6 +179,7 @@ final class SoundEngine {
     }
 
     func stop() {
+        shouldRun = false
         engine.stop()
     }
 
@@ -366,6 +385,8 @@ final class SoundEngine {
 
     /// Route audio to a specific output device (nil = system default).
     func setOutputDevice(_ deviceID: AudioDeviceID?) {
+        outputDeviceID = deviceID
+        shouldRun = true
         engine.stop()
         var id = deviceID ?? AudioDevices.defaultOutputDevice()
         if let unit = engine.outputNode.audioUnit, id != kAudioObjectUnknown {
@@ -380,10 +401,5 @@ final class SoundEngine {
             }
         }
         restart()
-        // If the chosen device refuses to start, fall back to the default
-        // device rather than staying silently dead.
-        if !engine.isRunning, deviceID != nil {
-            setOutputDevice(nil)
-        }
     }
 }
