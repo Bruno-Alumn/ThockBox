@@ -13,6 +13,9 @@ struct SettingsView: View {
                 if !state.accessibilityTrusted {
                     PermissionBanner()
                 }
+                if let app = state.secureInputApp {
+                    SecureInputBanner(app: app)
+                }
             }
 
             Section {

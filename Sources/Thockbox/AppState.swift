@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import Combine
 import ServiceManagement
 import UserNotifications
@@ -140,6 +141,8 @@ final class AppState: ObservableObject {
     let stats: StatsStore
 
     @Published private(set) var accessibilityTrusted = Permissions.isTrusted
+    /// Checked when the menu or settings window opens; see secureInputHolder().
+    @Published private(set) var secureInputApp: String?
     /// Why sounds are automatically muted right now, if they are.
     @Published private(set) var automaticMute: AutomaticMute?
     var isAutomaticallyMuted: Bool { automaticMute != nil }
@@ -428,6 +431,27 @@ final class AppState: ObservableObject {
     func refreshAccessibilityStatus() {
         let trusted = Permissions.isTrusted
         if accessibilityTrusted != trusted { accessibilityTrusted = trusted }
+        let holder = Self.secureInputHolder()
+        if secureInputApp != holder { secureInputApp = holder }
+    }
+
+    /// The app holding Secure Input, if any. While it's on (a focused
+    /// password field, Terminal's Secure Keyboard Entry, or an app that
+    /// forgot to turn it off), macOS sends no key events to other apps, so
+    /// sounds stop with no other sign.
+    static func secureInputHolder() -> String? {
+        guard IsSecureEventInputEnabled() else { return nil }
+        let session = CGSessionCopyCurrentDictionary() as? [String: Any]
+        let app = (session?["kCGSSessionSecureInputPID"] as? Int)
+            .flatMap { NSRunningApplication(processIdentifier: pid_t($0)) }
+        return secureInputHolderName(bundleID: app?.bundleIdentifier, name: app?.localizedName)
+    }
+
+    /// The lock screen always holds Secure Input; that's covered by the
+    /// screen-lock mute, so it isn't reported.
+    static func secureInputHolderName(bundleID: String?, name: String?) -> String? {
+        guard bundleID != "com.apple.loginwindow" else { return nil }
+        return name ?? "Another app"
     }
 
     private func updateLoginItem() {
