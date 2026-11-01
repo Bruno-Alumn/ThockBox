@@ -145,7 +145,7 @@ Measured on Apple Silicon with `make bench`:
 |---|---|
 | Key press to rendered audio | ~5 ms, plus output device latency |
 | CPU per key press | ~1 ms |
-| CPU when idle | ~0.5–1% |
+| CPU when idle | ~0.5% while typing, 0% after 30 s without a key |
 | App size | ~2.3 MB |
 
 Bluetooth headphones add their own latency, around 160 ms for AirPods. Built-in

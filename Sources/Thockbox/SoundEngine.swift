@@ -39,6 +39,16 @@ final class SoundEngine {
     private var shouldRun = false
     private var isSleeping = false
 
+    /// A running engine wakes the CPU every I/O cycle (~2.7 ms) even when
+    /// silent: ~0.6% of a core, around the clock. After this long without a
+    /// sound it pauses (0% CPU) and the next sound resumes it, which adds
+    /// ~8 ms to that one key. Bluetooth outputs never pause: they fade in
+    /// after the stream stops and would swallow the first keys.
+    static let idlePauseDelay: TimeInterval = 30
+    private var lastSound = Date()
+    private(set) var isIdlePaused = false
+    private var idleTimer: Timer?
+
     /// Decoded buffers keyed by "<packId>/<relativePath>".
     private(set) var buffers: [String: AVAudioPCMBuffer] = [:]
     private var currentPack: SoundPack?
@@ -98,6 +108,7 @@ final class SoundEngine {
         ) { [weak self] _ in
             guard let self else { return }
             self.isSleeping = true
+            self.isIdlePaused = false
             self.engine.stop()
         }
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -115,6 +126,7 @@ final class SoundEngine {
     /// changed) and get every voice playing again.
     private func restart() {
         guard shouldRun, !isSleeping else { return }
+        isIdlePaused = false
         engine.stop()
         let hwFormat = engine.outputNode.outputFormat(forBus: 0)
         if hwFormat.sampleRate > 0 {
@@ -137,11 +149,42 @@ final class SoundEngine {
 
     func start() throws {
         shouldRun = true
+        startIdleTimer()
         guard !engine.isRunning else { return }
+        isIdlePaused = false
         requestLowLatencyIO()
         try engine.start()
         reviveVoices()
+        lastSound = Date()
         klog.notice("engine started (output latency \(self.outputLatency * 1000, privacy: .public) ms)")
+    }
+
+    /// Checks every 10 s rather than re-arming per key, so typing costs
+    /// nothing extra.
+    private func startIdleTimer() {
+        guard idleTimer == nil else { return }
+        let timer = Timer(timeInterval: 10, repeats: true) { [weak self] _ in self?.pauseIfIdle() }
+        timer.tolerance = 5
+        RunLoop.main.add(timer, forMode: .common)
+        idleTimer = timer
+    }
+
+    func pauseIfIdle(now: Date = Date()) {
+        guard engine.isRunning, !isIdlePaused,
+              now.timeIntervalSince(lastSound) >= Self.idlePauseDelay,
+              outputLatency < 0.05 else { return }
+        engine.pause()
+        isIdlePaused = true
+    }
+
+    private func resumeFromIdle() {
+        isIdlePaused = false
+        do {
+            try engine.start()
+        } catch {
+            klog.error("engine resume failed: \(error, privacy: .public)")
+            restart()
+        }
     }
 
     /// Hardware I/O cycle we ask for, in frames. The HAL default (512 frames,
@@ -186,6 +229,9 @@ final class SoundEngine {
 
     func stop() {
         shouldRun = false
+        isIdlePaused = false
+        idleTimer?.invalidate()
+        idleTimer = nil
         engine.stop()
     }
 
@@ -416,7 +462,7 @@ final class SoundEngine {
             }
             return false
         }
-        if !engine.isRunning {
+        if !engine.isRunning && !isIdlePaused {
             klog.error("play requested but engine not running")
             return false
         }
@@ -435,6 +481,8 @@ final class SoundEngine {
     }
 
     private func play(buffer: AVAudioPCMBuffer, cents: Float, pan: Float, gain: Float) {
+        lastSound = Date()
+        if isIdlePaused { resumeFromIdle() }
         guard engine.isRunning else { return }
         let index = Self.voiceIndex(next: nextVoice, count: voiceCount) { voices[$0].isSounding }
         let voice = voices[index]

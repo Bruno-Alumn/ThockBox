@@ -32,6 +32,24 @@ final class SoundEngineTests: XCTestCase {
         XCTAssertEqual(SoundEngine.normalizingGain(for: [quiet], allPeaks: [0.089]), 10, accuracy: 0.01)
     }
 
+    /// After 30 s without a sound the engine pauses, and the next key
+    /// resumes it and still plays.
+    func testPausesWhenIdleAndResumesOnTheNextKey() throws {
+        let engine = SoundEngine()
+        engine.volume = 0
+        let pack = try XCTUnwrap(Self.packs.first)
+        engine.load(pack: pack)
+        do { try engine.start() } catch { throw XCTSkip("no audio output (CI)") }
+        defer { engine.stop() }
+
+        engine.pauseIfIdle(now: Date().addingTimeInterval(5))
+        XCTAssertFalse(engine.isIdlePaused, "not idle long enough")
+        engine.pauseIfIdle(now: Date().addingTimeInterval(SoundEngine.idlePauseDelay + 1))
+        try XCTSkipIf(!engine.isIdlePaused, "output is Bluetooth-like, never pauses")
+        XCTAssertTrue(engine.playKey(keyClass: .row2, up: false, x: 0.5))
+        XCTAssertFalse(engine.isIdlePaused)
+    }
+
     /// Every file a pack lists gets decoded (and trimmed) once.
     func testLoadDecodesEveryFileEachPackLists() throws {
         XCTAssertFalse(Self.packs.isEmpty)
