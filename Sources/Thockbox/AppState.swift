@@ -91,6 +91,13 @@ final class AppState: ObservableObject {
             updateAutomaticMute()
         }
     }
+    @Published var muteDuringCalls: Bool {
+        didSet {
+            defaults.set(muteDuringCalls, forKey: "muteDuringCalls")
+            updateMicrophoneMonitor()
+            updateAutomaticMute()
+        }
+    }
     @Published var idleTimeoutMinutes: Int {
         didSet {
             defaults.set(idleTimeoutMinutes, forKey: "idleTimeoutMinutes")
@@ -116,10 +123,13 @@ final class AppState: ObservableObject {
 
     @Published private(set) var accessibilityTrusted = Permissions.isTrusted
     @Published private(set) var isAutomaticallyMuted = false
+    /// Another app is recording (only tracked while muteDuringCalls is on).
+    @Published private(set) var microphoneInUse = false
 
     private let defaults: UserDefaults
     private var idleMode = IdleMode()
     private var screenLocked = false
+    private var microphoneMonitor: MicrophoneMonitor?
 
     /// The app uses `shared` (standard defaults); tests pass their own store.
     init(defaults: UserDefaults = .standard) {
@@ -130,7 +140,7 @@ final class AppState: ObservableObject {
             "muteModifiers": false, "functionKeysAudible": true,
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false, "notifyOnSwitchChange": false,
-            "launchAtLogin": false, "muteWhenLocked": false,
+            "launchAtLogin": false, "muteWhenLocked": false, "muteDuringCalls": false,
             "idleTimeoutMinutes": 0,
         ])
         enabled = defaults.bool(forKey: "enabled")
@@ -147,6 +157,7 @@ final class AppState: ObservableObject {
         notifyOnSwitchChange = defaults.bool(forKey: "notifyOnSwitchChange")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
+        muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
         idleTimeoutMinutes = max(0, defaults.integer(forKey: "idleTimeoutMinutes"))
         outputDeviceUID = defaults.string(forKey: "outputDeviceUID")
         stats = StatsStore(defaults: defaults)
@@ -164,6 +175,7 @@ final class AppState: ObservableObject {
         if let session = CGSessionCopyCurrentDictionary() as NSDictionary? {
             screenLocked = session["CGSSessionScreenIsLocked"] as? Bool ?? false
         }
+        updateMicrophoneMonitor()
         updateAutomaticMute()
         syncEngineState()
 
@@ -424,9 +436,28 @@ final class AppState: ObservableObject {
         updateAutomaticMute()
     }
 
+    /// Called by the microphone monitor (and by tests).
+    func setMicrophoneInUse(_ inUse: Bool) {
+        microphoneInUse = inUse
+        updateAutomaticMute()
+    }
+
+    private func updateMicrophoneMonitor() {
+        guard muteDuringCalls else {
+            microphoneMonitor = nil
+            microphoneInUse = false
+            return
+        }
+        guard microphoneMonitor == nil else { return }
+        let monitor = MicrophoneMonitor { [weak self] inUse in self?.setMicrophoneInUse(inUse) }
+        microphoneMonitor = monitor
+        microphoneInUse = monitor.inUse
+    }
+
     /// `now` is a parameter so tests can check the idle timeout without waiting.
     func updateAutomaticMute(now: Date = Date()) {
         let muted = (muteWhenLocked && screenLocked)
+            || (muteDuringCalls && microphoneInUse)
             || idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes)
         guard muted != isAutomaticallyMuted else { return }
         isAutomaticallyMuted = muted
