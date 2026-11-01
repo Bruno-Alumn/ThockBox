@@ -322,6 +322,8 @@ final class AppState: ObservableObject {
         case .mouseUp:
             guard enabled, !isAutomaticallyMuted, mouseClicks else { return }
             engine.playExtra(named: "click_up", gain: 0.7)
+        case .optionStatusItemClick:
+            enabled.toggle()
         }
     }
 

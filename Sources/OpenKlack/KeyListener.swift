@@ -9,12 +9,14 @@ final class KeyListener {
         case keyUp(keycode: UInt16)
         case mouseDown
         case mouseUp
+        case optionStatusItemClick
     }
 
     var handler: ((Event) -> Void)?
 
     private var monitors: [Any] = []
     private var downModifiers = Set<UInt16>()
+    private var suppressNextStatusItemMouseUp = false
 
     /// Device-dependent NX_DEVICE* modifier flag masks, keyed by keycode.
     private static let deviceMasks: [UInt16: UInt] = [
@@ -47,6 +49,17 @@ final class KeyListener {
             monitors.append(monitor)
         }
         if let monitor = NSEvent.addLocalMonitorForEvents(matching: mouseMask, handler: { [weak self] event in
+            if event.type == .leftMouseUp, self?.suppressNextStatusItemMouseUp == true {
+                self?.suppressNextStatusItemMouseUp = false
+                return nil
+            }
+            if event.type == .leftMouseDown,
+               event.modifierFlags.contains(.option),
+               event.window?.level == .statusBar {
+                self?.suppressNextStatusItemMouseUp = true
+                self?.handler?(.optionStatusItemClick)
+                return nil
+            }
             self?.process(event)
             return event
         }) {
@@ -58,6 +71,7 @@ final class KeyListener {
         for m in monitors { NSEvent.removeMonitor(m) }
         monitors.removeAll()
         downModifiers.removeAll()
+        suppressNextStatusItemMouseUp = false
     }
 
     private func process(_ event: NSEvent) {

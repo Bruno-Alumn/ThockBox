@@ -24,7 +24,7 @@ no keystroke logging. The whole app bundle is **~2 MB**.
 - **Volume slider** with Soft / Balanced / Loud presets, independent of
   system volume
 - **Stereo spread** — keys pan subtly by their physical position on the board
-- **⌘⌃K** global hotkey to toggle sounds
+- **⌘⌃K** global hotkey or **option-click** on the menu bar icon to toggle sounds
 - Mute modifier keys, function-key audibility toggle
 - **Ding on return** (typewriter margin bell), **mouse click sounds**
 - Output device picker (play through any device, independent of default)
@@ -80,7 +80,7 @@ transmitted. The code that touches key events is ~90 lines in
 | Dynamic menu bar icon | ✅ (filled = on, outline = off) |
 | AppleScript support | ❌ not yet |
 | Sleep automation / idle mode | ✅ screen lock + configurable inactivity timeout |
-| Menu bar icon opacity / click actions | ❌ not yet |
+| Menu bar icon opacity / click actions | ◐ option-click toggles sounds; no opacity setting |
 
 ## Sounds
 
