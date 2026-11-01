@@ -16,9 +16,15 @@
 </p>
 
 <p align="center">
-  <img src="docs/menu-bar.png" alt="Menu bar panel" width="270">
-  &nbsp;&nbsp;
-  <img src="docs/settings.png" alt="Settings window" width="370">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/menu-dark.png">
+    <img src="docs/screenshots/menu-light.png" alt="Menu bar panel" width="290">
+  </picture>
+  &nbsp;
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/settings-dark.png">
+    <img src="docs/screenshots/settings-light.png" alt="Settings window" width="420">
+  </picture>
 </p>
 
 ## Overview
