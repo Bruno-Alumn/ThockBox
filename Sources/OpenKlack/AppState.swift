@@ -77,6 +77,7 @@ final class AppState: ObservableObject {
     @Published var mouseClicks: Bool {
         didSet {
             defaults.set(mouseClicks, forKey: "mouseClicks")
+            listener.listensToMouse = mouseClicks
             if mouseClicks && oldValue != mouseClicks {
                 engine.playExtra(named: "click_down", gain: 0.9)
             }
@@ -169,6 +170,7 @@ final class AppState: ObservableObject {
             self?.handle(event)
         }
         accessibilityTrusted = Permissions.requestIfNeeded()
+        listener.listensToMouse = mouseClicks
         listener.start()
         reconcileLoginItem()
         NotificationCenter.default.addObserver(
