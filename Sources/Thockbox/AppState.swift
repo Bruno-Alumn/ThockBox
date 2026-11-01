@@ -199,21 +199,47 @@ final class AppState: ObservableObject {
         // Monitors registered without Accessibility access don't recover
         // in-process. Watch both directions so a revoked then restored grant
         // gets the same fresh process as a grant made on first launch.
-        var wasTrusted = accessibilityTrusted
-        Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] timer in
-            guard let self else { return timer.invalidate() }
-            let trusted = Permissions.isTrusted
-            // Only assign on a change: every @Published write re-renders the
-            // menu bar label and menu (~5 ms), even for an unchanged value.
-            if self.accessibilityTrusted != trusted { self.accessibilityTrusted = trusted }
-            guard trusted != wasTrusted else { return }
-            wasTrusted = trusted
-            if trusted {
-                klog.notice("accessibility granted — relaunching")
-                Self.relaunch()
-            } else {
-                klog.notice("accessibility revoked")
-            }
+        wasTrusted = accessibilityTrusted
+        scheduleAccessibilityCheck()
+        // Posted when any app's Accessibility access changes, so a revoke is
+        // usually seen right away instead of at the next slow poll. The
+        // trust state can lag the notification slightly, hence the delay.
+        DistributedNotificationCenter.default().addObserver(
+            forName: NSNotification.Name("com.apple.accessibility.api"), object: nil, queue: .main
+        ) { [weak self] _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self?.checkAccessibility() }
+        }
+    }
+
+    private var wasTrusted = false
+    private var accessibilityTimer: Timer?
+
+    /// Every 2 s while waiting for a grant (the user is in System Settings
+    /// right now), every 30 s once trusted: revoking is rare, and the
+    /// notification above usually reports it sooner anyway.
+    private func scheduleAccessibilityCheck() {
+        accessibilityTimer?.invalidate()
+        let interval: TimeInterval = wasTrusted ? 30 : 2
+        let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            self?.checkAccessibility()
+        }
+        timer.tolerance = interval / 4
+        accessibilityTimer = timer
+    }
+
+    private func checkAccessibility() {
+        let trusted = Permissions.isTrusted
+        // Only assign on a change: every @Published write re-renders the
+        // menu bar label and menu (~5 ms), even for an unchanged value.
+        if accessibilityTrusted != trusted { accessibilityTrusted = trusted }
+        guard trusted != wasTrusted else { return }
+        wasTrusted = trusted
+        if trusted {
+            klog.notice("accessibility granted — relaunching")
+            Self.relaunch()
+        } else {
+            klog.notice("accessibility revoked")
+            scheduleAccessibilityCheck()   // back to fast polling for the re-grant
         }
     }
 
