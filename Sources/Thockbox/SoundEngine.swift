@@ -366,13 +366,15 @@ final class SoundEngine {
         return true
     }
 
+    /// The next voice in turn that isn't sounding. Only when every voice is
+    /// busy (e.g. under a long ding) does the next one in turn get cut off.
+    static func voiceIndex(next: Int, count: Int, isBusy: (Int) -> Bool) -> Int {
+        (0..<count).lazy.map { (next + $0) % count }.first { !isBusy($0) } ?? next
+    }
+
     private func play(buffer: AVAudioPCMBuffer, cents: Float, pan: Float, gain: Float) {
         guard engine.isRunning else { return }
-        // Prefer a silent voice; only cut one off (the next in turn) when
-        // every voice is busy, e.g. under a long ding.
-        let index = (0..<voiceCount).lazy
-            .map { (self.nextVoice + $0) % self.voiceCount }
-            .first { !self.voices[$0].isSounding } ?? nextVoice
+        let index = Self.voiceIndex(next: nextVoice, count: voiceCount) { voices[$0].isSounding }
         let voice = voices[index]
         nextVoice = (index + 1) % voiceCount
         voice.isSounding = true
