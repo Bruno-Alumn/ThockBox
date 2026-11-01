@@ -18,6 +18,7 @@ bundle: build
 	mkdir -p $(BUNDLE)/Contents/MacOS $(BUNDLE)/Contents/Resources
 	cp $(BUILD)/$(APP) $(BUNDLE)/Contents/MacOS/
 	cp Resources/Info.plist $(BUNDLE)/Contents/
+	cp Resources/OpenKlack.sdef $(BUNDLE)/Contents/Resources/
 	cp -R Resources/Sounds $(BUNDLE)/Contents/Resources/Sounds
 	cp Resources/AppIcon.icns $(BUNDLE)/Contents/Resources/
 	codesign --force --sign "$(CODESIGN_ID)" $(BUNDLE)

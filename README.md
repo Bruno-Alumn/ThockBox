@@ -78,9 +78,19 @@ transmitted. The code that touches key events is ~90 lines in
 | Launch at login | ✅ |
 | Haptic feedback | ✅ |
 | Dynamic menu bar icon | ✅ (filled = on, outline = off) |
-| AppleScript support | ❌ not yet |
+| AppleScript support | ✅ enabled, sound pack, and volume properties |
 | Sleep automation / idle mode | ✅ screen lock + configurable inactivity timeout |
 | Menu bar icon opacity / click actions | ◐ option-click toggles sounds; no opacity setting |
+
+## AppleScript
+
+```applescript
+tell application "OpenKlack"
+    set sounds enabled to false
+    set sound pack to "cream" -- pack ID or display name
+    set sound volume to 0.55 -- 0.0 through 1.0
+end tell
+```
 
 ## Sounds
 
