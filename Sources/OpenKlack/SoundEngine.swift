@@ -17,7 +17,9 @@ final class SoundEngine {
     /// A varispeed resamples continuously whether or not anything is playing
     /// (and even at rate 1.0): 20 of them cost ~9% of a core while idle.
     /// Each voice's varispeed is bypassed while silent and only switched in
-    /// for the duration of a keystroke.
+    /// for the duration of a keystroke. Pan goes back to center at the same
+    /// time: an off-center mixer input keeps a costlier mixing path running
+    /// on silence (~3% idle after typing vs ~0.8% centered).
     private final class Voice {
         let player = AVAudioPlayerNode()
         let varispeed = AVAudioUnitVarispeed()
@@ -376,6 +378,7 @@ final class SoundEngine {
             DispatchQueue.main.async {
                 guard let voice, voice.generation == generation else { return }
                 voice.varispeed.bypass = true
+                voice.player.pan = 0
             }
         }
         if !voice.player.isPlaying { voice.player.play() }
