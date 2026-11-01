@@ -200,7 +200,7 @@ Add a folder under `Resources/Sounds/` containing your samples and a
 
 ```sh
 make test          # unit tests, then a smoke test that plays every pack
-make bench         # CPU per key press and idle CPU, fails on a large regression
+make bench         # CPU per key press and idle CPU (typing and paused), fails on a regression
 make icon          # rebuild the app icon from art/logo-source.png
 make sounds        # rebuild the bundled sound sets (requires uv)
 make signing-cert  # one-time: create the certificate builds are signed with
