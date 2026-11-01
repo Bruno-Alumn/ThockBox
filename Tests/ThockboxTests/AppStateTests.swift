@@ -182,6 +182,16 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertNil(state.automaticMute, "removing the app unmutes")
     }
 
+    func testSetMutedNeverAddsAnAppTwice() {
+        let state = AppState(defaults: defaults)
+        state.setMuted(true, appID: "com.example.game")
+        state.setMuted(true, appID: "com.example.game")
+        state.setMuted(true, appID: "com.example.editor")
+        XCTAssertEqual(state.mutedApps, ["com.example.game", "com.example.editor"])
+        state.setMuted(false, appID: "com.example.game")
+        XCTAssertEqual(state.mutedApps, ["com.example.editor"])
+    }
+
     func testOwnWindowsDontChangeTheFrontApp() {
         let state = AppState(defaults: defaults)
         state.setFrontApp(id: "com.example.game", name: "Game")

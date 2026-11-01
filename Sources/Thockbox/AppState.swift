@@ -482,6 +482,15 @@ final class AppState: ObservableObject {
         updateAutomaticMute()
     }
 
+    /// Adds or removes an app from the muted list, never twice.
+    func setMuted(_ muted: Bool, appID: String) {
+        if muted {
+            if !mutedApps.contains(appID) { mutedApps.append(appID) }
+        } else {
+            mutedApps.removeAll { $0 == appID }
+        }
+    }
+
     private func setFrontApp(_ app: NSRunningApplication?) {
         setFrontApp(id: app?.bundleIdentifier, name: app?.localizedName)
     }
