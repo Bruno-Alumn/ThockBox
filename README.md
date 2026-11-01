@@ -119,6 +119,27 @@ tccutil reset Accessibility io.github.bruno-alumn.thockbox
 You can also sign with a developer certificate:
 `make bundle CODESIGN_ID="Apple Development: you@example.com"`.
 
+## Troubleshooting
+
+**No sound at all.** Open the menu bar panel. It shows a notice if
+Accessibility access is missing, if sounds are muted automatically and why,
+or if another app's secure input is blocking key presses. Also check that
+the toggle is on (⌃⌘K by default) and the volume isn't at zero.
+
+**Sound stops in some apps.** While a password field is focused, or while
+Terminal's Secure Keyboard Entry is on, macOS doesn't pass key presses to
+other apps. That's expected. If it stays that way after you leave the field,
+quit and reopen the app the panel names. Also check Settings → Muted apps.
+
+**Sound is late.** Bluetooth headphones add around 100 to 250 ms that no app
+can remove. Settings → Output shows the delay for the current device. Built-in
+speakers and wired headphones respond within a few milliseconds.
+
+**Access was granted but nothing plays after rebuilding.** Builds made
+without the signing certificate get a new identity each time. Run
+`make signing-cert` once, or reset the permission as shown under
+[Accessibility permission](#accessibility-permission).
+
 ## Privacy
 
 ThockBox uses key events only to choose and play a sound. It does not record,
