@@ -9,6 +9,7 @@ final class KeyListener {
         case keyUp(keycode: UInt16)
         case mouseDown
         case mouseUp
+        case optionStatusItemClick
     }
 
     var handler: ((Event) -> Void)?
@@ -17,9 +18,10 @@ final class KeyListener {
     private(set) var mouseMonitors: [Any] = []
     private var isRunning = false
     private var downModifiers = Set<UInt16>()
+    private var suppressNextStatusItemMouseUp = false
 
-    /// Mouse monitors are only installed while mouse click sounds are on,
-    /// so clicks elsewhere don't wake the app for nothing.
+    /// The global (system-wide) mouse monitor is only installed while mouse
+    /// click sounds are on, so clicks in other apps don't wake us for nothing.
     var listensToMouse = false {
         didSet {
             if isRunning, listensToMouse != oldValue { updateMouseMonitors() }
@@ -37,6 +39,25 @@ final class KeyListener {
     func start() {
         stop()
         monitors = addMonitors(for: [.keyDown, .keyUp, .flagsChanged])
+        // Always installed: it only sees clicks on our own UI, and it catches
+        // option-click on the menu bar icon (toggle sounds).
+        if let monitor = NSEvent.addLocalMonitorForEvents(matching: Self.mouseMask, handler: { [weak self] event in
+            if event.type == .leftMouseUp, self?.suppressNextStatusItemMouseUp == true {
+                self?.suppressNextStatusItemMouseUp = false
+                return nil
+            }
+            if event.type == .leftMouseDown,
+               event.modifierFlags.contains(.option),
+               event.window?.level == .statusBar {
+                self?.suppressNextStatusItemMouseUp = true
+                self?.handler?(.optionStatusItemClick)
+                return nil
+            }
+            self?.process(event)
+            return event
+        }) {
+            monitors.append(monitor)
+        }
         isRunning = true
         updateMouseMonitors()
     }
@@ -47,14 +68,22 @@ final class KeyListener {
         mouseMonitors.removeAll()
         isRunning = false
         downModifiers.removeAll()
+        suppressNextStatusItemMouseUp = false
     }
+
+    private static let mouseMask: NSEvent.EventTypeMask = [.leftMouseDown, .leftMouseUp,
+                                                           .rightMouseDown, .rightMouseUp,
+                                                           .otherMouseDown, .otherMouseUp]
 
     private func updateMouseMonitors() {
         for m in mouseMonitors { NSEvent.removeMonitor(m) }
-        mouseMonitors = listensToMouse
-            ? addMonitors(for: [.leftMouseDown, .leftMouseUp, .rightMouseDown,
-                                .rightMouseUp, .otherMouseDown, .otherMouseUp])
-            : []
+        mouseMonitors.removeAll()
+        guard listensToMouse else { return }
+        if let m = NSEvent.addGlobalMonitorForEvents(matching: Self.mouseMask, handler: { [weak self] event in
+            self?.process(event)
+        }) {
+            mouseMonitors.append(m)
+        }
     }
 
     /// A global monitor (other apps frontmost) plus a local one (our own UI).

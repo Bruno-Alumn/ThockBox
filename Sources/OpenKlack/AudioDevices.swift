@@ -71,3 +71,32 @@ enum AudioDevices {
         return value.takeRetainedValue() as String
     }
 }
+
+final class AudioDeviceMonitor {
+    private let onChange: () -> Void
+    private var address = AudioObjectPropertyAddress(
+        mSelector: kAudioHardwarePropertyDevices,
+        mScope: kAudioObjectPropertyScopeGlobal,
+        mElement: kAudioObjectPropertyElementMain)
+
+    init?(onChange: @escaping () -> Void) {
+        self.onChange = onChange
+        let status = AudioObjectAddPropertyListener(
+            AudioObjectID(kAudioObjectSystemObject), &address, Self.callback,
+            Unmanaged.passUnretained(self).toOpaque())
+        guard status == noErr else { return nil }
+    }
+
+    deinit {
+        AudioObjectRemovePropertyListener(
+            AudioObjectID(kAudioObjectSystemObject), &address, Self.callback,
+            Unmanaged.passUnretained(self).toOpaque())
+    }
+
+    private static let callback: AudioObjectPropertyListenerProc = { _, _, _, context in
+        guard let context else { return noErr }
+        Unmanaged<AudioDeviceMonitor>.fromOpaque(context)
+            .takeUnretainedValue().onChange()
+        return noErr
+    }
+}

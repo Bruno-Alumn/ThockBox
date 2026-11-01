@@ -20,6 +20,7 @@ bundle: build
 	# Local symbols are only for debugging; dropping them halves the binary.
 	strip -x $(BUNDLE)/Contents/MacOS/$(APP)
 	cp Resources/Info.plist $(BUNDLE)/Contents/
+	cp Resources/OpenKlack.sdef $(BUNDLE)/Contents/Resources/
 	cp -R Resources/Sounds $(BUNDLE)/Contents/Resources/Sounds
 	cp Resources/AppIcon.icns $(BUNDLE)/Contents/Resources/
 	codesign --force --sign "$(CODESIGN_ID)" $(BUNDLE)

@@ -6,6 +6,7 @@ struct MenuView: View {
     // Cached: enumerating CoreAudio devices inside body is slow, and body
     // re-runs on every AppState change.
     @State private var devices: [AudioDevices.Device] = []
+    @State private var deviceMonitor: AudioDeviceMonitor?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -26,7 +27,14 @@ struct MenuView: View {
         }
         .padding(14)
         .frame(width: 300)
-        .onAppear { state.refreshAccessibilityStatus() }
+        .onAppear {
+            state.refreshAccessibilityStatus()
+            devices = AudioDevices.outputDevices()
+            deviceMonitor = AudioDeviceMonitor {
+                DispatchQueue.main.async { devices = AudioDevices.outputDevices() }
+            }
+        }
+        .onDisappear { deviceMonitor = nil }
     }
 
     private var header: some View {
@@ -68,7 +76,7 @@ struct MenuView: View {
                 Button("Preview") { state.playSwitchPreview() }
                     .controlSize(.mini)
                     .buttonStyle(.borderless)
-                    .disabled(!state.enabled || state.packs.isEmpty)
+                    .disabled(!state.enabled || state.isAutomaticallyMuted || state.packs.isEmpty)
             }
             ForEach(state.packs) { pack in
                 Button {
@@ -171,6 +179,20 @@ struct MenuView: View {
                     Toggle("Haptic feedback", isOn: $state.hapticFeedback)
                     Toggle("Notify on switch change", isOn: $state.notifyOnSwitchChange)
                     Toggle("Launch at login", isOn: $state.launchAtLogin)
+                    Toggle("Mute when screen is locked", isOn: $state.muteWhenLocked)
+                    Picker("Mute after inactivity", selection: $state.idleTimeoutMinutes) {
+                        Text("Off").tag(0)
+                        Text("1 minute").tag(1)
+                        Text("5 minutes").tag(5)
+                        Text("15 minutes").tag(15)
+                        Text("30 minutes").tag(30)
+                        Text("60 minutes").tag(60)
+                    }
+                    if state.isAutomaticallyMuted {
+                        Text("Automatic mute is active.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                     outputDevicePicker
                 }
                 .toggleStyle(.checkbox)

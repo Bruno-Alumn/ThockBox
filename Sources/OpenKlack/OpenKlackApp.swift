@@ -15,7 +15,7 @@ struct OpenKlackApp: App {
         MenuBarExtra {
             MenuView(state: state)
         } label: {
-            Image(systemName: state.enabled ? "keyboard.fill" : "keyboard")
+            Image(systemName: state.enabled && !state.isAutomaticallyMuted ? "keyboard.fill" : "keyboard")
         }
         .menuBarExtraStyle(.window)
     }
@@ -28,6 +28,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         AppState.shared.flushStats()
+    }
+
+    func application(_ sender: NSApplication, delegateHandlesKey key: String) -> Bool {
+        ["soundsEnabled", "soundPack", "soundVolume"].contains(key)
+    }
+
+    @objc var soundsEnabled: Bool {
+        get { AppState.shared.enabled }
+        set { AppState.shared.enabled = newValue }
+    }
+
+    @objc var soundPack: String {
+        get { AppState.shared.currentPack?.id ?? AppState.shared.selectedPackID }
+        set {
+            let state = AppState.shared
+            guard let pack = state.packs.first(where: {
+                $0.id == newValue || $0.name.caseInsensitiveCompare(newValue) == .orderedSame
+            }) else { return }
+            state.selectedPackID = pack.id
+        }
+    }
+
+    @objc var soundVolume: Double {
+        get { Double(AppState.shared.volume) }
+        set { AppState.shared.volume = Float(min(max(newValue, 0), 1)) }
     }
 }
 

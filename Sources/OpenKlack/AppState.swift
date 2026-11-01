@@ -17,18 +17,7 @@ final class AppState: ObservableObject {
     @Published var enabled: Bool {
         didSet {
             defaults.set(enabled, forKey: "enabled")
-            if enabled {
-                do {
-                    try engine.start()
-                    if outputDeviceUID != nil || outputChangedWhileDisabled {
-                        applyOutputDevice()
-                    }
-                } catch {
-                    klog.error("engine start failed: \(error, privacy: .public)")
-                }
-            } else {
-                engine.stop()
-            }
+            syncEngineState()
         }
     }
     @Published var volume: Float {
@@ -96,6 +85,19 @@ final class AppState: ObservableObject {
             updateLoginItem()
         }
     }
+    @Published var muteWhenLocked: Bool {
+        didSet {
+            defaults.set(muteWhenLocked, forKey: "muteWhenLocked")
+            updateAutomaticMute()
+        }
+    }
+    @Published var idleTimeoutMinutes: Int {
+        didSet {
+            defaults.set(idleTimeoutMinutes, forKey: "idleTimeoutMinutes")
+            idleMode.recordActivity()
+            updateAutomaticMute()
+        }
+    }
     private var reconcilingLoginItem = false
     @Published var outputDeviceUID: String? {
         didSet {
@@ -103,9 +105,8 @@ final class AppState: ObservableObject {
             applyOutputDevice()
         }
     }
-    /// A picker change made while sounds are off is applied on re-enable;
-    /// otherwise switching back to System Default while muted would leave
-    /// the engine on the previously pinned device.
+    /// A picker change made while sounds are off or automatically muted is
+    /// applied on resume; otherwise System Default could keep the old device.
     private var outputChangedWhileDisabled = false
 
     // MARK: - Stats
@@ -113,8 +114,11 @@ final class AppState: ObservableObject {
     let stats: StatsStore
 
     @Published private(set) var accessibilityTrusted = Permissions.isTrusted
+    @Published private(set) var isAutomaticallyMuted = false
 
     private let defaults = UserDefaults.standard
+    private var idleMode = IdleMode()
+    private var screenLocked = false
 
     private init() {
         defaults.register(defaults: [
@@ -123,7 +127,8 @@ final class AppState: ObservableObject {
             "muteModifiers": false, "functionKeysAudible": true,
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false, "notifyOnSwitchChange": false,
-            "launchAtLogin": false,
+            "launchAtLogin": false, "muteWhenLocked": false,
+            "idleTimeoutMinutes": 0,
         ])
         enabled = defaults.bool(forKey: "enabled")
         volume = min(max(defaults.float(forKey: "volume"), 0), 1)
@@ -138,6 +143,8 @@ final class AppState: ObservableObject {
         hapticFeedback = defaults.bool(forKey: "hapticFeedback")
         notifyOnSwitchChange = defaults.bool(forKey: "notifyOnSwitchChange")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
+        muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
+        idleTimeoutMinutes = max(0, defaults.integer(forKey: "idleTimeoutMinutes"))
         outputDeviceUID = defaults.string(forKey: "outputDeviceUID")
         stats = StatsStore(defaults: defaults)
     }
@@ -151,18 +158,30 @@ final class AppState: ObservableObject {
         engine.setTone(x: toneX, y: toneY)
         applyPack(notify: false)
         engine.loadExtras(from: Self.soundsDirectory().appendingPathComponent("_extras"))
-        if enabled {
-            do {
-                try engine.start()
-            } catch {
-                klog.error("engine start failed: \(error, privacy: .public)")
-            }
-            // Only pin an output device when one is explicitly saved; default
-            // routing follows the system output on its own.
-            if outputDeviceUID != nil {
-                applyOutputDevice()
-            }
+        if let session = CGSessionCopyCurrentDictionary() as NSDictionary? {
+            screenLocked = session["CGSSessionScreenIsLocked"] as? Bool ?? false
         }
+        updateAutomaticMute()
+        syncEngineState()
+
+        let distributed = DistributedNotificationCenter.default()
+        distributed.addObserver(
+            forName: NSNotification.Name("com.apple.screenIsLocked"), object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.screenLocked = true
+            self?.updateAutomaticMute()
+        }
+        distributed.addObserver(
+            forName: NSNotification.Name("com.apple.screenIsUnlocked"), object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.screenLocked = false
+            self?.updateAutomaticMute()
+        }
+        let idleTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] timer in
+            guard let self else { return timer.invalidate() }
+            self.updateAutomaticMute()
+        }
+        idleTimer.tolerance = 5
 
         // NSEvent monitor callbacks arrive on the main thread already; calling
         // straight through keeps keystroke→sound latency at one buffer.
@@ -180,17 +199,21 @@ final class AppState: ObservableObject {
         }
         klog.notice("startup: trusted=\(self.accessibilityTrusted, privacy: .public) packs=\(self.packs.count, privacy: .public) device=\(self.outputDeviceUID ?? "default", privacy: .public)")
 
-        // Monitors registered before the Accessibility grant never deliver
-        // events, and re-registering in-process isn't enough — the app has to
-        // relaunch. Poll for the grant and relaunch ourselves when it lands.
-        if !accessibilityTrusted {
-            Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] timer in
-                guard self != nil else { return timer.invalidate() }
-                if Permissions.isTrusted {
-                    timer.invalidate()
-                    klog.notice("accessibility granted — relaunching")
-                    Self.relaunch()
-                }
+        // Monitors registered without Accessibility access don't recover
+        // in-process. Watch both directions so a revoked then restored grant
+        // gets the same fresh process as a grant made on first launch.
+        var wasTrusted = accessibilityTrusted
+        Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] timer in
+            guard let self else { return timer.invalidate() }
+            let trusted = Permissions.isTrusted
+            self.accessibilityTrusted = trusted
+            guard trusted != wasTrusted else { return }
+            wasTrusted = trusted
+            if trusted {
+                klog.notice("accessibility granted — relaunching")
+                Self.relaunch()
+            } else {
+                klog.notice("accessibility revoked")
             }
         }
     }
@@ -263,6 +286,8 @@ final class AppState: ObservableObject {
         }
         switch event {
         case let .keyDown(keycode, isRepeat, flags):
+            idleMode.recordActivity()
+            if isAutomaticallyMuted { updateAutomaticMute() }
             // ⌘⌃K toggles Klack-style, even while disabled. Swallow the
             // matching key-up too, or enabling would emit an orphan release.
             if keycode == Self.toggleKeycode && !isRepeat,
@@ -271,7 +296,7 @@ final class AppState: ObservableObject {
                 suppressNextKeyUp = keycode
                 return
             }
-            guard enabled, !isRepeat, audible(keycode) else { return }
+            guard enabled, !isAutomaticallyMuted, !isRepeat, audible(keycode) else { return }
             // Sound first; stats and haptics can trail it.
             let info = KeyMap.info(for: keycode)
             if returnDing, KeyMap.returnKeycodes.contains(keycode) {
@@ -289,15 +314,17 @@ final class AppState: ObservableObject {
                 suppressNextKeyUp = nil
                 return
             }
-            guard enabled, audible(keycode) else { return }
+            guard enabled, !isAutomaticallyMuted, audible(keycode) else { return }
             let info = KeyMap.info(for: keycode)
             engine.playKey(keyClass: info.keyClass, up: true, x: info.x)
         case .mouseDown:
-            guard enabled, mouseClicks else { return }
+            guard enabled, !isAutomaticallyMuted, mouseClicks else { return }
             engine.playExtra(named: "click_down", gain: 0.9)
         case .mouseUp:
-            guard enabled, mouseClicks else { return }
+            guard enabled, !isAutomaticallyMuted, mouseClicks else { return }
             engine.playExtra(named: "click_up", gain: 0.7)
+        case .optionStatusItemClick:
+            enabled.toggle()
         }
     }
 
@@ -345,8 +372,33 @@ final class AppState: ObservableObject {
         reconcilingLoginItem = false
     }
 
+    private func updateAutomaticMute() {
+        let muted = (muteWhenLocked && screenLocked)
+            || idleMode.isIdle(timeoutMinutes: idleTimeoutMinutes)
+        guard muted != isAutomaticallyMuted else { return }
+        isAutomaticallyMuted = muted
+        syncEngineState()
+    }
+
+    private func syncEngineState() {
+        guard enabled, !isAutomaticallyMuted else {
+            engine.stop()
+            return
+        }
+        do {
+            try engine.start()
+            // Only pin an output device when one is explicitly saved; default
+            // routing follows the system output on its own.
+            if outputDeviceUID != nil || outputChangedWhileDisabled {
+                applyOutputDevice()
+            }
+        } catch {
+            klog.error("engine start failed: \(error, privacy: .public)")
+        }
+    }
+
     private func applyOutputDevice() {
-        guard enabled else {
+        guard enabled, !isAutomaticallyMuted else {
             outputChangedWhileDisabled = true
             return
         }

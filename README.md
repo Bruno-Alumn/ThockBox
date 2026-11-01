@@ -24,13 +24,14 @@ no keystroke logging. The whole app bundle is **~1.8 MB**.
 - **Volume slider** with Soft / Balanced / Loud presets, independent of
   system volume
 - **Stereo spread** — keys pan subtly by their physical position on the board
-- **⌘⌃K** global hotkey to toggle sounds
+- **⌘⌃K** global hotkey or **option-click** on the menu bar icon to toggle sounds
 - Mute modifier keys, function-key audibility toggle
 - **Ding on return** (typewriter margin bell), **mouse click sounds**
 - Output device picker (play through any device, independent of default)
 - Haptic feedback (Force Touch trackpads)
 - Keystroke stats (today / all-time), notification on switch change,
   launch at login
+- **Sleep automation** — mute on screen lock or after 1–60 minutes of inactivity
 - Works with any keyboard — internal, external, whatever
 
 ## Install
@@ -77,9 +78,19 @@ transmitted. The code that touches key events is ~120 lines in
 | Launch at login | ✅ |
 | Haptic feedback | ✅ |
 | Dynamic menu bar icon | ✅ (filled = on, outline = off) |
-| AppleScript support | ❌ not yet |
-| Sleep automation / idle mode | ❌ not yet |
-| Menu bar icon opacity / click actions | ❌ not yet |
+| AppleScript support | ✅ enabled, sound pack, and volume properties |
+| Sleep automation / idle mode | ✅ screen lock + configurable inactivity timeout |
+| Menu bar icon opacity / click actions | ◐ option-click toggles sounds; no opacity setting |
+
+## AppleScript
+
+```applescript
+tell application "OpenKlack"
+    set sounds enabled to false
+    set sound pack to "cream" -- pack ID or display name
+    set sound volume to 0.55 -- 0.0 through 1.0
+end tell
+```
 
 ## Sounds
 
