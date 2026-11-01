@@ -1,12 +1,14 @@
 APP := Thockbox
 BUILD := .build/release
 BUNDLE := dist/$(APP).app
+VERSION := $(shell /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Resources/Info.plist)
+ZIP := dist/$(APP)-$(VERSION).zip
 # Ad-hoc by default. With "-", every rebuild changes the binary hash and
 # invalidates the Accessibility grant (see README). Set a real identity to
 # keep the grant across rebuilds.
 CODESIGN_ID ?= -
 
-.PHONY: all build bundle test bench sounds icon clean run
+.PHONY: all build bundle zip test bench sounds icon clean run
 
 all: bundle
 
@@ -51,5 +53,11 @@ bench:
 run: bundle
 	open $(BUNDLE)
 
+# A zip of the app that's ready to send or attach (keeps the signature).
+zip: bundle
+	rm -f $(ZIP)
+	ditto -c -k --keepParent --sequesterRsrc $(BUNDLE) $(ZIP)
+	@echo "$(ZIP)"
+
 clean:
-	rm -rf .build dist/$(APP).app
+	rm -rf .build dist/$(APP).app dist/$(APP)-*.zip

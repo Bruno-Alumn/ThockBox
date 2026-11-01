@@ -44,6 +44,7 @@ no keystroke logging. The whole app bundle is **~1.9 MB**.
 git clone https://github.com/Bruno-Alumn/thockbox && cd thockbox
 make            # builds dist/Thockbox.app
 make run        # or: open dist/Thockbox.app
+make zip        # dist/Thockbox-<version>.zip, ready to send to someone
 ```
 
 Requires macOS 13+ to run; Xcode command-line tools to build.
