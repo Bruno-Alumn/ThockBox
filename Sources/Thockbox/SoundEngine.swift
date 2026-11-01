@@ -39,7 +39,7 @@ final class SoundEngine {
     private var isSleeping = false
 
     /// Decoded buffers keyed by "<packId>/<relativePath>".
-    private var buffers: [String: AVAudioPCMBuffer] = [:]
+    private(set) var buffers: [String: AVAudioPCMBuffer] = [:]
     private var currentPack: SoundPack?
     private var packGain: Float = 1
 
