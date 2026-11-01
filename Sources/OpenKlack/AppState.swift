@@ -239,7 +239,7 @@ final class AppState: ObservableObject {
     private var volumePreview: DispatchWorkItem?
 
     /// A short down/up pair so a new switch or volume can be judged instantly.
-    private func playSwitchPreview() {
+    func playSwitchPreview() {
         engine.playKey(keyClass: .row2, up: false, x: 0.5)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
             self?.engine.playKey(keyClass: .row2, up: true, x: 0.5)
@@ -360,6 +360,10 @@ final class AppState: ObservableObject {
     }
 
     // MARK: - System integration
+
+    func refreshAccessibilityStatus() {
+        accessibilityTrusted = Permissions.isTrusted
+    }
 
     private func updateLoginItem() {
         do {

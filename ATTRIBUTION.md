@@ -7,6 +7,7 @@ Every bundled sample is MIT-licensed or original work. Each pack folder under
 |---|---|---|---|
 | Japanese Black | Gateron Black Ink | [tplai/kbsim](https://github.com/tplai/kbsim) `blackink` | MIT (Thomas Lai) |
 | Cream | NovelKeys Cream | [tplai/kbsim](https://github.com/tplai/kbsim) `cream` | MIT (Thomas Lai) |
+| Holy Panda | Holy Panda | [tplai/kbsim](https://github.com/tplai/kbsim) `holypanda` | MIT (Thomas Lai) |
 | Super Red | Gateron Red Ink | [tplai/kbsim](https://github.com/tplai/kbsim) `redink` | MIT (Thomas Lai) |
 | Milky Yellow | Alpaca linear (stand-in¹) | [tplai/kbsim](https://github.com/tplai/kbsim) `alpaca` | MIT (Thomas Lai) |
 | Cardboard | Topre (dampened stand-in¹) | [tplai/kbsim](https://github.com/tplai/kbsim) `topre` | MIT (Thomas Lai) |

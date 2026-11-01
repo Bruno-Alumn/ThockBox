@@ -1,0 +1,84 @@
+{
+  "id": "holy-panda",
+  "name": "Holy Panda",
+  "attribution": "Holy Panda \u2014 samples from tplai/kbsim (MIT)",
+  "license": "MIT",
+  "keys": {
+    "row0": {
+      "down": [
+        "press/GENERIC_R0.mp3"
+      ],
+      "up": [
+        "release/GENERIC.mp3"
+      ]
+    },
+    "row1": {
+      "down": [
+        "press/GENERIC_R1.mp3"
+      ],
+      "up": [
+        "release/GENERIC.mp3"
+      ]
+    },
+    "row2": {
+      "down": [
+        "press/GENERIC_R2.mp3"
+      ],
+      "up": [
+        "release/GENERIC.mp3"
+      ]
+    },
+    "row3": {
+      "down": [
+        "press/GENERIC_R3.mp3"
+      ],
+      "up": [
+        "release/GENERIC.mp3"
+      ]
+    },
+    "row4": {
+      "down": [
+        "press/GENERIC_R4.mp3"
+      ],
+      "up": [
+        "release/GENERIC.mp3"
+      ]
+    },
+    "space": {
+      "down": [
+        "press/SPACE.mp3"
+      ],
+      "up": [
+        "release/SPACE.mp3"
+      ]
+    },
+    "enter": {
+      "down": [
+        "press/ENTER.mp3"
+      ],
+      "up": [
+        "release/ENTER.mp3"
+      ]
+    },
+    "backspace": {
+      "down": [
+        "press/BACKSPACE.mp3"
+      ],
+      "up": [
+        "release/BACKSPACE.mp3"
+      ]
+    },
+    "default": {
+      "down": [
+        "press/GENERIC_R0.mp3",
+        "press/GENERIC_R1.mp3",
+        "press/GENERIC_R2.mp3",
+        "press/GENERIC_R3.mp3",
+        "press/GENERIC_R4.mp3"
+      ],
+      "up": [
+        "release/GENERIC.mp3"
+      ]
+    }
+  }
+}

@@ -3,7 +3,7 @@
 Run via: uv run --with soundfile,numpy scripts/build_sounds.py
 
 Sources:
-- tplai/kbsim (MIT) — per-key press/release MP3s for 5 switch sets.
+- tplai/kbsim (MIT) — per-key press/release MP3s for 6 switch sets.
 - hainguyents13/mechvibes (MIT) — Everglide Oreo OGG sprite, sliced per its
   config.json offsets.
 - Return-key ding — synthesized here from scratch (no external source).
@@ -63,6 +63,7 @@ KBSIM_SETS = {
     "super-red": ("Super Red", "redink", "Gateron Red Ink"),
     "milky-yellow": ("Milky Yellow", "alpaca", "Alpaca linear (stand-in)"),
     "cardboard": ("Cardboard", "topre", "Topre (dampened stand-in)"),
+    "holy-panda": ("Holy Panda", "holypanda", "Holy Panda"),
 }
 
 PRESS_FILES = ["GENERIC_R0", "GENERIC_R1", "GENERIC_R2", "GENERIC_R3",

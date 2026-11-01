@@ -12,9 +12,10 @@ no keystroke logging. The whole app bundle is **~2 MB**.
 
 ## Features
 
-- **Six switch sets** — Japanese Black, Cream, Milky Yellow, Super Red,
-  Cardboard, Oreo (see [ATTRIBUTION.md](ATTRIBUTION.md) for what was actually
-  recorded)
+- **Seven switch sets** — Japanese Black, Cream, Milky Yellow, Super Red,
+  Cardboard, Oreo, Holy Panda (see [ATTRIBUTION.md](ATTRIBUTION.md) for what was
+  actually recorded)
+- **Preview button** for the current switch and tone settings
 - **Distinct keydown / keyup sounds**, with dedicated samples for space,
   return, backspace, and per-row variation across the board
 - **Randomized pitch** on every stroke so no two keystrokes sound identical
@@ -59,7 +60,7 @@ transmitted. The code that touches key events is ~90 lines in
 
 | Klack feature | OpenKlack |
 |---|---|
-| 6 switch sound sets | ✅ (2 are sonic stand-ins — see ATTRIBUTION.md) |
+| 6 switch sound sets | ✅ 7 total (2 are sonic stand-ins — see ATTRIBUTION.md) |
 | Up/down keystroke samples | ✅ (Oreo is down-only; upstream source has no release samples) |
 | Randomized pitching | ✅ |
 | Tone Pad tuning | ✅ (EQ tilt × pitch offset) |

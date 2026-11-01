@@ -26,6 +26,7 @@ struct MenuView: View {
         }
         .padding(14)
         .frame(width: 300)
+        .onAppear { state.refreshAccessibilityStatus() }
     }
 
     private var header: some View {
@@ -59,9 +60,16 @@ struct MenuView: View {
 
     private var switchPicker: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Switches")
-                .font(.caption.bold())
-                .foregroundStyle(.secondary)
+            HStack {
+                Text("Switches")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Preview") { state.playSwitchPreview() }
+                    .controlSize(.mini)
+                    .buttonStyle(.borderless)
+                    .disabled(!state.enabled || state.packs.isEmpty)
+            }
             ForEach(state.packs) { pack in
                 Button {
                     state.selectedPackID = pack.id
