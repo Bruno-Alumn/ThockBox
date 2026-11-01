@@ -122,7 +122,9 @@ final class AppState: ObservableObject {
     let stats: StatsStore
 
     @Published private(set) var accessibilityTrusted = Permissions.isTrusted
-    @Published private(set) var isAutomaticallyMuted = false
+    /// Why sounds are automatically muted right now, if they are.
+    @Published private(set) var automaticMute: AutomaticMute?
+    var isAutomaticallyMuted: Bool { automaticMute != nil }
     /// Another app is recording (only tracked while muteDuringCalls is on).
     @Published private(set) var microphoneInUse = false
 
@@ -456,12 +458,20 @@ final class AppState: ObservableObject {
 
     /// `now` is a parameter so tests can check the idle timeout without waiting.
     func updateAutomaticMute(now: Date = Date()) {
-        let muted = (muteWhenLocked && screenLocked)
-            || (muteDuringCalls && microphoneInUse)
-            || idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes)
-        guard muted != isAutomaticallyMuted else { return }
-        isAutomaticallyMuted = muted
-        syncEngineState()
+        let reason: AutomaticMute?
+        if muteDuringCalls && microphoneInUse {
+            reason = .call
+        } else if muteWhenLocked && screenLocked {
+            reason = .screenLocked
+        } else if idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes) {
+            reason = .idle
+        } else {
+            reason = nil
+        }
+        guard reason != automaticMute else { return }
+        let wasMuted = isAutomaticallyMuted
+        automaticMute = reason
+        if wasMuted != isAutomaticallyMuted { syncEngineState() }
     }
 
     private func syncEngineState() {
@@ -512,5 +522,28 @@ final class AppState: ObservableObject {
         }
         return URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
             .appendingPathComponent("Resources/Sounds")
+    }
+}
+
+/// The reasons sounds can be muted without the user turning them off.
+enum AutomaticMute: Equatable {
+    case call
+    case screenLocked
+    case idle
+
+    var message: String {
+        switch self {
+        case .call: "Muted while another app uses the microphone."
+        case .screenLocked: "Muted while the screen is locked."
+        case .idle: "Muted after inactivity. Press any key to wake it."
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .call: "mic.fill"
+        case .screenLocked: "lock.fill"
+        case .idle: "moon.zzz.fill"
+        }
     }
 }
