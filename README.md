@@ -44,17 +44,17 @@ make run        # or: open dist/OpenKlack.app
 Requires macOS 13+ to run; Xcode command-line tools to build.
 
 On first launch, grant **Accessibility** permission
-(System Settings → Privacy & Security → Accessibility).
+(System Settings → Privacy & Security → Accessibility). OpenKlack uses it
+solely to hear key up/down events and play a sound — nothing is stored or
+transmitted. The code that touches key events is ~120 lines in
+[`KeyListener.swift`](Sources/OpenKlack/KeyListener.swift); audit it yourself.
 
 > **After rebuilding:** the app is ad-hoc signed, and macOS ties the
 > Accessibility grant to the exact binary hash. A rebuilt app shows as
 > "granted" in System Settings but isn't actually trusted. Fix:
 > `tccutil reset Accessibility dev.openklack.OpenKlack`, relaunch, and
 > grant again. (Signing with a real developer identity avoids this —
-> `make bundle CODESIGN_ID="Apple Development: you@example.com"`.) OpenKlack uses it
-solely to hear key up/down events and play a sound — nothing is stored or
-transmitted. The code that touches key events is ~90 lines in
-[`KeyListener.swift`](Sources/OpenKlack/KeyListener.swift); audit it yourself.
+> `make bundle CODESIGN_ID="Apple Development: you@example.com"`.)
 
 ## Klack parity
 
@@ -116,15 +116,16 @@ random-choice variants. WAV, MP3, CAF, AIFF, and M4A all work. Then
 ## Development
 
 ```sh
-make test    # headless smoke test: decodes + plays every pack
+make test    # unit tests, then a headless smoke test that plays every pack
 swift build  # debug build
 ```
 
 Architecture: `KeyListener` (NSEvent global monitors) → `AppState` (settings,
-stats, routing) → `SoundEngine` (AVAudioEngine: 20-voice pool → per-voice
-varispeed → submix → tilt EQ → main mix). Sample buffers are fully decoded
-into memory at pack load, so playback is a single `scheduleBuffer` call —
-effectively zero latency.
+routing; keystroke counts in `StatsStore`) → `SoundEngine` (AVAudioEngine:
+8-voice pool → per-voice varispeed → submix → tilt EQ → main mix). Sample
+buffers are fully decoded into memory at pack load, so playback is a single
+`scheduleBuffer` call, and the output runs with a 128-frame buffer: about
+5 ms from key press to rendered audio, plus the output device's own delay.
 
 ## License
 
