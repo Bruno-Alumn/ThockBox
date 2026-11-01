@@ -33,8 +33,9 @@ sounds:
 icon:
 	swift scripts/make_icon.swift Resources/AppIcon.icns
 
-# Headless audio smoke test: decodes and plays every pack.
+# Unit tests, then a headless audio smoke test that decodes and plays every pack.
 test: bundle
+	swift test
 	$(BUNDLE)/Contents/MacOS/$(APP) --test-audio
 
 run: bundle

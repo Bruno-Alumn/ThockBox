@@ -8,6 +8,11 @@ let package = Package(
         .executableTarget(
             name: "OpenKlack",
             path: "Sources/OpenKlack"
-        )
+        ),
+        .testTarget(
+            name: "OpenKlackTests",
+            dependencies: ["OpenKlack"],
+            path: "Tests/OpenKlackTests"
+        ),
     ]
 )
