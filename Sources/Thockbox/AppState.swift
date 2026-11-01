@@ -95,6 +95,7 @@ final class AppState: ObservableObject {
         didSet {
             defaults.set(idleTimeoutMinutes, forKey: "idleTimeoutMinutes")
             idleMode.recordActivity()
+            updateIdleTimer()
             updateAutomaticMute()
         }
     }
@@ -177,11 +178,7 @@ final class AppState: ObservableObject {
             self?.screenLocked = false
             self?.updateAutomaticMute()
         }
-        let idleTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] timer in
-            guard let self else { return timer.invalidate() }
-            self.updateAutomaticMute()
-        }
-        idleTimer.tolerance = 5
+        updateIdleTimer()
 
         // NSEvent monitor callbacks arrive on the main thread already; calling
         // straight through keeps keystroke→sound latency at one buffer.
@@ -374,6 +371,25 @@ final class AppState: ObservableObject {
         reconcilingLoginItem = true
         launchAtLogin = SMAppService.mainApp.status == .enabled
         reconcilingLoginItem = false
+    }
+
+    private var idleTimer: Timer?
+
+    /// The idle check only needs to run while idle muting is on (it's off by
+    /// default), so the app isn't woken every 5 seconds for nothing.
+    private func updateIdleTimer() {
+        guard idleTimeoutMinutes > 0 else {
+            idleTimer?.invalidate()
+            idleTimer = nil
+            return
+        }
+        guard idleTimer == nil else { return }
+        let timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] timer in
+            guard let self else { return timer.invalidate() }
+            self.updateAutomaticMute()
+        }
+        timer.tolerance = 5
+        idleTimer = timer
     }
 
     private func updateAutomaticMute() {
