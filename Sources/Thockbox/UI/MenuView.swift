@@ -12,6 +12,12 @@ struct MenuView: View {
             if !state.accessibilityTrusted {
                 PermissionBanner()
             }
+            if state.enabled, let mute = state.automaticMute {
+                Label(mute.message, systemImage: mute.symbol)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if let release = updater.availableRelease {
                 UpdateBanner(release: release)
             }

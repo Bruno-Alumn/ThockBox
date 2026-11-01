@@ -91,10 +91,8 @@ struct SettingsView: View {
             } header: {
                 Text("Automatic mute")
             } footer: {
-                if state.isAutomaticallyMuted && state.muteDuringCalls && state.microphoneInUse {
-                    Text("Muted while another app uses the microphone.")
-                } else if state.isAutomaticallyMuted {
-                    Text("Automatic mute is on right now. Press any key to wake it.")
+                if let mute = state.automaticMute {
+                    Text(mute.message)
                 }
             }
 

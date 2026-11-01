@@ -155,4 +155,18 @@ final class AutoMuteTests: XCTestCase {
         state.setMicrophoneInUse(false)
         XCTAssertFalse(state.isAutomaticallyMuted)
     }
+
+    func testAutomaticMuteReportsWhy() {
+        let state = AppState(defaults: defaults)
+        state.muteWhenLocked = true
+        state.muteDuringCalls = true
+        state.setScreenLocked(true)
+        XCTAssertEqual(state.automaticMute, .screenLocked)
+        state.setMicrophoneInUse(true)
+        XCTAssertEqual(state.automaticMute, .call, "a call outranks the lock screen")
+        state.setMicrophoneInUse(false)
+        XCTAssertEqual(state.automaticMute, .screenLocked)
+        state.setScreenLocked(false)
+        XCTAssertNil(state.automaticMute)
+    }
 }
