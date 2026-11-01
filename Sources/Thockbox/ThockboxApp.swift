@@ -48,7 +48,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ sender: NSApplication, delegateHandlesKey key: String) -> Bool {
-        ["soundsEnabled", "soundPack", "soundVolume"].contains(key)
+        ["soundsEnabled", "soundPack", "soundVolume", "muteDuringCalls", "automaticallyMuted",
+         "muteReason", "keystrokesToday", "keystrokesTotal"].contains(key)
     }
 
     @objc var soundsEnabled: Bool {
@@ -71,6 +72,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         get { Double(AppState.shared.volume) }
         set { AppState.shared.volume = Float(min(max(newValue, 0), 1)) }
     }
+
+    @objc var muteDuringCalls: Bool {
+        get { AppState.shared.muteDuringCalls }
+        set { AppState.shared.muteDuringCalls = newValue }
+    }
+
+    @objc var automaticallyMuted: Bool { AppState.shared.isAutomaticallyMuted }
+
+    @objc var muteReason: String { AppState.shared.automaticMute?.message ?? "" }
+
+    @objc var keystrokesToday: Int { AppState.shared.stats.shown.today }
+
+    @objc var keystrokesTotal: Int { AppState.shared.stats.shown.total }
 }
 
 /// Headless verification used by `make test`: loads every pack, checks all
