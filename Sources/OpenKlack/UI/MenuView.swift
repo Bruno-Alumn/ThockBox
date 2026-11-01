@@ -205,7 +205,7 @@ struct MenuView: View {
 
     private var footer: some View {
         HStack {
-            Text("\(state.todayKeystrokes.formatted()) today · \(state.totalKeystrokes.formatted()) total")
+            Text("\(state.stats.today.formatted()) today · \(state.stats.total.formatted()) total")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             Spacer()

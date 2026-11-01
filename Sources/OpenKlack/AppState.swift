@@ -109,9 +109,7 @@ final class AppState: ObservableObject {
 
     // MARK: - Stats
 
-    @Published private(set) var totalKeystrokes: Int
-    @Published private(set) var todayKeystrokes: Int
-    private var todayStamp: String
+    @Published private(set) var stats: KeystrokeStats
 
     @Published private(set) var accessibilityTrusted = Permissions.isTrusted
 
@@ -126,7 +124,6 @@ final class AppState: ObservableObject {
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false, "notifyOnSwitchChange": false,
             "launchAtLogin": false,
-            "statsTotal": 0, "statsToday": 0, "statsTodayStamp": "",
         ])
         enabled = defaults.bool(forKey: "enabled")
         volume = min(max(defaults.float(forKey: "volume"), 0), 1)
@@ -142,10 +139,7 @@ final class AppState: ObservableObject {
         notifyOnSwitchChange = defaults.bool(forKey: "notifyOnSwitchChange")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         outputDeviceUID = defaults.string(forKey: "outputDeviceUID")
-        totalKeystrokes = defaults.integer(forKey: "statsTotal")
-        todayKeystrokes = defaults.integer(forKey: "statsToday")
-        todayStamp = defaults.string(forKey: "statsTodayStamp") ?? ""
-        rollOverDayIfNeeded()
+        stats = KeystrokeStats(defaults: defaults)
     }
 
     // MARK: - Lifecycle
@@ -181,7 +175,7 @@ final class AppState: ObservableObject {
         NotificationCenter.default.addObserver(
             forName: .NSCalendarDayChanged, object: nil, queue: .main
         ) { [weak self] _ in
-            self?.rollOverDayIfNeeded()
+            self?.stats.rollOver()
         }
         klog.notice("startup: trusted=\(self.accessibilityTrusted, privacy: .public) packs=\(self.packs.count, privacy: .public) device=\(self.outputDeviceUID ?? "default", privacy: .public)")
 
@@ -288,7 +282,7 @@ final class AppState: ObservableObject {
             if hapticFeedback {
                 NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
             }
-            recordKeystroke()
+            stats.record()
         case let .keyUp(keycode):
             if keycode == suppressNextKeyUp {
                 suppressNextKeyUp = nil
@@ -319,44 +313,8 @@ final class AppState: ObservableObject {
 
     // MARK: - Stats
 
-    /// Zero "today" once the date has moved past the saved stamp, so a count
-    /// from yesterday isn't shown as today's.
-    private func rollOverDayIfNeeded() {
-        let stamp = Self.dayStamp()
-        guard stamp != todayStamp else { return }
-        todayStamp = stamp
-        todayKeystrokes = 0
-        defaults.set(stamp, forKey: "statsTodayStamp")
-        defaults.set(0, forKey: "statsToday")
-    }
-
-    private func recordKeystroke() {
-        rollOverDayIfNeeded()
-        todayKeystrokes += 1
-        totalKeystrokes += 1
-        // UserDefaults writes hit an in-memory cache; persist every N strokes
-        // to avoid two change notifications per keypress. flushStats() covers
-        // the remainder at quit.
-        if todayKeystrokes % 20 == 0 {
-            flushStats()
-        }
-    }
-
     func flushStats() {
-        defaults.set(todayKeystrokes, forKey: "statsToday")
-        defaults.set(totalKeystrokes, forKey: "statsTotal")
-    }
-
-    private static let dayFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.calendar = Calendar(identifier: .gregorian)
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
-
-    private static func dayStamp() -> String {
-        dayFormatter.string(from: Date())
+        stats.flush()
     }
 
     // MARK: - System integration
