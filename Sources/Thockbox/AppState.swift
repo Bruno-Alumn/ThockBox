@@ -206,7 +206,9 @@ final class AppState: ObservableObject {
         Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] timer in
             guard let self else { return timer.invalidate() }
             let trusted = Permissions.isTrusted
-            self.accessibilityTrusted = trusted
+            // Only assign on a change: every @Published write re-renders the
+            // menu bar label and menu (~5 ms), even for an unchanged value.
+            if self.accessibilityTrusted != trusted { self.accessibilityTrusted = trusted }
             guard trusted != wasTrusted else { return }
             wasTrusted = trusted
             if trusted {
@@ -348,7 +350,8 @@ final class AppState: ObservableObject {
     // MARK: - System integration
 
     func refreshAccessibilityStatus() {
-        accessibilityTrusted = Permissions.isTrusted
+        let trusted = Permissions.isTrusted
+        if accessibilityTrusted != trusted { accessibilityTrusted = trusted }
     }
 
     private func updateLoginItem() {
