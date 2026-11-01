@@ -96,6 +96,14 @@ struct SettingsView: View {
                 }
             }
 
+            Section {
+                MutedAppsList(state: state)
+            } header: {
+                Text("Muted apps")
+            } footer: {
+                Text("ThockBox stays quiet while one of these apps is in front.")
+            }
+
             Section("Output") {
                 OutputDevicePicker(state: state)
             }
