@@ -330,7 +330,7 @@ final class AppState: ObservableObject {
                 try SMAppService.mainApp.unregister()
             }
         } catch {
-            NSLog("OpenKlack: login item update failed: \(error)")
+            klog.error("login item update failed: \(error, privacy: .public)")
             reconcileLoginItem()
         }
     }

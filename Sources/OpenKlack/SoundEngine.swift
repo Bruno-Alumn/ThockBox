@@ -410,7 +410,7 @@ final class SoundEngine {
                                            &id,
                                            UInt32(MemoryLayout<AudioDeviceID>.size))
             if err != noErr {
-                NSLog("OpenKlack: could not select output device \(id): \(err)")
+                klog.error("could not select output device \(id, privacy: .public): \(err, privacy: .public)")
             }
         }
         restart()
