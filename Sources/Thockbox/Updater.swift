@@ -97,6 +97,7 @@ final class Updater: ObservableObject {
 
     private let defaults: UserDefaults
     private let session: URLSession
+    private let currentVersion: String
     private var timer: Timer?
 
     /// The GitHub API by default. The `updateFeedURL` default points it
@@ -106,9 +107,11 @@ final class Updater: ObservableObject {
             ?? URL(string: "https://api.github.com/repos/Bruno-Alumn/ThockBox/releases/latest")!
     }
 
-    init(defaults: UserDefaults = .standard, session: URLSession = .shared) {
+    init(defaults: UserDefaults = .standard, session: URLSession = .shared,
+         currentVersion: String = AppVersion.current) {
         self.defaults = defaults
         self.session = session
+        self.currentVersion = currentVersion
         defaults.register(defaults: ["checkForUpdates": true])
         checksAutomatically = defaults.bool(forKey: "checkForUpdates")
     }
@@ -144,7 +147,7 @@ final class Updater: ObservableObject {
         do {
             let release = try await fetchLatest()
             defaults.set(Date(), forKey: "lastUpdateCheck")
-            if let release, AppVersion.isNewer(release.version, than: AppVersion.current) {
+            if let release, AppVersion.isNewer(release.version, than: currentVersion) {
                 status = .available(release)
             } else {
                 status = .upToDate
@@ -160,7 +163,7 @@ final class Updater: ObservableObject {
     private func fetchLatest() async throws -> Release? {
         var request = URLRequest(url: feedURL, timeoutInterval: 20)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        request.setValue("ThockBox/\(AppVersion.current)", forHTTPHeaderField: "User-Agent")
+        request.setValue("ThockBox/\(currentVersion)", forHTTPHeaderField: "User-Agent")
         let (data, response) = try await session.data(for: request)
         let code = (response as? HTTPURLResponse)?.statusCode ?? 0
         if code == 404 { return nil }
