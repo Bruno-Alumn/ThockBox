@@ -249,3 +249,43 @@ struct MutedAppsList: View {
         state.mutedApps += ids.filter { !state.mutedApps.contains($0) }
     }
 }
+
+/// Click, then press the new shortcut. Esc cancels.
+struct ShortcutRecorder: View {
+    @ObservedObject var state: AppState
+    @State private var monitor: Any?
+
+    var body: some View {
+        HStack {
+            Button(monitor == nil ? state.toggleShortcut.display : "Press keys…") {
+                monitor == nil ? start() : stop()
+            }
+            .frame(minWidth: 90)
+            if monitor == nil && state.toggleShortcut != .standard {
+                Button("Reset") { state.toggleShortcut = .standard }
+            }
+        }
+        .onDisappear(perform: stop)
+    }
+
+    private func start() {
+        state.isRecordingShortcut = true
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if event.keyCode == 53 { // Esc
+                stop()
+            } else if let shortcut = Shortcut(event: event) {
+                state.toggleShortcut = shortcut
+                stop()
+            } else {
+                NSSound.beep() // needs ⌘, ⌃ or ⌥
+            }
+            return nil
+        }
+    }
+
+    private func stop() {
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
+        state.isRecordingShortcut = false
+    }
+}
