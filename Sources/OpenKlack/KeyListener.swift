@@ -74,6 +74,24 @@ final class KeyListener {
         return added
     }
 
+    /// NSEvent gives no press/release direction for modifiers; read it from
+    /// the event's flag bits (device-dependent masks distinguish left/right
+    /// keys) so state can't invert if an event is missed.
+    static func isModifierPress(code: UInt16, flags: NSEvent.ModifierFlags, wasDown: Bool) -> Bool {
+        if code == 57 {
+            // Caps Lock latches: one event per press/release cycle, so a
+            // toggle would alternate press/release samples. Always press.
+            return true
+        }
+        if code == 63 {
+            return flags.contains(.function)
+        }
+        if let mask = deviceMasks[code] {
+            return flags.rawValue & mask != 0
+        }
+        return !wasDown
+    }
+
     private func process(_ event: NSEvent) {
         switch event.type {
         case .keyDown:
@@ -82,22 +100,9 @@ final class KeyListener {
         case .keyUp:
             handler?(.keyUp(keycode: event.keyCode))
         case .flagsChanged:
-            // NSEvent gives no press/release direction for modifiers; read it
-            // from the event's flag bits (device-dependent masks distinguish
-            // left/right keys) so state can't invert if an event is missed.
             let code = event.keyCode
-            let down: Bool
-            if code == 57 {
-                // Caps Lock latches: one event per press/release cycle, so a
-                // toggle would alternate press/release samples. Always press.
-                down = true
-            } else if code == 63 {
-                down = event.modifierFlags.contains(.function)
-            } else if let mask = Self.deviceMasks[code] {
-                down = event.modifierFlags.rawValue & mask != 0
-            } else {
-                down = !downModifiers.contains(code)
-            }
+            let down = Self.isModifierPress(code: code, flags: event.modifierFlags,
+                                            wasDown: downModifiers.contains(code))
             if down {
                 downModifiers.insert(code)
                 handler?(.keyDown(keycode: code, isRepeat: false, flags: event.modifierFlags))
