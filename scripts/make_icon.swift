@@ -1,4 +1,4 @@
-// Render the OpenKlack app icon — original artwork, MIT.
+// Render the Thockbox app icon — original artwork, MIT.
 //
 // Run via: swift scripts/make_icon.swift Resources/AppIcon.icns
 //
@@ -94,7 +94,7 @@ func png(size: Int) -> Data {
 let output = URL(fileURLWithPath: CommandLine.arguments.count > 1
                  ? CommandLine.arguments[1] : "Resources/AppIcon.icns")
 let iconset = FileManager.default.temporaryDirectory
-    .appendingPathComponent("OpenKlack-\(UUID().uuidString).iconset")
+    .appendingPathComponent("Thockbox-\(UUID().uuidString).iconset")
 try FileManager.default.createDirectory(at: iconset, withIntermediateDirectories: true)
 defer { try? FileManager.default.removeItem(at: iconset) }
 

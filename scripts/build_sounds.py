@@ -1,4 +1,4 @@
-"""Build the OpenKlack sound catalog from permissively-licensed sources.
+"""Build the Thockbox sound catalog from permissively-licensed sources.
 
 Run via: uv run --with soundfile,numpy scripts/build_sounds.py
 

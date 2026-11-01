@@ -1,12 +1,16 @@
-# OpenKlack
+# Thockbox
 
 Satisfying mechanical-keyboard sound with every keystroke — a free, open-source
 macOS menu bar app inspired by [Klack](https://tryklack.com/).
 
+Thockbox started as a fork of [OpenKlack](https://github.com/amruth-sn/openklack)
+by Amruth Niranjan and has since gone its own way: lower latency, cleaner
+samples, lower CPU use, more switch sets, and more features.
+
 Native Swift + SwiftUI + AVAudioEngine. No Electron, no network, no analytics,
 no keystroke logging. The whole app bundle is **~1.8 MB**.
 
-> OpenKlack is an independent project, not affiliated with or endorsed by
+> Thockbox is an independent project, not affiliated with or endorsed by
 > Klack or Henrik Ruscon. If you want the original (it's great), buy it —
 > it's $4.99.
 
@@ -37,29 +41,29 @@ no keystroke logging. The whole app bundle is **~1.8 MB**.
 ## Install
 
 ```sh
-git clone https://github.com/amruth-sn/openklack && cd openklack
-make            # builds dist/OpenKlack.app
-make run        # or: open dist/OpenKlack.app
+git clone https://github.com/Bruno-Alumn/thockbox && cd thockbox
+make            # builds dist/Thockbox.app
+make run        # or: open dist/Thockbox.app
 ```
 
 Requires macOS 13+ to run; Xcode command-line tools to build.
 
 On first launch, grant **Accessibility** permission
-(System Settings → Privacy & Security → Accessibility). OpenKlack uses it
+(System Settings → Privacy & Security → Accessibility). Thockbox uses it
 solely to hear key up/down events and play a sound — nothing is stored or
 transmitted. The code that touches key events is ~120 lines in
-[`KeyListener.swift`](Sources/OpenKlack/KeyListener.swift); audit it yourself.
+[`KeyListener.swift`](Sources/Thockbox/KeyListener.swift); audit it yourself.
 
 > **After rebuilding:** the app is ad-hoc signed, and macOS ties the
 > Accessibility grant to the exact binary hash. A rebuilt app shows as
 > "granted" in System Settings but isn't actually trusted. Fix:
-> `tccutil reset Accessibility dev.openklack.OpenKlack`, relaunch, and
+> `tccutil reset Accessibility io.github.bruno-alumn.thockbox`, relaunch, and
 > grant again. (Signing with a real developer identity avoids this —
 > `make bundle CODESIGN_ID="Apple Development: you@example.com"`.)
 
 ## Klack parity
 
-| Klack feature | OpenKlack |
+| Klack feature | Thockbox |
 |---|---|
 | 6 switch sound sets | ✅ 7 total (2 are sonic stand-ins — see ATTRIBUTION.md) |
 | Up/down keystroke samples | ✅ (Oreo is down-only; upstream source has no release samples) |
@@ -85,7 +89,7 @@ transmitted. The code that touches key events is ~120 lines in
 ## AppleScript
 
 ```applescript
-tell application "OpenKlack"
+tell application "Thockbox"
     set sounds enabled to false
     set sound pack to "cream" -- pack ID or display name
     set sound volume to 0.55 -- 0.0 through 1.0

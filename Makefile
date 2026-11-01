@@ -1,4 +1,4 @@
-APP := OpenKlack
+APP := Thockbox
 BUILD := .build/release
 BUNDLE := dist/$(APP).app
 # Ad-hoc by default. With "-", every rebuild changes the binary hash and
@@ -20,13 +20,13 @@ bundle: build
 	# Local symbols are only for debugging; dropping them halves the binary.
 	strip -x $(BUNDLE)/Contents/MacOS/$(APP)
 	cp Resources/Info.plist $(BUNDLE)/Contents/
-	cp Resources/OpenKlack.sdef $(BUNDLE)/Contents/Resources/
+	cp Resources/Thockbox.sdef $(BUNDLE)/Contents/Resources/
 	cp -R Resources/Sounds $(BUNDLE)/Contents/Resources/Sounds
 	cp Resources/AppIcon.icns $(BUNDLE)/Contents/Resources/
 	codesign --force --sign "$(CODESIGN_ID)" $(BUNDLE)
 	@du -sh $(BUNDLE)
 	@echo "note: if this replaced an already-granted build, re-grant Accessibility:"
-	@echo "  tccutil reset Accessibility dev.openklack.OpenKlack && open $(BUNDLE)"
+	@echo "  tccutil reset Accessibility io.github.bruno-alumn.thockbox && open $(BUNDLE)"
 
 # Rebuild the sound catalog from upstream sources (requires uv + network).
 sounds:

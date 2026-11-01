@@ -1,5 +1,5 @@
 import XCTest
-@testable import OpenKlack
+@testable import Thockbox
 
 final class SoundPackTests: XCTestCase {
     private func pack(_ keys: [String: SoundPackManifest.KeySounds]) -> SoundPack {
@@ -45,7 +45,7 @@ final class SoundPackTests: XCTestCase {
 final class SoundPackDiscoveryTests: XCTestCase {
     func testSkipsBrokenPacksAndKeepsGoodOnes() throws {
         let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent("OpenKlackTests-\(UUID().uuidString)")
+            .appendingPathComponent("ThockboxTests-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
         func pack(_ folder: String, _ json: String?) throws {
             let dir = root.appendingPathComponent(folder)

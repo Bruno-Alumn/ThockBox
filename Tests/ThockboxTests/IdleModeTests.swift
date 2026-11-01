@@ -1,5 +1,5 @@
 import XCTest
-@testable import OpenKlack
+@testable import Thockbox
 
 final class IdleModeTests: XCTestCase {
     private let start = Date(timeIntervalSince1970: 1_000_000)

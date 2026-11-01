@@ -1,12 +1,12 @@
 import XCTest
-@testable import OpenKlack
+@testable import Thockbox
 
 final class KeystrokeStatsTests: XCTestCase {
     private var suite = ""
     private var defaults: UserDefaults!
 
     override func setUp() {
-        suite = "OpenKlackTests.\(UUID().uuidString)"
+        suite = "ThockboxTests.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suite)
     }
 
@@ -66,7 +66,7 @@ final class KeystrokeStatsTests: XCTestCase {
 
 final class StatsStoreTests: XCTestCase {
     func testMenuCountRefreshesOnceAfterABurst() {
-        let suite = "OpenKlackTests.\(UUID().uuidString)"
+        let suite = "ThockboxTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
         let store = StatsStore(defaults: defaults)

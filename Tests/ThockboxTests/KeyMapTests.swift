@@ -1,5 +1,5 @@
 import XCTest
-@testable import OpenKlack
+@testable import Thockbox
 
 final class KeyMapTests: XCTestCase {
     func testSpecialKeys() {

@@ -2,17 +2,17 @@
 import PackageDescription
 
 let package = Package(
-    name: "OpenKlack",
+    name: "Thockbox",
     platforms: [.macOS(.v13)],
     targets: [
         .executableTarget(
-            name: "OpenKlack",
-            path: "Sources/OpenKlack"
+            name: "Thockbox",
+            path: "Sources/Thockbox"
         ),
         .testTarget(
-            name: "OpenKlackTests",
-            dependencies: ["OpenKlack"],
-            path: "Tests/OpenKlackTests"
+            name: "ThockboxTests",
+            dependencies: ["Thockbox"],
+            path: "Tests/ThockboxTests"
         ),
     ]
 )

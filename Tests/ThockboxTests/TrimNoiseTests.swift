@@ -1,6 +1,6 @@
 import AVFoundation
 import XCTest
-@testable import OpenKlack
+@testable import Thockbox
 
 final class TrimNoiseTests: XCTestCase {
     private let sampleRate = 48_000.0

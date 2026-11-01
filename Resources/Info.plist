@@ -3,15 +3,15 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>OpenKlack</string>
+    <string>Thockbox</string>
     <key>CFBundleDisplayName</key>
-    <string>OpenKlack</string>
+    <string>Thockbox</string>
     <key>CFBundleIdentifier</key>
-    <string>dev.openklack.OpenKlack</string>
+    <string>io.github.bruno-alumn.thockbox</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleExecutable</key>
-    <string>OpenKlack</string>
+    <string>Thockbox</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -25,7 +25,7 @@
     <key>NSAppleScriptEnabled</key>
     <true/>
     <key>OSAScriptingDefinition</key>
-    <string>OpenKlack.sdef</string>
+    <string>Thockbox.sdef</string>
     <key>NSHumanReadableCopyright</key>
     <string>MIT License. Not affiliated with Klack or Henrik Ruscon.</string>
 </dict>

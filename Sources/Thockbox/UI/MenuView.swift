@@ -41,7 +41,7 @@ struct MenuView: View {
         HStack {
             Image(systemName: "keyboard.fill")
                 .foregroundStyle(.secondary)
-            Text("OpenKlack")
+            Text("Thockbox")
                 .font(.headline)
             Spacer()
             Toggle("", isOn: $state.enabled)
@@ -56,7 +56,7 @@ struct MenuView: View {
             Label("Accessibility permission needed", systemImage: "exclamationmark.triangle.fill")
                 .font(.caption.bold())
                 .foregroundStyle(.orange)
-            Text("OpenKlack needs Accessibility access to hear your keystrokes. No keystroke data ever leaves your Mac.")
+            Text("Thockbox needs Accessibility access to hear your keystrokes. No keystroke data ever leaves your Mac.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             Button("Open System Settings") { Permissions.openSystemSettings() }

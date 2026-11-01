@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary xmlns:xi="http://www.w3.org/2001/XInclude" title="Thockbox Terminology">
+    <xi:include href="file:///System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite[@name='Standard Suite'])"/>
+    <suite name="Thockbox Suite" code="Tbox" description="Thockbox sound settings.">
+        <class-extension name="application" extends="application" description="Thockbox application.">
+            <cocoa class="NSApplication"/>
+            <property name="sounds enabled" code="Tben" type="boolean" access="rw" description="Whether keyboard sounds are enabled.">
+                <cocoa key="soundsEnabled"/>
+            </property>
+            <property name="sound pack" code="Tbsp" type="text" access="rw" description="The selected sound pack ID or display name.">
+                <cocoa key="soundPack"/>
+            </property>
+            <property name="sound volume" code="Tbvo" type="real" access="rw" description="Sound volume from 0.0 to 1.0.">
+                <cocoa key="soundVolume"/>
+            </property>
+        </class-extension>
+    </suite>
+</dictionary>

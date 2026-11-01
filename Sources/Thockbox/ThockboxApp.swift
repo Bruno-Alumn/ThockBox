@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct OpenKlackApp: App {
+struct ThockboxApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @StateObject private var state = AppState.shared
 

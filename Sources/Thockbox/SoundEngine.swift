@@ -2,7 +2,7 @@ import AppKit
 import AVFoundation
 import os.log
 
-let klog = Logger(subsystem: "dev.openklack", category: "app")
+let klog = Logger(subsystem: "io.github.bruno-alumn.thockbox", category: "app")
 
 /// Low-latency sample player. A fixed pool of player nodes (each with its own
 /// varispeed unit for per-keystroke pitch randomization) feeds a master EQ
