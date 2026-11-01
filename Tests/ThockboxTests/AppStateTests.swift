@@ -182,6 +182,13 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertNil(state.automaticMute, "removing the app unmutes")
     }
 
+    func testMenuBarIconIsShownByDefaultAndRemembered() {
+        let state = AppState(defaults: defaults)
+        XCTAssertTrue(state.showMenuBarIcon)
+        state.showMenuBarIcon = false
+        XCTAssertFalse(AppState(defaults: defaults).showMenuBarIcon)
+    }
+
     func testSetMutedNeverAddsAnAppTwice() {
         let state = AppState(defaults: defaults)
         state.setMuted(true, appID: "com.example.game")

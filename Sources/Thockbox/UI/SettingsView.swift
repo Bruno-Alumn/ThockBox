@@ -116,6 +116,12 @@ struct SettingsView: View {
 
             Section("General") {
                 Toggle("Launch at login", isOn: $state.launchAtLogin)
+                Toggle(isOn: $state.showMenuBarIcon) {
+                    Text("Show in menu bar")
+                    if !state.showMenuBarIcon {
+                        Text("Open ThockBox from Applications or Spotlight to get back here.")
+                    }
+                }
                 Toggle("Notify when the switch changes", isOn: $state.notifyOnSwitchChange)
                 LabeledContent("Keystrokes") {
                     StatsLine(store: state.stats)

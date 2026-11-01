@@ -12,7 +12,7 @@ struct ThockboxApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra {
+        MenuBarExtra(isInserted: $state.showMenuBarIcon) {
             MenuView(state: state)
         } label: {
             Image(nsImage: state.enabled && !state.isAutomaticallyMuted ? MenuBarIcon.on : MenuBarIcon.off)
