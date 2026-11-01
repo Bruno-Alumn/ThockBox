@@ -117,11 +117,13 @@ final class AppState: ObservableObject {
     @Published private(set) var accessibilityTrusted = Permissions.isTrusted
     @Published private(set) var isAutomaticallyMuted = false
 
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
     private var idleMode = IdleMode()
     private var screenLocked = false
 
-    private init() {
+    /// The app uses `shared` (standard defaults); tests pass their own store.
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         defaults.register(defaults: [
             "enabled": true, "volume": 0.55, "pack": "cream",
             "toneX": 0.0, "toneY": 0.0, "pitchVariation": 60.0,

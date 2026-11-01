@@ -1,0 +1,92 @@
+import AppKit
+import XCTest
+@testable import Thockbox
+
+final class AppStateTests: XCTestCase {
+    private var suite = ""
+    private var defaults: UserDefaults!
+
+    override func setUp() {
+        suite = "ThockboxTests.\(UUID().uuidString)"
+        defaults = UserDefaults(suiteName: suite)
+    }
+
+    override func tearDown() {
+        defaults.removePersistentDomain(forName: suite)
+    }
+
+    private func keyDown(_ state: AppState, _ code: UInt16, _ flags: NSEvent.ModifierFlags = []) {
+        state.handle(.keyDown(keycode: code, isRepeat: false, flags: flags))
+    }
+
+    /// Key presses counted today, read back through the stats store.
+    private func counted(_ state: AppState) -> Int {
+        state.stats.flush()
+        return defaults.integer(forKey: "statsToday")
+    }
+
+    func testFirstLaunchDefaults() {
+        let state = AppState(defaults: defaults)
+        XCTAssertTrue(state.enabled)
+        XCTAssertEqual(state.volume, 0.55)
+        XCTAssertEqual(state.selectedPackID, "cream")
+        XCTAssertEqual(state.idleTimeoutMinutes, 0)
+        XCTAssertFalse(state.mouseClicks)
+    }
+
+    func testStoredValuesAreClampedOnLoad() {
+        defaults.set(5.0, forKey: "volume")
+        defaults.set(-9.0, forKey: "toneX")
+        defaults.set(999.0, forKey: "pitchVariation")
+        defaults.set(-3, forKey: "idleTimeoutMinutes")
+        let state = AppState(defaults: defaults)
+        XCTAssertEqual(state.volume, 1)
+        XCTAssertEqual(state.toneX, -1)
+        XCTAssertEqual(state.pitchVariation, 150)
+        XCTAssertEqual(state.idleTimeoutMinutes, 0)
+    }
+
+    func testSettingsSurviveARelaunch() {
+        let state = AppState(defaults: defaults)
+        state.muteModifiers = true
+        state.functionKeysAudible = false
+        let relaunched = AppState(defaults: defaults)
+        XCTAssertTrue(relaunched.muteModifiers)
+        XCTAssertFalse(relaunched.functionKeysAudible)
+    }
+
+    func testHotkeyTogglesSoundsWithoutCountingAKeystroke() {
+        let state = AppState(defaults: defaults)
+        keyDown(state, AppState.toggleKeycode, [.command, .control])
+        XCTAssertFalse(state.enabled)
+        state.handle(.keyUp(keycode: AppState.toggleKeycode))
+        keyDown(state, AppState.toggleKeycode, [.command, .control])
+        XCTAssertTrue(state.enabled)
+        XCTAssertEqual(counted(state), 0)
+    }
+
+    func testKeystrokesCountOnlyWhileSoundsAreOn() {
+        let state = AppState(defaults: defaults)
+        keyDown(state, 0)
+        keyDown(state, 1)
+        XCTAssertEqual(counted(state), 2)
+        state.enabled = false
+        keyDown(state, 2)
+        XCTAssertEqual(counted(state), 2)
+    }
+
+    func testMutedModifierKeysAreNotCounted() {
+        let state = AppState(defaults: defaults)
+        state.muteModifiers = true
+        keyDown(state, 56)          // shift
+        XCTAssertEqual(counted(state), 0)
+        keyDown(state, 0)           // a
+        XCTAssertEqual(counted(state), 1)
+    }
+
+    func testKeyRepeatIsIgnored() {
+        let state = AppState(defaults: defaults)
+        state.handle(.keyDown(keycode: 0, isRepeat: true, flags: []))
+        XCTAssertEqual(counted(state), 0)
+    }
+}
