@@ -1,4 +1,4 @@
-// Performance checks for Thockbox: CPU per key press with the menu views
+// Performance checks for ThockBox: CPU per key press with the menu views
 // alive (as in the real app), and idle CPU after typing.
 //
 // Run via `make bench`. It compiles the app's sources (minus the @main

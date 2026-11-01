@@ -1,8 +1,9 @@
 APP := Thockbox
+NAME := ThockBox
 BUILD := .build/release
-BUNDLE := dist/$(APP).app
+BUNDLE := dist/$(NAME).app
 VERSION := $(shell /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Resources/Info.plist)
-ZIP := dist/$(APP)-$(VERSION).zip
+ZIP := dist/$(NAME)-$(VERSION).zip
 # Ad-hoc by default. With "-", every rebuild changes the binary hash and
 # invalidates the Accessibility grant (see README). Set a real identity to
 # keep the grant across rebuilds.
@@ -60,4 +61,4 @@ zip: bundle
 	@echo "$(ZIP)"
 
 clean:
-	rm -rf .build dist/$(APP).app dist/$(APP)-*.zip
+	rm -rf .build dist/$(NAME).app dist/$(NAME)-*.zip

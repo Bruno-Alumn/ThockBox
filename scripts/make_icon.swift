@@ -1,4 +1,4 @@
-// Build the Thockbox app icon from the logo artwork.
+// Build the ThockBox app icon from the logo artwork.
 //
 // Run via: swift scripts/make_icon.swift art/logo-source.png Resources/AppIcon.icns [docs/logo.png]
 //
@@ -81,7 +81,7 @@ func png(size: Int) -> Data {
 }
 
 let iconset = FileManager.default.temporaryDirectory
-    .appendingPathComponent("Thockbox-\(UUID().uuidString).iconset")
+    .appendingPathComponent("ThockBox-\(UUID().uuidString).iconset")
 try FileManager.default.createDirectory(at: iconset, withIntermediateDirectories: true)
 defer { try? FileManager.default.removeItem(at: iconset) }
 

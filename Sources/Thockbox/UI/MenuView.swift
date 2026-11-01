@@ -41,7 +41,7 @@ struct MenuView: View {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
                 .frame(width: 20, height: 20)
-            Text("Thockbox")
+            Text("ThockBox")
                 .font(.headline)
             Spacer()
             Toggle("", isOn: $state.enabled)

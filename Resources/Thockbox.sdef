@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
-<dictionary xmlns:xi="http://www.w3.org/2001/XInclude" title="Thockbox Terminology">
+<dictionary xmlns:xi="http://www.w3.org/2001/XInclude" title="ThockBox Terminology">
     <xi:include href="file:///System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite[@name='Standard Suite'])"/>
-    <suite name="Thockbox Suite" code="Tbox" description="Thockbox sound settings.">
-        <class-extension name="application" extends="application" description="Thockbox application.">
+    <suite name="ThockBox Suite" code="Tbox" description="ThockBox sound settings.">
+        <class-extension name="application" extends="application" description="ThockBox application.">
             <cocoa class="NSApplication"/>
             <property name="sounds enabled" code="Tben" type="boolean" access="rw" description="Whether keyboard sounds are enabled.">
                 <cocoa key="soundsEnabled"/>

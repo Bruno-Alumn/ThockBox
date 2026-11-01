@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>Thockbox</string>
+    <string>ThockBox</string>
     <key>CFBundleDisplayName</key>
-    <string>Thockbox</string>
+    <string>ThockBox</string>
     <key>CFBundleIdentifier</key>
     <string>io.github.bruno-alumn.thockbox</string>
     <key>CFBundleIconFile</key>

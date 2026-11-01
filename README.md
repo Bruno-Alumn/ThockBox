@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/logo.png" alt="Thockbox" width="128">
+  <img src="docs/logo.png" alt="ThockBox" width="128">
 </p>
 
-<h1 align="center">Thockbox</h1>
+<h1 align="center">ThockBox</h1>
 
 <p align="center">
   Mechanical keyboard sounds for your Mac.<br>
@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Bruno-Alumn/thockbox/actions/workflows/test.yml"><img src="https://github.com/Bruno-Alumn/thockbox/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
+  <a href="https://github.com/Bruno-Alumn/ThockBox/actions/workflows/test.yml"><img src="https://github.com/Bruno-Alumn/ThockBox/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
   <img src="https://img.shields.io/badge/macOS-13%2B-informational" alt="macOS 13+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-informational" alt="MIT license"></a>
 </p>
@@ -23,7 +23,7 @@
 
 ## Overview
 
-Thockbox sits in the menu bar and plays a switch sound for every key you
+ThockBox sits in the menu bar and plays a switch sound for every key you
 type. It ships with seven switch sets, with samples per keyboard row and
 separate ones for Space, Return and Backspace. Most sets also have their own
 release sounds. Keys are panned by their
@@ -54,29 +54,29 @@ volume, and today's keystroke count.
 
 **Settings…** (⌘,) opens the settings window with everything else, including
 the Tone Pad, key options, automatic mute and output device. While the window
-is open Thockbox appears in the Dock; closing the window returns it to the
-menu bar. Opening Thockbox from Finder, Launchpad or Spotlight while it is
+is open ThockBox appears in the Dock; closing the window returns it to the
+menu bar. Opening ThockBox from Finder, Launchpad or Spotlight while it is
 running also brings up the window.
 
 ## Installation
 
-Thockbox is built from source. It needs macOS 13 or later and the Xcode
+ThockBox is built from source. It needs macOS 13 or later and the Xcode
 command line tools.
 
 ```sh
-git clone https://github.com/Bruno-Alumn/thockbox.git
-cd thockbox
-make            # build dist/Thockbox.app
+git clone https://github.com/Bruno-Alumn/ThockBox.git
+cd ThockBox
+make            # build dist/ThockBox.app
 make run        # open it
 ```
 
-Copy `dist/Thockbox.app` to Applications to keep it. `make zip` produces a
-signed archive, `dist/Thockbox-<version>.zip`, for sharing.
+Copy `dist/ThockBox.app` to Applications to keep it. `make zip` produces a
+signed archive, `dist/ThockBox-<version>.zip`, for sharing.
 
 ### Accessibility permission
 
 macOS requires Accessibility access for an app to receive key presses from
-other apps. On first launch Thockbox opens its settings window and asks for
+other apps. On first launch ThockBox opens its settings window and asks for
 it. Grant it in System Settings → Privacy & Security → Accessibility.
 
 Builds are ad-hoc signed, and macOS ties the permission to the exact binary.
@@ -91,7 +91,7 @@ Signing with a developer certificate avoids this:
 
 ## Privacy
 
-Thockbox uses key events only to choose and play a sound. It does not record,
+ThockBox uses key events only to choose and play a sound. It does not record,
 store or transmit what you type. The code that receives key events is in
 [`KeyListener.swift`](Sources/Thockbox/KeyListener.swift) and is short enough
 to read in a few minutes.
@@ -113,7 +113,7 @@ speakers or wired headphones give the most immediate response.
 ## AppleScript
 
 ```applescript
-tell application "Thockbox"
+tell application "ThockBox"
     set sounds enabled to false
     set sound pack to "cream" -- pack ID or display name
     set sound volume to 0.55 -- 0.0 to 1.0
@@ -174,7 +174,7 @@ opening a pull request.
 
 ## Credits
 
-Thockbox began as a fork of
+ThockBox began as a fork of
 [OpenKlack](https://github.com/amruth-sn/openklack) by Amruth Niranjan. It is
 inspired by [Klack](https://tryklack.com/) and is not affiliated with or
 endorsed by Klack or its developer.

@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Colors from the Thockbox logo (art/logo-source.png).
+/// Colors from the ThockBox logo (art/logo-source.png).
 extension Color {
     /// Tile background, #00676D.
     static let thockTeal = Color(red: 0, green: 0.404, blue: 0.427)
@@ -48,7 +48,7 @@ enum MenuBarIcon {
             return true
         }
         image.isTemplate = true
-        image.accessibilityDescription = soundsOn ? "Thockbox, sounds on" : "Thockbox, sounds off"
+        image.accessibilityDescription = soundsOn ? "ThockBox, sounds on" : "ThockBox, sounds off"
         return image
     }
 }

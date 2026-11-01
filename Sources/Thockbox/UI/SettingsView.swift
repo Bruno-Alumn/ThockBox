@@ -116,7 +116,7 @@ struct SettingsView: View {
                 .resizable()
                 .frame(width: 48, height: 48)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Thockbox")
+                Text("ThockBox")
                     .font(.title2.bold())
                 Text(state.enabled ? "Sounds are on. Toggle anytime with ⌘⌃K." : "Sounds are off. Toggle anytime with ⌘⌃K.")
                     .font(.caption)

@@ -33,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Opening Thockbox again (Finder, Launchpad, Spotlight, Dock) while it's
+    /// Opening ThockBox again (Finder, Launchpad, Spotlight, Dock) while it's
     /// running brings up the settings window.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         MainWindow.shared.show()

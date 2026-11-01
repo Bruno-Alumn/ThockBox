@@ -8,7 +8,7 @@ struct PermissionBanner: View {
             Label("Accessibility permission needed", systemImage: "exclamationmark.triangle.fill")
                 .font(.caption.bold())
                 .foregroundStyle(.orange)
-            Text("Thockbox needs Accessibility access to hear your keystrokes. No keystroke data ever leaves your Mac.")
+            Text("ThockBox needs Accessibility access to hear your keystrokes. No keystroke data ever leaves your Mac.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
