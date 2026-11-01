@@ -124,6 +124,13 @@ struct SettingsView: View {
             Section {
                 Toggle("Check for updates automatically", isOn: $updater.checksAutomatically)
                 UpdateStatusView(updater: updater)
+                if let notes = updater.availableRelease?.notesPreview {
+                    Text(notes)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             } header: {
                 Text("Updates")
             } footer: {
