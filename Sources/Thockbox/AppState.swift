@@ -83,6 +83,12 @@ final class AppState: ObservableObject {
     @Published var notifyOnSwitchChange: Bool {
         didSet { defaults.set(notifyOnSwitchChange, forKey: "notifyOnSwitchChange") }
     }
+    /// Hidden, ThockBox keeps running; opening it again from Finder or
+    /// Spotlight shows the settings window. macOS also turns this off when
+    /// the icon is ⌘-dragged out of the menu bar.
+    @Published var showMenuBarIcon: Bool {
+        didSet { defaults.set(showMenuBarIcon, forKey: "showMenuBarIcon") }
+    }
     @Published var launchAtLogin: Bool {
         didSet {
             defaults.set(launchAtLogin, forKey: "launchAtLogin")
@@ -172,7 +178,7 @@ final class AppState: ObservableObject {
             "muteModifiers": false, "functionKeysAudible": true,
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false, "notifyOnSwitchChange": false,
-            "launchAtLogin": false, "muteWhenLocked": false, "muteDuringCalls": false,
+            "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "muteDuringCalls": false,
             "idleTimeoutMinutes": 0,
         ])
         enabled = defaults.bool(forKey: "enabled")
@@ -188,6 +194,7 @@ final class AppState: ObservableObject {
         hapticFeedback = defaults.bool(forKey: "hapticFeedback")
         notifyOnSwitchChange = defaults.bool(forKey: "notifyOnSwitchChange")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
+        showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
