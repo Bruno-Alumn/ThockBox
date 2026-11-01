@@ -86,14 +86,20 @@ macOS requires Accessibility access for an app to receive key presses from
 other apps. On first launch ThockBox opens its settings window and asks for
 it. Grant it in System Settings → Privacy & Security → Accessibility.
 
-Builds are ad-hoc signed, and macOS ties the permission to the exact binary.
-After rebuilding, reset the permission and grant it again:
+macOS ties the permission to how the app is signed. Releases are signed with
+the same certificate every time, so the permission carries over to new
+versions.
+
+If you build ThockBox yourself, run `make signing-cert` once. It creates a
+self-signed "ThockBox Signing" certificate in your login keychain, and every
+build after that is signed with it, so you grant access once. Without it,
+builds are ad-hoc signed and each rebuild needs the permission again:
 
 ```sh
 tccutil reset Accessibility io.github.bruno-alumn.thockbox
 ```
 
-Signing with a developer certificate avoids this:
+You can also sign with a developer certificate:
 `make bundle CODESIGN_ID="Apple Development: you@example.com"`.
 
 ## Privacy
@@ -111,8 +117,8 @@ contains nothing but the app version. Turn it off in Settings → Updates.
 When a newer release is out, the menu bar panel says so, and Settings →
 Updates offers **Install and Relaunch**. ThockBox downloads the release zip,
 checks that it is a correctly signed ThockBox of that version, replaces the
-installed copy and reopens. Release builds are ad-hoc signed, so macOS asks
-for Accessibility access again after each update.
+installed copy and reopens. Accessibility access carries over, since every
+release is signed with the same certificate.
 
 ## Performance
 
@@ -169,11 +175,12 @@ Add a folder under `Resources/Sounds/` containing your samples and a
 ## Development
 
 ```sh
-make test     # unit tests, then a smoke test that plays every pack
-make bench    # CPU per key press and idle CPU, fails on a large regression
-make icon     # rebuild the app icon from art/logo-source.png
-make sounds   # rebuild the bundled sound sets (requires uv)
-make release  # publish dist/ThockBox-<version>.zip as a GitHub release (requires gh)
+make test          # unit tests, then a smoke test that plays every pack
+make bench         # CPU per key press and idle CPU, fails on a large regression
+make icon          # rebuild the app icon from art/logo-source.png
+make sounds        # rebuild the bundled sound sets (requires uv)
+make signing-cert  # one-time: create the certificate builds are signed with
+make release       # publish dist/ThockBox-<version>.zip as a GitHub release (requires gh)
 ```
 
 CI runs the unit tests and builds the app on every push and pull request. The

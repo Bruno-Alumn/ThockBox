@@ -4,12 +4,12 @@ BUILD := .build/release
 BUNDLE := dist/$(NAME).app
 VERSION := $(shell /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Resources/Info.plist)
 ZIP := dist/$(NAME)-$(VERSION).zip
-# Ad-hoc by default. With "-", every rebuild changes the binary hash and
-# invalidates the Accessibility grant (see README). Set a real identity to
-# keep the grant across rebuilds.
-CODESIGN_ID ?= -
+# Signed with the "ThockBox Signing" identity when this Mac has it (see
+# `make signing-cert`), so the Accessibility grant survives rebuilds and
+# updates. Otherwise ad-hoc ("-"), where every rebuild needs a new grant.
+CODESIGN_ID ?= $(or $(shell security find-identity -p codesigning 2>/dev/null | awk -F'"' '/"ThockBox Signing"/ {split($$1, a, " "); print a[2]; exit}'),-)
 
-.PHONY: all build bundle zip release test bench sounds icon clean run
+.PHONY: all build bundle zip release signing-cert test bench sounds icon clean run
 
 all: bundle
 
@@ -28,8 +28,13 @@ bundle: build
 	cp Resources/AppIcon.icns $(BUNDLE)/Contents/Resources/
 	codesign --force --sign "$(CODESIGN_ID)" $(BUNDLE)
 	@du -sh $(BUNDLE)
-	@echo "note: if this replaced an already-granted build, re-grant Accessibility:"
-	@echo "  tccutil reset Accessibility io.github.bruno-alumn.thockbox && open $(BUNDLE)"
+	@if [ "$(CODESIGN_ID)" = "-" ]; then \
+		echo "note: ad-hoc signed. Run 'make signing-cert' so the Accessibility grant survives rebuilds."; \
+	fi
+
+# One-time setup: a self-signed identity that every build is signed with.
+signing-cert:
+	scripts/make_signing_cert.sh
 
 # Rebuild the sound catalog from upstream sources (requires uv + network).
 sounds:
@@ -63,6 +68,7 @@ zip: bundle
 # Publish the zip as GitHub release v<version>. The app's updater looks for
 # the newest release and its ThockBox-<version>.zip asset.
 release: zip
+	@if [ "$(CODESIGN_ID)" = "-" ]; then echo "refusing to release an ad-hoc build; run 'make signing-cert'"; exit 1; fi
 	gh release create v$(VERSION) $(ZIP) --title "ThockBox $(VERSION)" --generate-notes
 
 clean:

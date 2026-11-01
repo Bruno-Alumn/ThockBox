@@ -187,16 +187,17 @@ final class Updater: ObservableObject {
             status = .installing
             let newApp = try unpack(zip, in: work, expecting: release.version)
 
-            let wasAdHoc = Self.isAdHocSigned()
+            let keepsGrant = Self.satisfiesOwnRequirement(newApp)
             _ = try FileManager.default.replaceItemAt(target, withItemAt: newApp)
-            klog.notice("updated to \(release.version, privacy: .public)")
-            // An ad-hoc signed build gets a new identity with every release,
-            // so the old Accessibility grant no longer matches and would
-            // quietly do nothing. Clear it so the new build asks again.
-            if wasAdHoc, let id = Bundle.main.bundleIdentifier {
+            klog.notice("updated to \(release.version, privacy: .public), keeps grant: \(keepsGrant, privacy: .public)")
+            // macOS keeps the Accessibility grant when the new build is
+            // signed by the same identity. If it isn't (an ad-hoc build, or
+            // the first update after switching identities), the old grant
+            // would quietly do nothing, so clear it and let the new build ask.
+            if !keepsGrant, let id = Bundle.main.bundleIdentifier {
                 try? Self.run("/usr/bin/tccutil", ["reset", "Accessibility", id])
+                defaults.set(true, forKey: "showSettingsAfterUpdate")
             }
-            defaults.set(true, forKey: "showSettingsAfterUpdate")
             relaunch(target)
         } catch {
             klog.error("update failed: \(error.localizedDescription, privacy: .public)")
@@ -239,16 +240,36 @@ final class Updater: ObservableObject {
         }
     }
 
-    private static func isAdHocSigned() -> Bool {
-        var code: SecCode?
-        var staticCode: SecStaticCode?
+    /// Whether `app` meets the running app's designated requirement, the
+    /// same check macOS uses to decide if an Accessibility grant still
+    /// applies. Ad-hoc requirements name an exact build, so this is false
+    /// whenever the running app is ad-hoc signed.
+    static func satisfiesOwnRequirement(_ app: URL) -> Bool {
+        var me: SecCode?
+        var staticMe: SecStaticCode?
+        var requirement: SecRequirement?
+        var other: SecStaticCode?
+        guard SecCodeCopySelf([], &me) == errSecSuccess, let me,
+              SecCodeCopyStaticCode(me, [], &staticMe) == errSecSuccess, let staticMe,
+              SecCodeCopyDesignatedRequirement(staticMe, [], &requirement) == errSecSuccess, let requirement,
+              SecStaticCodeCreateWithPath(app as CFURL, [], &other) == errSecSuccess, let other else {
+            return false
+        }
+        return SecStaticCodeCheckValidity(other, [], requirement) == errSecSuccess
+    }
+
+    /// Whether this build is ad-hoc signed, so an update will need the
+    /// Accessibility grant again.
+    static var isAdHocSigned: Bool {
+        var me: SecCode?
+        var staticMe: SecStaticCode?
         var info: CFDictionary?
-        guard SecCodeCopySelf([], &code) == errSecSuccess, let code,
-              SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess, let staticCode,
-              SecCodeCopySigningInformation(staticCode, SecCSFlags(rawValue: kSecCSSigningInformation),
+        guard SecCodeCopySelf([], &me) == errSecSuccess, let me,
+              SecCodeCopyStaticCode(me, [], &staticMe) == errSecSuccess, let staticMe,
+              SecCodeCopySigningInformation(staticMe, SecCSFlags(rawValue: kSecCSSigningInformation),
                                             &info) == errSecSuccess,
               let flags = (info as? [String: Any])?[kSecCodeInfoFlags as String] as? UInt32 else {
-            return false
+            return true
         }
         return flags & SecCodeSignatureFlags.adhoc.rawValue != 0
     }

@@ -111,7 +111,7 @@ struct SettingsView: View {
             } header: {
                 Text("Updates")
             } footer: {
-                if updater.availableRelease != nil {
+                if updater.availableRelease != nil && Updater.isAdHocSigned {
                     Text("After updating, macOS may ask you to allow Accessibility access again.")
                 }
             }
