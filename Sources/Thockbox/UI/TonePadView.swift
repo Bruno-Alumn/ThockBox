@@ -38,5 +38,53 @@ struct TonePadView: View {
                     }
             )
         }
+        // Arrow keys move the handle once the pad has keyboard focus.
+        .focusable()
+        .onMoveCommand { direction in
+            switch direction {
+            case .left: x = Self.step(x, by: -0.1)
+            case .right: x = Self.step(x, by: 0.1)
+            case .up: y = Self.step(y, by: 0.1)
+            case .down: y = Self.step(y, by: -0.1)
+            @unknown default: break
+            }
+        }
+        // VoiceOver: one control. Adjusting changes brightness; pitch has
+        // its own actions.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Tone")
+        .accessibilityValue(Self.describe(x: x, y: y))
+        .accessibilityHint("Adjust to change brightness. Use the actions to change pitch.")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: x = Self.step(x, by: 0.1)
+            case .decrement: x = Self.step(x, by: -0.1)
+            @unknown default: break
+            }
+        }
+        .accessibilityAction(named: "Raise pitch") { y = Self.step(y, by: 0.1) }
+        .accessibilityAction(named: "Lower pitch") { y = Self.step(y, by: -0.1) }
+        .accessibilityAction(named: "Reset tone") {
+            x = 0
+            y = 0
+        }
+    }
+
+    /// Moves a value by `delta`, kept in -1...1 and on a 0.1 grid so
+    /// repeated steps land back exactly on 0.
+    static func step(_ value: Float, by delta: Float) -> Float {
+        (min(max(value + delta, -1), 1) * 10).rounded() / 10
+    }
+
+    /// What VoiceOver reads, e.g. "40% brighter, pitch 20% higher".
+    static func describe(x: Float, y: Float) -> String {
+        func part(_ v: Float, up: String, down: String) -> String? {
+            let percent = Int((abs(v) * 100).rounded())
+            guard percent > 0 else { return nil }
+            return "\(percent)% \(v > 0 ? up : down)"
+        }
+        let tone = part(x, up: "brighter", down: "darker") ?? "neutral"
+        let pitch = part(y, up: "higher", down: "lower").map { "pitch \($0)" } ?? "normal pitch"
+        return "\(tone), \(pitch)"
     }
 }
