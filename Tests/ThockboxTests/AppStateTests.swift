@@ -57,12 +57,24 @@ final class AppStateTests: XCTestCase {
 
     func testHotkeyTogglesSoundsWithoutCountingAKeystroke() {
         let state = AppState(defaults: defaults)
-        keyDown(state, AppState.toggleKeycode, [.command, .control])
+        keyDown(state, Shortcut.standard.keyCode, [.command, .control])
         XCTAssertFalse(state.enabled)
-        state.handle(.keyUp(keycode: AppState.toggleKeycode))
-        keyDown(state, AppState.toggleKeycode, [.command, .control])
+        state.handle(.keyUp(keycode: Shortcut.standard.keyCode))
+        keyDown(state, Shortcut.standard.keyCode, [.command, .control])
         XCTAssertTrue(state.enabled)
         XCTAssertEqual(counted(state), 0)
+    }
+
+    func testCustomShortcutReplacesTheDefaultAndMatchesExactly() {
+        let state = AppState(defaults: defaults)
+        state.toggleShortcut = Shortcut(keyCode: 49, flags: [.option, .command], key: "Space")
+        keyDown(state, Shortcut.standard.keyCode, [.command, .control])
+        XCTAssertTrue(state.enabled, "the old shortcut no longer toggles")
+        keyDown(state, 49, [.option, .command, .shift])
+        XCTAssertTrue(state.enabled, "an extra modifier doesn't match")
+        keyDown(state, 49, [.option, .command])
+        XCTAssertFalse(state.enabled)
+        XCTAssertEqual(AppState(defaults: defaults).toggleShortcut.display, "⌥⌘Space", "saved")
     }
 
     func testKeystrokesCountOnlyWhileSoundsAreOn() {

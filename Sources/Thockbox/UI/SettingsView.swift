@@ -67,6 +67,9 @@ struct SettingsView: View {
             }
 
             Section("Keys") {
+                LabeledContent("Toggle sounds") {
+                    ShortcutRecorder(state: state)
+                }
                 Toggle("Mute modifier keys (⌘ ⌥ ⌃ ⇧)", isOn: $state.muteModifiers)
                 Toggle("Play sounds for function keys", isOn: $state.functionKeysAudible)
                 Toggle("Ding on Return", isOn: $state.returnDing)
@@ -142,7 +145,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("ThockBox")
                     .font(.title2.bold())
-                Text(state.enabled ? "Sounds are on. Toggle anytime with ⌘⌃K." : "Sounds are off. Toggle anytime with ⌘⌃K.")
+                Text("Sounds are \(state.enabled ? "on" : "off"). Toggle anytime with \(state.toggleShortcut.display).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

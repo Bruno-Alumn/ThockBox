@@ -76,7 +76,7 @@ struct MenuView: View {
             Toggle("", isOn: $state.enabled)
                 .toggleStyle(.switch)
                 .controlSize(.small)
-                .help("Toggle sounds (⌘⌃K)")
+                .help("Toggle sounds (\(state.toggleShortcut.display))")
         }
     }
 

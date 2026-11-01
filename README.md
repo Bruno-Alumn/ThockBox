@@ -44,7 +44,7 @@ check.
 
 | Sound | Control | Automation |
 |---|---|---|
-| Seven switch sets | ⌘⌃K or option-click to toggle | Mute when the screen locks or during calls |
+| Seven switch sets | ⌃⌘K (or your own shortcut) or option-click to toggle | Mute when the screen locks or during calls |
 | Press and release samples (most sets) | Volume presets, independent of system volume | Mute after 1 to 60 minutes idle |
 | Per-row samples, panned by key position | Choose any output device | Mute in apps you choose |
 | Tone Pad for darker or brighter sound | Mute modifier or function keys | AppleScript control |

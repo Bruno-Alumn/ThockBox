@@ -105,6 +105,12 @@ final class AppState: ObservableObject {
             updateAutomaticMute()
         }
     }
+    @Published var toggleShortcut: Shortcut {
+        didSet { defaults.set(try? JSONEncoder().encode(toggleShortcut), forKey: "toggleShortcut") }
+    }
+    /// Set while Settings records a new shortcut, so pressing the current
+    /// one there doesn't also toggle sounds.
+    var isRecordingShortcut = false
     @Published var idleTimeoutMinutes: Int {
         didSet {
             defaults.set(idleTimeoutMinutes, forKey: "idleTimeoutMinutes")
@@ -171,6 +177,8 @@ final class AppState: ObservableObject {
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
+        toggleShortcut = defaults.data(forKey: "toggleShortcut")
+            .flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) } ?? .standard
         idleTimeoutMinutes = max(0, defaults.integer(forKey: "idleTimeoutMinutes"))
         outputDeviceUID = defaults.string(forKey: "outputDeviceUID")
         stats = StatsStore(defaults: defaults)
@@ -330,7 +338,6 @@ final class AppState: ObservableObject {
 
     // MARK: - Event handling
 
-    static let toggleKeycode: UInt16 = 40 // 'k'
     private var suppressNextKeyUp: UInt16?
 
     private var loggedFirstEvent = false
@@ -345,10 +352,10 @@ final class AppState: ObservableObject {
         case let .keyDown(keycode, isRepeat, flags):
             idleMode.recordActivity()
             if isAutomaticallyMuted { updateAutomaticMute() }
-            // ⌘⌃K toggles Klack-style, even while disabled. Swallow the
-            // matching key-up too, or enabling would emit an orphan release.
-            if keycode == Self.toggleKeycode && !isRepeat,
-               flags.contains(.command), flags.contains(.control) {
+            // The shortcut (⌃⌘K by default) toggles, even while disabled.
+            // Swallow the matching key-up too, or enabling would emit an
+            // orphan release.
+            if !isRepeat, !isRecordingShortcut, toggleShortcut.matches(keyCode: keycode, flags: flags) {
                 enabled.toggle()
                 suppressNextKeyUp = keycode
                 return
