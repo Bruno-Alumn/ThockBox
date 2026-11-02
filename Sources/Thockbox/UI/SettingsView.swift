@@ -122,6 +122,7 @@ private struct SoundPage: View {
                     Image(systemName: "speaker.wave.3.fill")
                 }
                 .accessibilityValue(SpokenValue.percent(state.volume))
+                .sliderHaptics(state.volume, in: 0...1, step: 0.1)
                 OutputDevicePicker(state: state)
             } footer: {
                 formFooter("Each output device keeps its own volume.")
@@ -136,6 +137,7 @@ private struct SoundPage: View {
                     Text("Brighter")
                 }
                 .accessibilityValue(SpokenValue.direction(state.toneX, up: "brighter", down: "darker"))
+                .sliderHaptics(state.toneX, in: -1...1, step: 1)
                 Slider(value: $state.toneY, in: -1...1) {
                     Text("Pitch")
                 } minimumValueLabel: {
@@ -144,6 +146,7 @@ private struct SoundPage: View {
                     Text("Higher")
                 }
                 .accessibilityValue(SpokenValue.direction(state.toneY, up: "higher", down: "lower"))
+                .sliderHaptics(state.toneY, in: -1...1, step: 1)
                 Slider(value: $state.pitchVariation, in: 0...150) {
                     Text("Variation")
                 } minimumValueLabel: {
