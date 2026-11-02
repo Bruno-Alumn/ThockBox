@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.1.2
 
 - **Turn Off for an Hour** in the menu bar menu: sounds come back by
   themselves, even if ThockBox is restarted in between. The menu and
