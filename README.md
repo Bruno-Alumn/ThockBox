@@ -47,6 +47,8 @@ or endorsed by Klack or its developer.
   in most sets for releasing a key.
 - Subtle pitch variation and stereo position, so typing never sounds looped.
 - Brightness and pitch controls to tune any set to your taste.
+- Spatial audio on headphones places each key around you, and with AirPods
+  the keys stay put as you turn your head.
 
 **Quiet when it should be**
 
@@ -115,8 +117,8 @@ loudness-matched like the built-in ones, and survive updates.
 <br>
 
 - **Sound:** on and off, the switch set with a field to try it, volume,
-  output device and spatial audio on headphones, and tone (brightness, pitch
-  and variation).
+  output device, spatial audio on headphones (following your head with
+  AirPods), and tone (brightness, pitch and variation).
 - **Keys:** the on/off shortcut, which keys play (and mouse clicks and scrolling), the
   Return ding, and a trackpad tap with each key.
 - **Muting:** during calls and while other apps play sound (both macOS 14.2
