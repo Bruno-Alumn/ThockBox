@@ -3,11 +3,11 @@ import XCTest
 
 final class SecureInputTests: XCTestCase {
     func testNamesTheAppHoldingSecureInput() {
-        XCTAssertEqual(AppState.secureInputHolderName(bundleID: "com.apple.Terminal", name: "Terminal"), "Terminal")
-        XCTAssertEqual(AppState.secureInputHolderName(bundleID: nil, name: nil), "Another app")
+        XCTAssertEqual(SecureInput.holderName(bundleID: "com.apple.Terminal", name: "Terminal"), "Terminal")
+        XCTAssertEqual(SecureInput.holderName(bundleID: nil, name: nil), "Another app")
     }
 
     func testTheLockScreenIsNotReported() {
-        XCTAssertNil(AppState.secureInputHolderName(bundleID: "com.apple.loginwindow", name: "loginwindow"))
+        XCTAssertNil(SecureInput.holderName(bundleID: "com.apple.loginwindow", name: "loginwindow"))
     }
 }
