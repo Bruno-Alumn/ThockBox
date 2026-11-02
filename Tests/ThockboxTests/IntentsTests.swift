@@ -19,7 +19,7 @@ final class IntentsTests: XCTestCase {
     }
 
     func testSetAndToggleSounds() async throws {
-        var set = SetSoundsIntent()
+        let set = SetSoundsIntent()
         set.on = false
         _ = try await set.perform()
         XCTAssertFalse(AppState.shared.enabled)
@@ -28,7 +28,7 @@ final class IntentsTests: XCTestCase {
     }
 
     func testTurnOffForAWhile() async throws {
-        var intent = TurnOffForIntent()
+        let intent = TurnOffForIntent()
         intent.minutes = 30
         let before = Date()
         _ = try await intent.perform()
@@ -40,7 +40,7 @@ final class IntentsTests: XCTestCase {
     }
 
     func testSetVolumeClampsToRange() async throws {
-        var intent = SetVolumeIntent()
+        let intent = SetVolumeIntent()
         intent.percent = 30
         _ = try await intent.perform()
         XCTAssertEqual(AppState.shared.volume, 0.3, accuracy: 0.001)
@@ -50,7 +50,7 @@ final class IntentsTests: XCTestCase {
     }
 
     func testSetSwitchSet() async throws {
-        var intent = SetSwitchSetIntent()
+        let intent = SetSwitchSetIntent()
         intent.switchSet = SwitchSetEntity(id: "holy-panda", name: "Holy Panda")
         _ = try await intent.perform()
         XCTAssertEqual(AppState.shared.selectedPackID, "holy-panda")
