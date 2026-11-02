@@ -36,6 +36,40 @@ enum AudioDevices {
         return devices.first { $0.uid == uid }?.id
     }
 
+    /// Whether sound from this device fills the room rather than going into
+    /// someone's ears: the Mac's own speakers, a display, or AirPlay.
+    static func isSpeaker(_ id: AudioDeviceID) -> Bool {
+        isSpeaker(transport: uint32(id, kAudioDevicePropertyTransportType, kAudioObjectPropertyScopeGlobal),
+                  dataSource: uint32(id, kAudioDevicePropertyDataSource, kAudioDevicePropertyScopeOutput))
+    }
+
+    /// Built-in output is speakers unless it reports the headphone jack
+    /// ('hdpn'); unsure, it counts as speakers, since the point is not to
+    /// play out loud. Bluetooth, USB and the rest count as headphones.
+    static func isSpeaker(transport: UInt32?, dataSource: UInt32?) -> Bool {
+        switch transport {
+        case kAudioDeviceTransportTypeBuiltIn:
+            return dataSource != headphoneDataSource
+        case kAudioDeviceTransportTypeHDMI, kAudioDeviceTransportTypeDisplayPort,
+             kAudioDeviceTransportTypeAirPlay:
+            return true
+        default:
+            return false
+        }
+    }
+
+    static let headphoneDataSource: UInt32 = 0x6864_706E // 'hdpn'
+
+    private static func uint32(_ id: AudioObjectID, _ selector: AudioObjectPropertySelector,
+                               _ scope: AudioObjectPropertyScope) -> UInt32? {
+        var address = AudioObjectPropertyAddress(mSelector: selector, mScope: scope,
+                                                 mElement: kAudioObjectPropertyElementMain)
+        var value: UInt32 = 0
+        var size = UInt32(MemoryLayout<UInt32>.size)
+        guard AudioObjectGetPropertyData(id, &address, 0, nil, &size, &value) == noErr else { return nil }
+        return value
+    }
+
     static func defaultOutputDevice() -> AudioDeviceID {
         var address = AudioObjectPropertyAddress(
             mSelector: kAudioHardwarePropertyDefaultOutputDevice,
@@ -114,16 +148,26 @@ final class SystemAudioListener {
     private var address: AudioObjectPropertyAddress
     private let block: AudioObjectPropertyListenerBlock
 
-    init(_ selector: AudioObjectPropertySelector, onChange: @escaping () -> Void) {
-        address = AudioObjectPropertyAddress(mSelector: selector,
-                                             mScope: kAudioObjectPropertyScopeGlobal,
+    private let object: AudioObjectID
+
+    init(_ selector: AudioObjectPropertySelector, on object: AudioObjectID = AudioObjectID(kAudioObjectSystemObject),
+         scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal, onChange: @escaping () -> Void) {
+        self.object = object
+        address = AudioObjectPropertyAddress(mSelector: selector, mScope: scope,
                                              mElement: kAudioObjectPropertyElementMain)
         block = { _, _ in onChange() }
-        AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, block)
+        AudioObjectAddPropertyListenerBlock(object, &address, .main, block)
     }
 
     deinit {
-        AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, block)
+        AudioObjectRemovePropertyListenerBlock(object, &address, .main, block)
+    }
+
+    /// Fires when a device switches between speakers and the headphone jack
+    /// (older Macs use one device for both).
+    static func dataSource(of device: AudioDeviceID, onChange: @escaping () -> Void) -> SystemAudioListener {
+        SystemAudioListener(kAudioDevicePropertyDataSource, on: device,
+                            scope: kAudioDevicePropertyScopeOutput, onChange: onChange)
     }
 
     /// Fires when the default output changes or a device comes or goes.
