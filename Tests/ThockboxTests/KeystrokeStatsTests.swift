@@ -103,4 +103,10 @@ final class StatsStoreTests: XCTestCase {
         XCTAssertEqual(publishes, 1, "one refresh for the whole burst")
     }
 
+
+    func testChartBarsReadAsKeystrokes() {
+        XCTAssertEqual(KeystrokeChart.spoken(0), "0 keystrokes")
+        XCTAssertEqual(KeystrokeChart.spoken(1), "1 keystroke")
+        XCTAssertEqual(KeystrokeChart.spoken(1234), 1234.formatted() + " keystrokes")
+    }
 }
