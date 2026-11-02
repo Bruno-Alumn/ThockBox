@@ -9,7 +9,9 @@ final class MainWindow: NSObject, NSWindowDelegate {
 
     private var window: NSWindow?
 
-    func show() {
+    /// Brings up the window, on `page` if given.
+    func show(_ page: SettingsPage? = nil) {
+        if let page { SettingsNavigation.shared.page = page }
         let window = self.window ?? makeWindow()
         self.window = window
         NSApp.setActivationPolicy(.regular)
@@ -24,9 +26,11 @@ final class MainWindow: NSObject, NSWindowDelegate {
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
         window.isReleasedWhenClosed = false
         window.delegate = self
-        window.setContentSize(NSSize(width: 480, height: 720))
+        window.setContentSize(NSSize(width: 720, height: 600))
         window.center()
-        window.setFrameAutosaveName("ThockboxSettings")
+        // A new name for the sidebar layout, so the old tall, narrow frame
+        // isn't restored onto it.
+        window.setFrameAutosaveName("ThockBoxSettingsWindow")
         return window
     }
 

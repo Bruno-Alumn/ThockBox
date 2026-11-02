@@ -1,101 +1,116 @@
 import SwiftUI
 
-/// The menu bar panel: quick settings only. Everything else lives in the
-/// settings window (SettingsView), opened with "Settings…".
+/// The menu bar panel: what ThockBox is doing, and the few things people
+/// change from day to day. Everything else is in the settings window.
 struct MenuView: View {
     @ObservedObject var state: AppState
     @ObservedObject var updater = Updater.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
             header
-            if !state.accessibilityTrusted {
-                PermissionBanner()
-            }
-            if let app = state.secureInputApp {
-                SecureInputBanner(app: app)
-            }
-            if state.enabled, let mute = state.automaticMute {
-                Label(mute.message, systemImage: mute.symbol)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                .padding(14)
+            Divider()
+            sound
+                .padding(14)
+            if let app = state.frontApp {
+                Divider()
+                muteInApp(app)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
             }
             if let release = updater.availableRelease {
-                UpdateBanner(release: release)
-            }
-            Divider()
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    sectionTitle("Switches")
-                    Spacer()
-                    PreviewButton(state: state)
-                        .controlSize(.mini)
-                        .buttonStyle(.borderless)
-                }
-                SwitchList(state: state)
-            }
-            Divider()
-            VStack(alignment: .leading, spacing: 6) {
-                sectionTitle("Volume")
-                VolumeControl(state: state)
-            }
-            if let app = state.frontApp {
-                HStack {
-                    Text("Mute in \(app.name)")
-                        .font(.caption)
-                    Spacer()
-                    Toggle("Mute in \(app.name)", isOn: Binding(
-                        get: { state.mutedApps.contains(app.id) },
-                        set: { state.setMuted($0, appID: app.id) }))
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
-                        .labelsHidden()
-                }
+                Divider()
+                updateRow(release)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
             }
             Divider()
             footer
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
         }
-        .padding(14)
-        .frame(width: 280)
+        .frame(width: 300)
         .tint(.thockCoral)
         .onAppear { state.refreshAccessibilityStatus() }
     }
 
+    /// Name, status and the switch that turns everything on or off.
     private var header: some View {
-        HStack {
+        HStack(alignment: .top, spacing: 10) {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
-                .frame(width: 20, height: 20)
-            Text("ThockBox")
-                .font(.headline)
-            Spacer()
-            Toggle("", isOn: $state.enabled)
+                .frame(width: 32, height: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("ThockBox")
+                    .font(.headline)
+                StatusView(state: state)
+            }
+            Spacer(minLength: 8)
+            Toggle("Sounds", isOn: $state.enabled)
                 .toggleStyle(.switch)
-                .controlSize(.small)
-                .help("Toggle sounds (\(state.toggleShortcut.display))")
+                .labelsHidden()
+                .help("Turn sounds on or off (\(state.toggleShortcut.display))")
         }
     }
 
-    private func sectionTitle(_ title: String) -> some View {
-        Text(title)
-            .font(.caption.bold())
-            .foregroundStyle(.secondary)
+    private var sound: some View {
+        Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 12) {
+            GridRow {
+                Text("Switch")
+                    .foregroundStyle(.secondary)
+                SwitchPicker(state: state)
+                    .labelsHidden()
+            }
+            GridRow {
+                Text("Volume")
+                    .foregroundStyle(.secondary)
+                VolumeSlider(state: state)
+            }
+        }
+        .disabled(!state.enabled)
+    }
+
+    /// The app you came from, one switch away from being muted.
+    private func muteInApp(_ app: FrontApp) -> some View {
+        HStack(spacing: 8) {
+            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: app.id) {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                    .resizable()
+                    .frame(width: 18, height: 18)
+            }
+            Text("Mute in \(app.name)")
+            Spacer()
+            Toggle("Mute in \(app.name)", isOn: Binding(
+                get: { state.mutedApps.contains(app.id) },
+                set: { state.setMuted($0, appID: app.id) }))
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .labelsHidden()
+        }
+    }
+
+    private func updateRow(_ release: Release) -> some View {
+        Button {
+            MainWindow.shared.show(.general)
+        } label: {
+            Label("Update to \(release.version)…", systemImage: "arrow.down.circle.fill")
+        }
+        .buttonStyle(.borderless)
+        .foregroundStyle(Color.thockCoral)
     }
 
     private var footer: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            StatsLine(store: state.stats)
-                .font(.caption2)
+        HStack {
+            KeysTodayText(store: state.stats)
+                .font(.caption)
                 .foregroundStyle(.secondary)
-            HStack {
-                Button("Settings…") { MainWindow.shared.show() }
-                    .keyboardShortcut(",")
-                Spacer()
-                Button("Quit") { NSApp.terminate(nil) }
-                    .keyboardShortcut("q")
-            }
-            .controlSize(.small)
+            Spacer()
+            Button("Settings…") { MainWindow.shared.show() }
+                .keyboardShortcut(",")
+            Button("Quit") { NSApp.terminate(nil) }
+                .keyboardShortcut("q")
         }
+        .controlSize(.small)
     }
 }

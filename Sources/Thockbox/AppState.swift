@@ -2,7 +2,6 @@ import AppKit
 import Carbon.HIToolbox
 import Combine
 import ServiceManagement
-import UserNotifications
 
 /// Central app state: user settings (persisted to UserDefaults), the audio
 /// engine, the key listener, and keystroke stats.
@@ -80,9 +79,6 @@ final class AppState: ObservableObject {
     }
     @Published var hapticFeedback: Bool {
         didSet { defaults.set(hapticFeedback, forKey: "hapticFeedback") }
-    }
-    @Published var notifyOnSwitchChange: Bool {
-        didSet { defaults.set(notifyOnSwitchChange, forKey: "notifyOnSwitchChange") }
     }
     /// Hidden, ThockBox keeps running; opening it again from Finder or
     /// Spotlight shows the settings window. macOS also turns this off when
@@ -178,7 +174,7 @@ final class AppState: ObservableObject {
             "toneX": 0.0, "toneY": 0.0, "pitchVariation": 60.0,
             "muteModifiers": false, "functionKeysAudible": true,
             "returnDing": false, "mouseClicks": false,
-            "hapticFeedback": false, "notifyOnSwitchChange": false,
+            "hapticFeedback": false,
             "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "muteDuringCalls": false,
             "idleTimeoutMinutes": 0,
         ])
@@ -193,7 +189,6 @@ final class AppState: ObservableObject {
         returnDing = defaults.bool(forKey: "returnDing")
         mouseClicks = defaults.bool(forKey: "mouseClicks")
         hapticFeedback = defaults.bool(forKey: "hapticFeedback")
-        notifyOnSwitchChange = defaults.bool(forKey: "notifyOnSwitchChange")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
@@ -342,6 +337,13 @@ final class AppState: ObservableObject {
         if wasSelected { selectedPackID = "cream" }
     }
 
+    /// What ThockBox is doing right now; the first thing that stops sound
+    /// wins. The menu bar panel and the settings sidebar both show it.
+    var status: PlaybackStatus {
+        .from(trusted: accessibilityTrusted, enabled: enabled, shortcut: toggleShortcut.display,
+              secureInputApp: secureInputApp, mute: automaticMute, pack: currentPack?.name ?? "")
+    }
+
     var currentPack: SoundPack? {
         packs.first { $0.id == selectedPackID } ?? packs.first
     }
@@ -353,12 +355,7 @@ final class AppState: ObservableObject {
         }
         engine.load(pack: pack)
         klog.notice("loaded pack \(pack.id, privacy: .public)")
-        if notify {
-            playSwitchPreview()
-            if notifyOnSwitchChange {
-                postNotification(title: "Switch changed", body: pack.name)
-            }
-        }
+        if notify { playSwitchPreview() }
     }
 
     // MARK: - Preference previews (audible feedback for settings changes)
@@ -631,18 +628,6 @@ final class AppState: ObservableObject {
         engine.setOutputDevice(AudioDevices.id(forUID: outputDeviceUID, in: AudioDevices.outputDevices()))
     }
 
-    private func postNotification(title: String, body: String) {
-        guard Bundle.main.bundleIdentifier != nil else { return }
-        let center = UNUserNotificationCenter.current()
-        center.requestAuthorization(options: [.alert]) { granted, _ in
-            guard granted else { return }
-            let content = UNMutableNotificationContent()
-            content.title = title
-            content.body = body
-            center.add(UNNotificationRequest(identifier: UUID().uuidString,
-                                             content: content, trigger: nil))
-        }
-    }
 
     /// Sounds live in the app bundle's Resources/Sounds; during `swift run`
     /// development, fall back to ./Resources/Sounds in the working directory.
@@ -681,8 +666,74 @@ enum AutomaticMute: Equatable {
         switch self {
         case .call: "mic.fill"
         case .screenLocked: "lock.fill"
-        case .app: "app.fill"
+        case .app: "speaker.slash.fill"
         case .idle: "moon.zzz.fill"
+        }
+    }
+}
+
+/// The one status line shown in the menu bar panel and the settings
+/// sidebar, so both always agree on what's happening and why.
+enum PlaybackStatus: Equatable {
+    case needsAccess
+    case off(shortcut: String)
+    case blocked(app: String)
+    case muted(AutomaticMute)
+    case playing(pack: String)
+
+    static func from(trusted: Bool, enabled: Bool, shortcut: String, secureInputApp: String?,
+                     mute: AutomaticMute?, pack: String) -> PlaybackStatus {
+        if !trusted { return .needsAccess }
+        if !enabled { return .off(shortcut: shortcut) }
+        if let app = secureInputApp { return .blocked(app: app) }
+        if let mute { return .muted(mute) }
+        return .playing(pack: pack)
+    }
+
+    var title: String {
+        switch self {
+        case .needsAccess: "Needs Accessibility access"
+        case .off: "Off"
+        case .blocked(let app): "Paused by \(app)"
+        case .muted(.call): "Muted during a call"
+        case .muted(.screenLocked): "Muted while locked"
+        case .muted(.app(let name)): "Muted in \(name)"
+        case .muted(.idle): "Muted after inactivity"
+        case .playing(let pack): "Playing \(pack)"
+        }
+    }
+
+    /// One sentence of explanation, when the title alone isn't enough.
+    var detail: String? {
+        switch self {
+        case .needsAccess:
+            "Allow ThockBox in System Settings so it can hear key presses. Nothing you type leaves your Mac."
+        case .off(let shortcut):
+            "Turn it on here or with \(shortcut)."
+        case .blocked(let app):
+            "\(app) has secure input on, which hides key presses from other apps. That's normal in a password field. If it lasts, quit and reopen \(app)."
+        case .muted(.idle):
+            "Press any key to wake it."
+        case .muted, .playing:
+            nil
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .needsAccess: "exclamationmark.triangle.fill"
+        case .off: "speaker.slash.fill"
+        case .blocked: "lock.shield.fill"
+        case .muted(let reason): reason.symbol
+        case .playing: "speaker.wave.2.fill"
+        }
+    }
+
+    /// Something the user has to act on, not a choice they made.
+    var needsAttention: Bool {
+        switch self {
+        case .needsAccess, .blocked: true
+        default: false
         }
     }
 }

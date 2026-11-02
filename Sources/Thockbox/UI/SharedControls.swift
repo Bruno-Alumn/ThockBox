@@ -1,79 +1,118 @@
 import SwiftUI
 
-/// Controls shown both in the menu bar panel and the settings window.
+/// Pieces used by both the menu bar panel and the settings window.
 
-struct PermissionBanner: View {
+/// The status line: what ThockBox is doing and, when something needs fixing,
+/// why and the button that fixes it.
+struct StatusView: View {
+    @ObservedObject var state: AppState
+    /// The settings sidebar is narrow, so it leaves the explanation for
+    /// problems only; the menu bar panel explains every state.
+    var showsDetailOnlyForProblems = false
+
     var body: some View {
+        let status = state.status
         VStack(alignment: .leading, spacing: 6) {
-            Label("Accessibility permission needed", systemImage: "exclamationmark.triangle.fill")
-                .font(.caption.bold())
-                .foregroundStyle(.orange)
-            Text("ThockBox needs Accessibility access to hear your keystrokes. No keystroke data ever leaves your Mac.")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Button("Open System Settings") { Permissions.openSystemSettings() }
-                .controlSize(.small)
+            Label(status.title, systemImage: status.symbol)
+                .font(.callout.weight(.medium))
+                .foregroundStyle(status.needsAttention ? Color.orange : Color.secondary)
+                .labelStyle(StatusLabelStyle(tint: status.needsAttention ? .orange : symbolTint(status)))
+            if let detail = status.detail, status.needsAttention || !showsDetailOnlyForProblems {
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if status == .needsAccess {
+                Button("Open System Settings") { Permissions.openSystemSettings() }
+                    .controlSize(.small)
+            }
         }
-        .padding(8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 6).fill(.orange.opacity(0.1)))
+        .accessibilityElement(children: .combine)
+    }
+
+    private func symbolTint(_ status: PlaybackStatus) -> Color {
+        if case .playing = status { return .thockCoral }
+        return .secondary
     }
 }
 
-/// Shown while another app holds Secure Input, which keeps key presses
-/// from reaching ThockBox.
-struct SecureInputBanner: View {
-    let app: String
+private struct StatusLabelStyle: LabelStyle {
+    let tint: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 6) {
+            configuration.icon
+                .foregroundStyle(tint)
+                .frame(width: 16)
+            configuration.title
+        }
+    }
+}
+
+/// Switch sets as a pop-up menu: one line in the menu bar panel no matter
+/// how many sets there are. Choosing one plays a sample of it.
+struct SwitchPicker: View {
+    @ObservedObject var state: AppState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Label("Key sounds paused", systemImage: "lock.shield")
-                .font(.caption.bold())
-            Text("\(app) has secure input on, so macOS isn't passing key presses to other apps. That's normal in a password field. If it stays on, quit and reopen \(app).")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+        Picker("Switch", selection: Binding(
+            get: { state.currentPack?.id ?? "" },
+            set: { state.selectedPackID = $0 }
+        )) {
+            ForEach(state.packs) { pack in
+                Text(pack.name).tag(pack.id)
+            }
         }
-        .padding(8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 6).fill(Color.secondary.opacity(0.1)))
+        .pickerStyle(.menu)
     }
 }
 
+/// All switch sets as a list, for the settings window. Choosing one plays a
+/// sample of it; sets the user added can be removed.
 struct SwitchList: View {
     @ObservedObject var state: AppState
-    /// Settings shows a remove button on sets the user added; the menu
-    /// bar panel doesn't, so a stray click there can't delete one.
-    var allowsRemoving = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             ForEach(state.packs) { pack in
-                Button {
-                    state.selectedPackID = pack.id
-                } label: {
-                    HStack {
-                        Image(systemName: state.currentPack?.id == pack.id
-                              ? "circle.inset.filled" : "circle")
-                            .foregroundStyle(state.currentPack?.id == pack.id
-                                             ? Color.thockCoral : Color.secondary)
-                        Text(pack.name)
-                        Spacer()
-                        if allowsRemoving && UserPacks.isUserPack(pack) {
-                            Button {
-                                remove(pack)
-                            } label: {
-                                Image(systemName: "minus.circle.fill")
+                let selected = state.currentPack?.id == pack.id
+                HStack {
+                    Button {
+                        state.selectedPackID = pack.id
+                    } label: {
+                        HStack {
+                            Image(systemName: selected ? "circle.inset.filled" : "circle")
+                                .foregroundStyle(selected ? Color.thockCoral : Color.secondary)
+                            Text(pack.name)
+                            if UserPacks.isUserPack(pack) {
+                                Text("Yours")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 1)
+                                    .background(Capsule().fill(Color.secondary.opacity(0.15)))
                             }
-                            .buttonStyle(.borderless)
-                            .foregroundStyle(.secondary)
-                            .help("Remove \(pack.name) (moves its files to the Trash)")
+                            Spacer()
                         }
+                        .contentShape(Rectangle())
                     }
-                    .contentShape(Rectangle())
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                    if UserPacks.isUserPack(pack) {
+                        Button {
+                            remove(pack)
+                        } label: {
+                            Image(systemName: "minus.circle.fill")
+                        }
+                        .buttonStyle(.borderless)
+                        .foregroundStyle(.secondary)
+                        .help("Remove \(pack.name) (moves its files to the Trash)")
+                        .accessibilityLabel("Remove \(pack.name)")
+                    }
                 }
-                .buttonStyle(.plain)
+                .padding(.vertical, 2)
             }
         }
     }
@@ -87,34 +126,68 @@ struct SwitchList: View {
     }
 }
 
-struct PreviewButton: View {
+struct VolumeSlider: View {
     @ObservedObject var state: AppState
 
     var body: some View {
-        Button("Preview") { state.playSwitchPreview() }
-            .disabled(!state.enabled || state.isAutomaticallyMuted || state.packs.isEmpty)
+        HStack(spacing: 8) {
+            Image(systemName: "speaker.fill")
+                .imageScale(.small)
+                .foregroundStyle(.secondary)
+            // labelsHidden: in a grouped Form an unlabeled slider would sit
+            // in the value column, at half width.
+            Slider(value: $state.volume, in: 0...1)
+                .labelsHidden()
+                .accessibilityLabel("Volume")
+            Image(systemName: "speaker.wave.3.fill")
+                .imageScale(.small)
+                .foregroundStyle(.secondary)
+        }
     }
 }
 
-struct VolumeControl: View {
+/// The Tone Pad with its directions written on its edges, so it explains
+/// itself, and the pitch variation slider under it.
+struct ToneControl: View {
     @ObservedObject var state: AppState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Image(systemName: "speaker.fill").imageScale(.small)
-                Slider(value: $state.volume, in: 0...1)
-                Image(systemName: "speaker.wave.3.fill").imageScale(.small)
-            }
-            HStack {
-                ForEach(VolumePreset.allCases, id: \.self) { preset in
-                    Button(preset.label) { state.volume = preset.value }
-                        .controlSize(.small)
-                        .buttonStyle(.bordered)
-                        .tint(abs(state.volume - preset.value) < 0.01 ? .thockCoral : nil)
+        HStack(alignment: .center, spacing: 20) {
+            VStack(spacing: 4) {
+                edgeLabel("Higher")
+                HStack(spacing: 6) {
+                    edgeLabel("Darker")
+                    TonePadView(x: $state.toneX, y: $state.toneY)
+                        .frame(width: 132, height: 132)
+                    edgeLabel("Brighter")
                 }
+                edgeLabel("Lower")
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Variation")
+                HStack(spacing: 6) {
+                    Text("None")
+                    Slider(value: $state.pitchVariation, in: 0...150)
+                        .labelsHidden()
+                        .accessibilityLabel("Pitch variation")
+                    Text("More")
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                Text("Varies the pitch of each key a little, like a real keyboard.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    private func edgeLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .fixedSize()
+            .accessibilityHidden(true)
     }
 }
 
@@ -157,49 +230,11 @@ struct OutputDevicePicker: View {
 }
 
 /// Watches only the keystroke counts, so typing doesn't re-render the rest.
-struct StatsLine: View {
+struct KeysTodayText: View {
     @ObservedObject var store: StatsStore
 
     var body: some View {
-        Text("\(store.shown.today.formatted()) today · \(store.shown.total.formatted()) total")
-    }
-}
-
-enum VolumePreset: CaseIterable {
-    case soft, balanced, loud
-
-    var label: String {
-        switch self {
-        case .soft: "Soft"
-        case .balanced: "Balanced"
-        case .loud: "Loud"
-        }
-    }
-
-    var value: Float {
-        switch self {
-        case .soft: 0.25
-        case .balanced: 0.55
-        case .loud: 0.9
-        }
-    }
-}
-
-/// The menu bar panel's notice that a newer release is out. Opens the
-/// settings window, where the update is installed.
-struct UpdateBanner: View {
-    let release: Release
-
-    var body: some View {
-        Button {
-            MainWindow.shared.show()
-        } label: {
-            Label("ThockBox \(release.version) is available", systemImage: "arrow.down.circle.fill")
-                .font(.caption.bold())
-                .foregroundStyle(Color.thockCoral)
-        }
-        .buttonStyle(.borderless)
-        .help("Open Settings to install the update")
+        Text("\(store.shown.today.formatted()) keys today")
     }
 }
 
