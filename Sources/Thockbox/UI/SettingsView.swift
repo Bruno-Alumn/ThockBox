@@ -307,8 +307,9 @@ private struct MutingPage: View {
     var body: some View {
         Form {
             Section {
-                if MicrophoneMonitor.isSupported {
+                if AudioActivityMonitor.isSupported {
                     Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
+                    Toggle("While other apps play sound", isOn: $state.muteWhileMedia)
                 }
                 Toggle("During calendar events", isOn: $state.muteDuringMeetings)
                 if state.muteDuringMeetings && !state.calendars.isEmpty {
@@ -319,6 +320,7 @@ private struct MutingPage: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
+                Toggle("While playing a game", isOn: $state.muteWhileGaming)
                 Toggle("While the screen is locked", isOn: $state.muteWhenLocked)
                 if ScreenCapture.isAvailable {
                     Toggle("While sharing or recording the screen", isOn: $state.muteWhileSharing)
@@ -335,10 +337,10 @@ private struct MutingPage: View {
             } header: {
                 Text("Mute Automatically")
             } footer: {
-                formFooter((MicrophoneMonitor.isSupported
-                      ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. "
+                formFooter((AudioActivityMonitor.isSupported
+                      ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. Other apps playing sound includes music, videos and games, but not alerts. "
                       : "")
-                     + "Calendar events don't count when they last all day, are marked free, or you declined them. Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
+                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam. Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
             }
 
             Section {
@@ -397,6 +399,10 @@ private struct GeneralPage: View {
                 Toggle("Show today's keystrokes in the menu bar", isOn: $state.showKeystrokesInMenuBar)
                 Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)
                     .disabled(!state.showMenuBarIcon)
+                Toggle(isOn: $state.notifySetChanges) {
+                    Text("Notify when the switch set changes")
+                    Text("When a Focus, Shortcuts or AppleScript picks a different set.")
+                }
             }
 
             Section {
@@ -422,6 +428,12 @@ private struct GeneralPage: View {
                         Text("Allowed")
                     } else {
                         Button("Open System Settings") { Permissions.openSystemSettings() }
+                    }
+                }
+                LabeledContent("Getting started") {
+                    HStack {
+                        Button("Welcome…") { WelcomeWindow.shared.show() }
+                        Button("What's New…") { WhatsNewWindow.shared.show() }
                     }
                 }
                 Link("Troubleshooting", destination: URL(string: "https://github.com/Bruno-Alumn/ThockBox#troubleshooting")!)

@@ -17,6 +17,12 @@
             <property name="mute during calls" code="Tbmc" type="boolean" access="rw" description="Whether sounds stop while another app uses the microphone (macOS 14.2 or later).">
                 <cocoa key="muteDuringCalls"/>
             </property>
+            <property name="mute while gaming" code="Tbmg" type="boolean" access="rw" description="Whether sounds stop while a game is in front.">
+                <cocoa key="muteWhileGaming"/>
+            </property>
+            <property name="mute while media plays" code="Tbmm" type="boolean" access="rw" description="Whether sounds stop while another app plays sound (macOS 14.2 or later).">
+                <cocoa key="muteWhileMedia"/>
+            </property>
             <property name="mute during meetings" code="Tbmt" type="boolean" access="rw" description="Whether sounds stop during calendar events (once Calendars access is allowed).">
                 <cocoa key="muteDuringMeetings"/>
             </property>

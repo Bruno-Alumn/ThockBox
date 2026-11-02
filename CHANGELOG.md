@@ -5,6 +5,17 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **What's New** opens once after an update with the notes for that
+  version. Settings › General › Help reopens it, and the Welcome window.
+- **Notify when the switch set changes** (Settings › General, off by
+  default): a notification says which set a Focus, Shortcuts or AppleScript
+  picked.
+- **Mute while playing a game** (Settings › Muting): any app filed under
+  Games, or installed by Steam.
+- **Mute while other apps play sound** (Settings → Muting): music, videos
+  and games quiet the keys; alerts don't. Needs macOS 14.2 or later.
+- **Focus filter:** turn sounds off, or pick a switch set, while a Focus is on
+  (System Settings › Focus › Focus Filters). It goes back when the Focus ends.
 - The ThockBox icon in the Welcome window presses like a key.
 - **The menu bar icon dims while sounds are off,** so it's easy to tell at a
   glance. Turn it off in Settings › General.
