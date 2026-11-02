@@ -54,11 +54,15 @@ Oreo and Super Red.
 ## Menu bar and settings window
 
 The menu bar icon opens a standard menu. Its first line says what
-ThockBox is doing (playing, off, muted and why, or what needs fixing), then:
+ThockBox is doing (playing, off, muted and why, or what needs fixing). When
+something does, an item under it helps: **Open Accessibility Settings…**,
+or **Why Is Sound Paused?** when another app's secure input is blocking key
+presses. Then:
 
 - **Sounds On**, checked while sounds play.
 - **Switch** and **Volume** submenus.
 - **Mute in** the app you were just using.
+- **Update to** the new version, when there is one.
 - **Settings…** (⌘,) and **Quit ThockBox** (⌘Q).
 
 The settings window is a standard Mac preferences window with five tabs:
@@ -66,8 +70,8 @@ The settings window is a standard Mac preferences window with five tabs:
 - **Sound:** on and off, the switch set (including your own) with a field
   to try it, volume and output device, and tone (brightness, pitch and
   variation).
-- **Keys:** the on/off shortcut, which keys play, and extras like the Return
-  ding.
+- **Keys:** the on/off shortcut, which keys play (and mouse clicks), and
+  extras: the Return ding and a trackpad tap with each key.
 - **Muting:** when ThockBox goes quiet by itself, and the apps it stays quiet
   in.
 - **Activity:** keystrokes today, in total, and over the last week.
@@ -189,9 +193,10 @@ contains nothing but the app version. Turn it off in Settings → General.
 ## Updates
 
 When a newer release is out, the menu bar menu offers it, and Settings →
-General offers **Install and Relaunch**. ThockBox downloads the release zip,
-checks that it is a correctly signed ThockBox of that version, replaces the
-installed copy and reopens. Accessibility access carries over, since every
+General offers **Install and Relaunch**. ThockBox downloads the release's
+disk image, checks that it holds a correctly signed ThockBox of that
+version, replaces the installed copy and reopens. If that fails, **Download
+from GitHub** opens the release page instead. Accessibility access carries over, since every
 release is signed with the same certificate.
 
 ## Performance
