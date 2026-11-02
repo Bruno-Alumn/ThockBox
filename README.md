@@ -196,7 +196,7 @@ whether to allow it.
 
 ## Custom switch sets
 
-The quickest way is **Settings → Switches → Add Your Own…**. Pick a folder
+The quickest way is **Settings → Switches → Add Your Own…**, or dropping a folder onto the switch list. Pick a folder
 of recordings (or the files themselves) and it becomes a switch set named
 after the folder. Files with *space*, *enter*/*return* or
 *backspace*/*delete* in the name play for those keys. Files with *up* or
