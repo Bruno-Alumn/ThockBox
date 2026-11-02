@@ -1,3 +1,4 @@
+import AVFoundation
 import Foundation
 
 /// Switch sets made from the user's own recordings. Each is a folder in
@@ -55,7 +56,11 @@ enum UserPacks {
             for file in files {
                 // Two folders can hold files with the same name.
                 var target = file.lastPathComponent
-                if copied.contains(target) { target = "\(copied.count)-\(target)" }
+                var suffix = 2
+                while copied.contains(target) {
+                    target = "\(suffix)-\(file.lastPathComponent)"
+                    suffix += 1
+                }
                 try fm.copyItem(at: file, to: folder.appendingPathComponent(target))
                 copied.append(target)
             }
@@ -81,6 +86,11 @@ enum UserPacks {
               manifest.keys[KeyClass.default.rawValue]?.down.isEmpty == false else {
             throw ImportError(errorDescription: "This folder's pack.json isn't a valid ThockBox switch set.")
         }
+        let unusable = unusableFiles(in: manifest, at: source)
+        guard unusable.isEmpty else {
+            let more = unusable.count > 1 ? " and \(unusable.count - 1) more" : ""
+            throw ImportError(errorDescription: "This set lists sounds that are missing or can't be played: \(unusable[0])\(more).")
+        }
         let (id, folder) = try makeFolder(named: manifest.name, in: directory)
         do {
             let fm = FileManager.default
@@ -94,6 +104,18 @@ enum UserPacks {
         } catch {
             try? FileManager.default.removeItem(at: folder)
             throw error
+        }
+    }
+
+    /// The files a manifest lists that don't exist inside `folder` or can't
+    /// be opened as audio, so a set that would play nothing isn't added.
+    static func unusableFiles(in manifest: SoundPackManifest, at folder: URL) -> [String] {
+        let root = folder.standardizedFileURL.path + "/"
+        let listed = Set(manifest.keys.values.flatMap { $0.down + ($0.up ?? []) })
+        return listed.sorted().filter { name in
+            let url = folder.appendingPathComponent(name).standardizedFileURL
+            guard url.path.hasPrefix(root) else { return true }
+            return (try? AVAudioFile(forReading: url)) == nil
         }
     }
 

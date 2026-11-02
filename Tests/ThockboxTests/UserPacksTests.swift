@@ -118,6 +118,41 @@ final class UserPacksTests: XCTestCase {
         XCTAssertFalse(engine.buffers.isEmpty, "files in press/ and release/ came along")
     }
 
+    /// A pack.json whose sounds are missing, outside its folder or not audio
+    /// would add a set that plays nothing, so the import says which.
+    func testSetWithUnusableSoundsIsRejected() throws {
+        let folder = try recordings("Broken", ["a.mp3": "press/GENERIC_R1.mp3"])
+        try Data("not audio".utf8).write(to: folder.appendingPathComponent("notes.wav"))
+        let outside = try recordings("Elsewhere", ["b.mp3": "press/GENERIC_R1.mp3"])
+        func attempt(_ down: [String]) throws -> String {
+            let manifest = SoundPackManifest(id: "broken", name: "Broken", attribution: nil, license: nil,
+                                             keys: ["default": .init(down: down, up: nil)], gainDb: nil)
+            try UserPacks.write(manifest, to: folder)
+            return try UserPacks.importPack(from: [folder], into: library)
+        }
+        for down in [["a.mp3", "gone.mp3"], ["a.mp3", "notes.wav"], ["../\(outside.lastPathComponent)/b.mp3"]] {
+            XCTAssertThrowsError(try attempt(down), "\(down)") { error in
+                XCTAssertTrue(error.localizedDescription.contains(down.last!), error.localizedDescription)
+            }
+        }
+        XCTAssertEqual(SoundPack.discover(in: library).count, 0, "nothing half-added")
+        XCTAssertNoThrow(try attempt(["a.mp3"]))
+    }
+
+    /// Files with the same name from different folders all come along.
+    func testSameFileNamesFromSeveralFoldersAreKept() throws {
+        let one = try recordings("One", ["a.mp3": "press/GENERIC_R1.mp3", "2-a.mp3": "press/GENERIC_R1.mp3"])
+        let two = try recordings("Two", ["a.mp3": "press/GENERIC_R1.mp3"])
+        let three = try recordings("Three", ["a.mp3": "press/GENERIC_R1.mp3"])
+        let files = [one, two, three].flatMap { folder in
+            ["a.mp3", "2-a.mp3"].map { folder.appendingPathComponent($0) }
+                .filter { FileManager.default.fileExists(atPath: $0.path) }
+        }
+        let id = try UserPacks.importPack(from: files, into: library)
+        let pack = try XCTUnwrap(SoundPack.discover(in: library).first { $0.id == id })
+        XCTAssertEqual(pack.samples(for: .default, up: false).count, 4)
+    }
+
     /// A set of yours deleted in Finder disappears the next time the menu or
     /// Settings opens, sound falls back to Cream, and the set comes back
     /// selected if it's restored.
