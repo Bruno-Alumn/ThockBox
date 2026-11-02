@@ -37,16 +37,37 @@ jobs:
           MAX_CPU: 10
           MEASURE_SECONDS: 30
 
+  # Commits and the pull request description credit people only: no AI tool
+  # as an author or co-author (merges use the PR title and description).
+  credits:
+    name: No AI credits
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commits and description
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: >
+          scripts/check_no_ai_credit.sh
+          ${{ github.event.pull_request.base.sha }}
+          ${{ github.event.pull_request.head.sha }}
+
   # The status check branch protection requires. It runs even when a job
   # above fails (GitHub counts a skipped required check as passed), and
-  # passes only if both did.
+  # passes only if all of them did.
   test:
-    needs: [unit, app]
+    needs: [unit, app, credits]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Both jobs passed
         run: |
-          echo "unit: ${{ needs.unit.result }}, app: ${{ needs.app.result }}"
+          echo "unit: ${{ needs.unit.result }}, app: ${{ needs.app.result }}, credits: ${{ needs.credits.result }}"
           test "${{ needs.unit.result }}" = success
           test "${{ needs.app.result }}" = success
+          # Skipped on pushes to main, where there's no pull request.
+          test "${{ needs.credits.result }}" = success -o "${{ needs.credits.result }}" = skipped
