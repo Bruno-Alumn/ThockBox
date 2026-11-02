@@ -167,6 +167,9 @@ final class AppState: ObservableObject {
     @Published var showKeystrokesInMenuBar: Bool {
         didSet { defaults.set(showKeystrokesInMenuBar, forKey: "showKeystrokesInMenuBar") }
     }
+    @Published var dockIconStyle: DockIconStyle {
+        didSet { defaults.set(dockIconStyle.rawValue, forKey: "dockIconStyle") }
+    }
     @Published var launchAtLogin: Bool {
         didSet {
             defaults.set(launchAtLogin, forKey: "launchAtLogin")
@@ -319,6 +322,15 @@ final class AppState: ObservableObject {
     @Published private(set) var inCalendarEvent = false
     /// Whether ThockBox may read calendars, once it has asked.
     @Published private(set) var calendarAccess = CalendarMonitor.Access.unknown
+    /// The Mac's calendars, once access is allowed, for choosing which count.
+    @Published private(set) var calendars: [CalendarMonitor.CalendarInfo] = []
+    /// Calendars whose events don't mute.
+    @Published var ignoredCalendarIDs: Set<String> {
+        didSet {
+            defaults.set(Array(ignoredCalendarIDs), forKey: "ignoredCalendars")
+            calendarMonitor?.ignoredCalendarIDs = ignoredCalendarIDs
+        }
+    }
 
     private let defaults: UserDefaults
     private var idleMode = IdleMode()
@@ -377,6 +389,7 @@ final class AppState: ObservableObject {
         scrollSounds = defaults.bool(forKey: "scrollSounds")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
+        dockIconStyle = defaults.string(forKey: "dockIconStyle").flatMap(DockIconStyle.init) ?? .color
         dimIconWhenOff = defaults.bool(forKey: "dimIconWhenOff")
         showKeystrokesInMenuBar = defaults.bool(forKey: "showKeystrokesInMenuBar")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
@@ -385,6 +398,7 @@ final class AppState: ObservableObject {
         muteWhileGaming = defaults.bool(forKey: "muteWhileGaming")
         muteWhileMedia = defaults.bool(forKey: "muteWhileMedia")
         muteDuringMeetings = defaults.bool(forKey: "muteDuringMeetings")
+        ignoredCalendarIDs = Set(defaults.stringArray(forKey: "ignoredCalendars") ?? [])
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
         toggleShortcut = defaults.data(forKey: "toggleShortcut")
@@ -888,8 +902,12 @@ final class AppState: ObservableObject {
         }
         guard calendarMonitor == nil, readsCalendars else { return }
         calendarMonitor = CalendarMonitor(
+            ignoring: ignoredCalendarIDs,
             onChange: { [weak self] inEvent in self?.setInCalendarEvent(inEvent) },
-            onAccess: { [weak self] access in self?.calendarAccess = access })
+            onAccess: { [weak self] access in self?.calendarAccess = access },
+            onCalendars: { [weak self] calendars in
+                if self?.calendars != calendars { self?.calendars = calendars }
+            })
     }
 
     /// Called by the calendar monitor (and by tests).

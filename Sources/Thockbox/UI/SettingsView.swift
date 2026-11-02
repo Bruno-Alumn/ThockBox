@@ -283,6 +283,28 @@ private struct KeysPage: View {
 
 // MARK: - Muting
 
+/// Which calendars' events mute: all by default.
+private struct CalendarChoice: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        LabeledContent("Calendars") {
+            Menu(CalendarMonitor.summary(state.calendars, ignoring: state.ignoredCalendarIDs)) {
+                ForEach(state.calendars) { calendar in
+                    Toggle(calendar.account.isEmpty ? calendar.title : "\(calendar.title) (\(calendar.account))",
+                           isOn: Binding(
+                            get: { !state.ignoredCalendarIDs.contains(calendar.id) },
+                            set: { counts in
+                                if counts { state.ignoredCalendarIDs.remove(calendar.id) }
+                                else { state.ignoredCalendarIDs.insert(calendar.id) }
+                            }))
+                }
+            }
+            .fixedSize()
+        }
+    }
+}
+
 private struct MutingPage: View {
     @ObservedObject var state: AppState
 
@@ -294,6 +316,9 @@ private struct MutingPage: View {
                     Toggle("While other apps play sound", isOn: $state.muteWhileMedia)
                 }
                 Toggle("During calendar events", isOn: $state.muteDuringMeetings)
+                if state.muteDuringMeetings && !state.calendars.isEmpty {
+                    CalendarChoice(state: state)
+                }
                 if state.muteDuringMeetings && state.calendarAccess == .denied {
                     Text("ThockBox can't see your calendars. Allow it in System Settings › Privacy & Security › Calendars.")
                         .font(.callout)
@@ -374,6 +399,12 @@ private struct GeneralPage: View {
                     if !state.showMenuBarIcon {
                         Text("Open ThockBox from Applications or Spotlight to get back here.")
                     }
+                }
+                Picker(selection: $state.dockIconStyle) {
+                    ForEach(DockIconStyle.allCases) { Text($0.title).tag($0) }
+                } label: {
+                    Text("App icon")
+                    Text("Shown in the Dock and ThockBox's windows.")
                 }
                 Toggle("Show today's keystrokes in the menu bar", isOn: $state.showKeystrokesInMenuBar)
                 Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)

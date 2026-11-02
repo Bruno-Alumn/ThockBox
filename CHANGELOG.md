@@ -5,6 +5,11 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **App icon style** (Settings › General): Color, Graphite, or Graphite
+  while sounds are off, for the Dock and ThockBox's windows.
+- **Safer updates:** ThockBox only installs an update signed with its own
+  release certificate, not just any valid signature, and release builds
+  always check GitHub for updates.
 - The volume slider taps the trackpad at every 10%, and the brightness and
   pitch sliders at their middle (Force Touch trackpads).
 - **Scrolling sounds** (Settings › Keys, off by default): a soft tick per
@@ -30,7 +35,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   date) + 30 * minutes`. Setting it to `missing value` turns sounds back on.
 - **Mute during calendar events** (Settings › Muting). ThockBox asks for
   Calendars access the first time; all-day, free and declined events don't
-  count.
+  count. Choose which calendars count, for example to
+  leave out a shared family calendar.
 - **Mute while sharing or recording the screen** (Settings › Muting), so a
   call's screen share doesn't carry your typing.
 - **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain

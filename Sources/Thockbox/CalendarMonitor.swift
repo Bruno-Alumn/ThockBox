@@ -19,17 +19,42 @@ final class CalendarMonitor {
 
     enum Access { case unknown, granted, denied }
 
+    struct CalendarInfo: Identifiable, Equatable {
+        let id: String
+        let title: String
+        /// The account it belongs to (iCloud, Google, Exchange).
+        let account: String
+    }
+
+    /// "All", or how many of them count, for the picker's label.
+    static func summary(_ calendars: [CalendarInfo], ignoring ignored: Set<String>) -> String {
+        let counted = calendars.filter { !ignored.contains($0.id) }.count
+        if counted == calendars.count { return "All" }
+        if counted == 0 { return "None" }
+        return "\(counted) of \(calendars.count)"
+    }
+
+    /// Calendars whose events don't mute. Changing it checks again.
+    var ignoredCalendarIDs: Set<String> = [] {
+        didSet { if access == .granted { check() } }
+    }
+
     private(set) var inEvent = false
     private(set) var access = Access.unknown
     private let store = EKEventStore()
     private let onChange: (Bool) -> Void
     private let onAccess: (Access) -> Void
+    private let onCalendars: ([CalendarInfo]) -> Void
     private var timer: Timer?
     private var observers: [NSObjectProtocol] = []
 
-    init(onChange: @escaping (Bool) -> Void, onAccess: @escaping (Access) -> Void) {
+    init(ignoring ignored: Set<String> = [],
+         onChange: @escaping (Bool) -> Void, onAccess: @escaping (Access) -> Void,
+         onCalendars: @escaping ([CalendarInfo]) -> Void) {
+        self.ignoredCalendarIDs = ignored
         self.onChange = onChange
         self.onAccess = onAccess
+        self.onCalendars = onCalendars
         requestAccess()
     }
 
@@ -64,9 +89,15 @@ final class CalendarMonitor {
     }
 
     private func check(now: Date = Date()) {
-        let predicate = store.predicateForEvents(withStart: now.addingTimeInterval(-86_400),
-                                                 end: now.addingTimeInterval(86_400), calendars: nil)
-        let events = store.events(matching: predicate).map(Self.event)
+        let all = store.calendars(for: .event)
+        onCalendars(all.map {
+            CalendarInfo(id: $0.calendarIdentifier, title: $0.title, account: $0.source?.title ?? "")
+        }.sorted { ($0.account, $0.title) < ($1.account, $1.title) })
+        let counted = all.filter { !ignoredCalendarIDs.contains($0.calendarIdentifier) }
+        // An empty list would mean every calendar to EventKit.
+        let events = counted.isEmpty ? [] : store.events(matching: store.predicateForEvents(
+            withStart: now.addingTimeInterval(-86_400), end: now.addingTimeInterval(86_400),
+            calendars: counted)).map(Self.event)
         let busy = Self.isBusy(events, at: now)
         if busy != inEvent {
             inEvent = busy
