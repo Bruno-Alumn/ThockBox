@@ -34,6 +34,15 @@ final class AppStateTests: XCTestCase {
         XCTAssertFalse(state.mouseClicks)
     }
 
+    func testScrollSoundsListenOnlyWhenOn() {
+        let state = AppState(defaults: defaults)
+        XCTAssertFalse(state.scrollSounds, "off by default")
+        XCTAssertFalse(state.listener.listensToScroll)
+        state.scrollSounds = true
+        XCTAssertTrue(state.listener.listensToScroll)
+        XCTAssertTrue(AppState(defaults: defaults).scrollSounds, "saved")
+    }
+
     func testStoredValuesAreClampedOnLoad() {
         defaults.set(5.0, forKey: "volume")
         defaults.set(-9.0, forKey: "toneX")

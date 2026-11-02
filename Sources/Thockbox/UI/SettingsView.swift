@@ -259,10 +259,11 @@ private struct KeysPage: View {
                     set: { state.muteModifiers = !$0 }))
                 Toggle("Function keys", isOn: $state.functionKeysAudible)
                 Toggle("Mouse clicks", isOn: $state.mouseClicks)
+                Toggle("Scrolling", isOn: $state.scrollSounds)
             } header: {
                 Text("Also Play Sounds For")
             } footer: {
-                formFooter("Letters, numbers, Space, Return and the other typing keys always play.")
+                formFooter("Letters, numbers, Space, Return and the other typing keys always play. Scrolling ticks softly, like a mouse wheel.")
             }
 
             Section {
@@ -271,7 +272,7 @@ private struct KeysPage: View {
             } header: {
                 Text("Extras")
             } footer: {
-                formFooter("The trackpad tap needs a Force Touch trackpad.")
+                formFooter("The trackpad tap needs a Force Touch trackpad. With scrolling sounds on, each scroll tick taps too.")
             }
         }
     }

@@ -5,6 +5,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Scrolling sounds** (Settings › Keys, off by default): a soft tick per
+  notch, like a mouse wheel, and a trackpad tap with it when the trackpad
+  tap is on.
 - **Mute during calendar events** (Settings › Muting). ThockBox asks for
   Calendars access the first time; all-day, free and declined events don't
   count.

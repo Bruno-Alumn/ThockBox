@@ -114,7 +114,7 @@ loudness-matched like the built-in ones, and survive updates.
 
 - **Sound:** on and off, the switch set with a field to try it, volume and
   output device, and tone (brightness, pitch and variation).
-- **Keys:** the on/off shortcut, which keys play (and mouse clicks), the
+- **Keys:** the on/off shortcut, which keys play (and mouse clicks and scrolling), the
   Return ding, and a trackpad tap with each key.
 - **Muting:** during calls (macOS 14.2 or later), during calendar events,
   when the screen locks, while
