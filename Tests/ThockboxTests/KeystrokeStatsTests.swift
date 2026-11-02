@@ -21,6 +21,13 @@ final class KeystrokeStatsTests: XCTestCase {
         return c.date!
     }
 
+    func testCSVListsDaysOldestFirstWithToday() {
+        var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
+        for _ in 0..<3 { stats.record(now: day("2026-11-01")) }
+        for _ in 0..<2 { stats.record(now: day("2026-11-03")) }
+        XCTAssertEqual(stats.csv(), "date,keystrokes\n2026-11-01,3\n2026-11-03,2\n")
+    }
+
     func testCountsTodayAndTotal() {
         var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
         for _ in 0..<3 { stats.record(now: day("2026-11-01")) }

@@ -50,8 +50,9 @@ or endorsed by Klack or its developer.
 
 **Quiet when it should be**
 
-- Mutes itself during calls and meetings, while sharing your screen, when the screen
-  locks, on speakers, or in apps you choose.
+- Mutes itself during calls, meetings and games, while other apps play
+  sound or you share your screen, when the screen locks, on speakers, or in
+  apps you choose.
 - Turn it off for an hour with one click; it comes back by itself.
 - Or make a click on the menu bar icon turn sounds on or off.
 - Toggle anywhere with <kbd>⌃</kbd><kbd>⌘</kbd><kbd>K</kbd>, Shortcuts or AppleScript.
@@ -115,15 +116,19 @@ loudness-matched like the built-in ones, and survive updates.
 
 - **Sound:** on and off, the switch set with a field to try it, volume and
   output device, and tone (brightness, pitch and variation).
-- **Keys:** the on/off shortcut, which keys play (and mouse clicks), the
+- **Keys:** the on/off shortcut, which keys play (and mouse clicks and scrolling), the
   Return ding, and a trackpad tap with each key.
-- **Muting:** during calls (macOS 14.2 or later), during calendar events,
-  when the screen locks, while
-  the screen is shared or recorded, on
-  speakers only (“headphones only”), in chosen apps, and after 1 to 60
-  minutes without typing.
-- **Activity:** keystrokes today, in total, and over the last week.
-- **General:** login, the menu bar icon, updates and help.
+- **Muting:** during calls and while other apps play sound (both macOS 14.2
+  or later), during calendar events (from the calendars you pick), in games,
+  while the screen is shared or recorded; when the screen is locked, on
+  speakers only (“headphones only”), and after 1 to 60 minutes without typing;
+  and in apps you choose.
+- **Activity:** keystrokes today, in total, and over the last week, and a
+  CSV export of the last 30 days.
+- **General:** login, the menu bar icon (dimmed while sounds are off, if you
+  like, and today's keystrokes beside it), the app icon (Color or Graphite),
+  a notification when an automation changes the switch set, updates, and
+  help, including the Welcome and What's New windows.
 
 </details>
 
@@ -133,8 +138,13 @@ loudness-matched like the built-in ones, and survive updates.
 
 The Shortcuts app gets **Turn ThockBox Sounds On or Off**, **Toggle ThockBox
 Sounds**, **Turn Off ThockBox Sounds for a While**, **Set ThockBox Switch
-Set** and **Set ThockBox Volume**. Use them in a Focus automation, or say
-“Toggle ThockBox sounds” to Siri.
+Set** and **Set ThockBox Volume**. Use them in an automation, or say
+“Toggle ThockBox sounds” to Siri. To see when one of them, or a Focus, picks a different switch set,
+turn on Settings › General › Notify when the switch set changes.
+
+For a Focus, add ThockBox under **System Settings › Focus › (a Focus) › Focus
+Filters**: sounds off, or a different switch set, while that Focus is on.
+When the Focus ends, ThockBox goes back to how it was.
 
 ```applescript
 tell application "ThockBox"
@@ -143,13 +153,16 @@ tell application "ThockBox"
     set sound volume to 0.55 -- 0.0 to 1.0
     set mute during calls to true
     set headphones only to true
+    set scroll sounds to true -- also mouse clicks, return ding
+    set off until to (current date) + 30 * minutes -- back on by itself
     get mute reason -- e.g. "Muted in Safari.", or "" when not muted
     get keystrokes today
 end tell
 ```
 
-Read-only: `automatically muted`, `mute reason`, `off until`,
-`keystrokes today` and `keystrokes total`.
+Read-only: `automatically muted`, `mute reason`, `keystrokes today` and
+`keystrokes total`. Setting `off until` to `missing value` turns sounds back
+on.
 
 </details>
 
@@ -171,6 +184,16 @@ While a password field is focused, or Terminal’s Secure Keyboard Entry is on,
 macOS doesn’t pass key presses to other apps. If it stays quiet after you
 leave the field, quit and reopen the app the menu names. Also check
 Settings › Muting.
+</details>
+
+<details>
+<summary><strong>It goes quiet when I don't expect it</strong></summary>
+
+The menu bar menu's first line names the reason, for example "Muted during a
+meeting" or "Muted while media plays". Each one is a switch in
+Settings › Muting: calls, calendar events, other apps playing sound, games,
+screen sharing, a locked screen, speakers, chosen apps and idle time. A Focus
+filter can also turn sounds off while that Focus is on.
 </details>
 
 <details>

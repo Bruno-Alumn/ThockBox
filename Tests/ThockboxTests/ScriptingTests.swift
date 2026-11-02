@@ -20,4 +20,31 @@ final class ScriptingTests: XCTestCase {
             XCTAssertTrue(delegate.responds(to: NSSelectorFromString(key)), "\(key) not implemented")
         }
     }
+
+    /// AppleScript can start a timed off by setting `off until`, and end it.
+    func testSettingOffUntilTurnsSoundsOffAndOn() {
+        let state = AppState.shared
+        let wasEnabled = state.enabled
+        defer { state.enabled = wasEnabled }
+        let delegate = AppDelegate()
+        let until = Date().addingTimeInterval(1800)
+        delegate.setValue(until, forKey: "offUntil")
+        XCTAssertFalse(state.enabled)
+        XCTAssertEqual(state.offUntil?.timeIntervalSince1970 ?? 0, until.timeIntervalSince1970, accuracy: 1)
+        XCTAssertEqual((delegate.value(forKey: "offUntil") as? Date)?.timeIntervalSince1970 ?? 0,
+                       until.timeIntervalSince1970, accuracy: 1)
+        delegate.setValue(nil, forKey: "offUntil")
+        XCTAssertTrue(state.enabled)
+        XCTAssertNil(state.offUntil)
+    }
+
+    func testExtraSoundsCanBeScripted() {
+        let state = AppState.shared
+        let was = state.returnDing
+        defer { state.returnDing = was }
+        let delegate = AppDelegate()
+        delegate.setValue(!was, forKey: "returnDing")
+        XCTAssertEqual(state.returnDing, !was)
+        XCTAssertEqual(delegate.value(forKey: "returnDing") as? Bool, !was)
+    }
 }

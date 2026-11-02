@@ -21,9 +21,42 @@ struct ThockboxApp: App {
         )) {
             MenuView(state: state)
         } label: {
-            Image(nsImage: state.status.isPlaying ? MenuBarIcon.on : MenuBarIcon.off)
+            MenuBarLabel(state: state, stats: state.stats)
         }
         .menuBarExtraStyle(.menu)
+    }
+}
+
+/// The menu bar icon, with today's keystrokes beside it if chosen. Only
+/// this label watches the counts, so typing doesn't re-lay out the menu.
+private struct MenuBarLabel: View {
+    @ObservedObject var state: AppState
+    let stats: StatsStore
+
+    var body: some View {
+        let icon = Image(nsImage: state.status.isPlaying ? MenuBarIcon.on
+                         : state.dimIconWhenOff ? MenuBarIcon.offDimmed : MenuBarIcon.off)
+        if state.showKeystrokesInMenuBar {
+            KeystrokeLabel(stats: stats, icon: icon)
+        } else {
+            icon
+        }
+    }
+}
+
+/// Watches the counts only while they're shown, so typing doesn't rebuild
+/// the label when the count is off.
+private struct KeystrokeLabel: View {
+    @ObservedObject var stats: StatsStore
+    let icon: Image
+
+    var body: some View {
+        Label {
+            Text(stats.shown.today, format: .number.notation(.compactName))
+        } icon: {
+            icon
+        }
+        .labelStyle(.titleAndIcon)
     }
 }
 
@@ -31,16 +64,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppState.shared.startUp()
         IconClick.install(state: AppState.shared)
+        DockIcon.install(state: AppState.shared)
         Updater.shared.startUp()
         // New installs get the welcome window (Accessibility access, pick a
         // sound) until they finish it; updates that need the grant again
         // open Settings. Otherwise start in the menu bar.
+        // After any other update, What's New lists what changed.
         let defaults = UserDefaults.standard
-        if WelcomeWindow.isNeeded() {
+        let isNew = WelcomeWindow.isNeeded()
+        let notes = WhatsNew.afterLaunch(usedBefore: !isNew)
+        if isNew {
             WelcomeWindow.shared.show()
         } else if defaults.bool(forKey: "showSettingsAfterUpdate") {
             defaults.set(false, forKey: "showSettingsAfterUpdate")
             MainWindow.shared.show()
+        } else if let notes {
+            WhatsNewWindow.shared.show(notes)
         }
     }
 
@@ -56,7 +95,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ sender: NSApplication, delegateHandlesKey key: String) -> Bool {
-        ["soundsEnabled", "soundPack", "soundVolume", "muteDuringCalls", "muteDuringMeetings", "headphonesOnly",
+        ["soundsEnabled", "soundPack", "soundVolume", "mouseClicks", "scrollSounds", "returnDing", "muteDuringCalls", "muteDuringMeetings", "muteWhileMedia", "muteWhileGaming", "headphonesOnly",
          "muteWhenLocked", "muteWhileSharing", "automaticallyMuted", "muteReason", "offUntil", "keystrokesToday",
          "keystrokesTotal"].contains(key)
     }
@@ -73,7 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let pack = state.packs.first(where: {
                 $0.id == newValue || $0.name.caseInsensitiveCompare(newValue) == .orderedSame
             }) else { return }
-            state.selectedPackID = pack.id
+            state.selectPackFromElsewhere(pack.id)
         }
     }
 
@@ -82,9 +121,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         set { AppState.shared.volume = Float(min(max(newValue, 0), 1)) }
     }
 
+    @objc var mouseClicks: Bool {
+        get { AppState.shared.mouseClicks }
+        set { AppState.shared.mouseClicks = newValue }
+    }
+
+    @objc var scrollSounds: Bool {
+        get { AppState.shared.scrollSounds }
+        set { AppState.shared.scrollSounds = newValue }
+    }
+
+    @objc var returnDing: Bool {
+        get { AppState.shared.returnDing }
+        set { AppState.shared.returnDing = newValue }
+    }
+
     @objc var muteDuringCalls: Bool {
         get { AppState.shared.muteDuringCalls }
         set { AppState.shared.muteDuringCalls = newValue }
+    }
+
+    @objc var muteWhileGaming: Bool {
+        get { AppState.shared.muteWhileGaming }
+        set { AppState.shared.muteWhileGaming = newValue }
+    }
+
+    @objc var muteWhileMedia: Bool {
+        get { AppState.shared.muteWhileMedia }
+        set { AppState.shared.muteWhileMedia = newValue }
     }
 
     @objc var muteDuringMeetings: Bool {
@@ -109,7 +173,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc var automaticallyMuted: Bool { AppState.shared.isAutomaticallyMuted }
 
-    @objc var offUntil: Date? { AppState.shared.offUntil }
+    /// Setting a future date turns sounds off until then, like Turn Off for
+    /// an Hour; missing value (or a time that has passed) turns them on.
+    @objc var offUntil: Date? {
+        get { AppState.shared.offUntil }
+        set {
+            if let newValue, newValue > Date() {
+                AppState.shared.turnOff(for: newValue.timeIntervalSinceNow)
+            } else {
+                AppState.shared.enabled = true
+            }
+        }
+    }
 
     @objc var muteReason: String { AppState.shared.automaticMute?.message ?? "" }
 

@@ -116,11 +116,16 @@ final class Updater: ObservableObject {
     private let currentVersion: String
     private var timer: Timer?
 
-    /// The GitHub API by default. The `updateFeedURL` default points it
-    /// elsewhere, for testing against a local server.
+    /// The GitHub API. Debug builds can point it elsewhere with the
+    /// `updateFeedURL` default, for testing against a local server; release
+    /// builds ignore it, so another program can't redirect updates.
     private var feedURL: URL {
-        defaults.string(forKey: "updateFeedURL").flatMap(URL.init(string:))
-            ?? URL(string: "https://api.github.com/repos/Bruno-Alumn/ThockBox/releases/latest")!
+        #if DEBUG
+        if let custom = defaults.string(forKey: "updateFeedURL").flatMap(URL.init(string:)) {
+            return custom
+        }
+        #endif
+        return URL(string: "https://api.github.com/repos/Bruno-Alumn/ThockBox/releases/latest")!
     }
 
     init(defaults: UserDefaults = .standard, session: URLSession = .shared,
@@ -241,6 +246,9 @@ final class Updater: ObservableObject {
                 let app = try Self.unpack(file, in: work, expecting: version)
                 return (app, Self.satisfiesOwnRequirement(app))
             }.value
+            guard Self.accepts(signedByUs: keepsGrant, runningAdHoc: Self.isAdHocSigned) else {
+                throw UpdateError("The download isn't signed by ThockBox's release certificate.")
+            }
 
             do {
                 _ = try FileManager.default.replaceItemAt(target, withItemAt: newApp)
@@ -336,6 +344,17 @@ final class Updater: ObservableObject {
         }
     }
 
+    /// Whether to install a download. A valid signature isn't enough: it has
+    /// to be ThockBox's own (the running app's designated requirement, which
+    /// names the release certificate), or anyone able to publish a release
+    /// asset could ship code. Ad-hoc builds (made locally without the
+    /// certificate) have no identity to compare against, so they accept any
+    /// valid signature and the update asks for Accessibility access again.
+    /// Moving releases to a new certificate will need one manual download.
+    nonisolated static func accepts(signedByUs: Bool, runningAdHoc: Bool) -> Bool {
+        signedByUs || runningAdHoc
+    }
+
     /// Whether `app` meets the running app's designated requirement, the
     /// same check macOS uses to decide if an Accessibility grant still
     /// applies. Ad-hoc requirements name an exact build, so this is false
@@ -355,7 +374,9 @@ final class Updater: ObservableObject {
     }
 
     /// Whether this build is ad-hoc signed, so an update will need the
-    /// Accessibility grant again.
+    /// Accessibility grant again. If the signature can't be read it answers
+    /// no, so the updater insists on the release certificate (fails closed)
+    /// rather than accepting any signature.
     static var isAdHocSigned: Bool {
         var me: SecCode?
         var staticMe: SecStaticCode?
@@ -365,7 +386,7 @@ final class Updater: ObservableObject {
               SecCodeCopySigningInformation(staticMe, SecCSFlags(rawValue: kSecCSSigningInformation),
                                             &info) == errSecSuccess,
               let flags = (info as? [String: Any])?[kSecCodeInfoFlags as String] as? UInt32 else {
-            return true
+            return false
         }
         return flags & SecCodeSignatureFlags.adhoc.rawValue != 0
     }

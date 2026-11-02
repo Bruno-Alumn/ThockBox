@@ -40,6 +40,33 @@ struct TryItField: View {
     }
 }
 
+/// The app icon, pressable like a key: it sinks and plays the current set's
+/// space bar on press and release. A small thing for idle clicks.
+struct TappableAppIcon: View {
+    @ObservedObject var state: AppState
+    var size: CGFloat = 64
+    @State private var pressed = false
+
+    var body: some View {
+        Image(nsImage: NSApp.applicationIconImage)
+            .resizable()
+            .frame(width: size, height: size)
+            .scaleEffect(pressed ? 0.92 : 1)
+            .animation(.easeOut(duration: 0.08), value: pressed)
+            .gesture(DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    guard !pressed else { return }
+                    pressed = true
+                    state.pressAppIcon(down: true)
+                }
+                .onEnded { _ in
+                    pressed = false
+                    state.pressAppIcon(down: false)
+                })
+            .accessibilityHidden(true)
+    }
+}
+
 struct OutputDevicePicker: View {
     @ObservedObject var state: AppState
     // Cached: enumerating CoreAudio devices inside body is slow, and body

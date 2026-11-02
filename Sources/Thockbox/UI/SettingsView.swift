@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The settings window's pages, one per toolbar tab (see MainWindow). Each is
 /// a grouped Form of standard controls.
@@ -122,6 +123,7 @@ private struct SoundPage: View {
                     Image(systemName: "speaker.wave.3.fill")
                 }
                 .accessibilityValue(SpokenValue.percent(state.volume))
+                .sliderHaptics(state.volume, in: 0...1, step: 0.1)
                 OutputDevicePicker(state: state)
             } footer: {
                 formFooter("Each output device keeps its own volume.")
@@ -136,6 +138,7 @@ private struct SoundPage: View {
                     Text("Brighter")
                 }
                 .accessibilityValue(SpokenValue.direction(state.toneX, up: "brighter", down: "darker"))
+                .sliderHaptics(state.toneX, in: -1...1, step: 1)
                 Slider(value: $state.toneY, in: -1...1) {
                     Text("Pitch")
                 } minimumValueLabel: {
@@ -144,6 +147,7 @@ private struct SoundPage: View {
                     Text("Higher")
                 }
                 .accessibilityValue(SpokenValue.direction(state.toneY, up: "higher", down: "lower"))
+                .sliderHaptics(state.toneY, in: -1...1, step: 1)
                 Slider(value: $state.pitchVariation, in: 0...150) {
                     Text("Variation")
                 } minimumValueLabel: {
@@ -259,10 +263,11 @@ private struct KeysPage: View {
                     set: { state.muteModifiers = !$0 }))
                 Toggle("Function keys", isOn: $state.functionKeysAudible)
                 Toggle("Mouse clicks", isOn: $state.mouseClicks)
+                Toggle("Scrolling", isOn: $state.scrollSounds)
             } header: {
                 Text("Also Play Sounds For")
             } footer: {
-                formFooter("Letters, numbers, Space, Return and the other typing keys always play.")
+                formFooter("Letters, numbers, Space, Return and the other typing keys always play. Scrolling ticks softly, like a mouse wheel.")
             }
 
             Section {
@@ -271,7 +276,7 @@ private struct KeysPage: View {
             } header: {
                 Text("Extras")
             } footer: {
-                formFooter("The trackpad tap needs a Force Touch trackpad.")
+                formFooter("The trackpad tap needs a Force Touch trackpad. With scrolling sounds on, each scroll tick taps too.")
             }
         }
     }
@@ -279,27 +284,66 @@ private struct KeysPage: View {
 
 // MARK: - Muting
 
+/// Which calendars' events mute: all by default.
+private struct CalendarChoice: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        LabeledContent("Calendars") {
+            Menu(CalendarMonitor.summary(state.calendars, ignoring: state.ignoredCalendarIDs)) {
+                ForEach(state.calendars) { calendar in
+                    Toggle(calendar.account.isEmpty ? calendar.title : "\(calendar.title) (\(calendar.account))",
+                           isOn: Binding(
+                            get: { !state.ignoredCalendarIDs.contains(calendar.id) },
+                            set: { counts in
+                                if counts { state.ignoredCalendarIDs.remove(calendar.id) }
+                                else { state.ignoredCalendarIDs.insert(calendar.id) }
+                            }))
+                }
+            }
+            .fixedSize()
+        }
+    }
+}
+
 private struct MutingPage: View {
     @ObservedObject var state: AppState
 
     var body: some View {
         Form {
             Section {
-                if MicrophoneMonitor.isSupported {
-                    Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
+                if AudioActivityMonitor.isSupported {
+                    Toggle("Calls and recordings", isOn: $state.muteDuringCalls)
                 }
-                Toggle("During calendar events", isOn: $state.muteDuringMeetings)
+                Toggle("Calendar events", isOn: $state.muteDuringMeetings)
+                if state.muteDuringMeetings && !state.calendars.isEmpty {
+                    CalendarChoice(state: state)
+                }
                 if state.muteDuringMeetings && state.calendarAccess == .denied {
                     Text("ThockBox can't see your calendars. Allow it in System Settings › Privacy & Security › Calendars.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                Toggle("While the screen is locked", isOn: $state.muteWhenLocked)
                 if ScreenCapture.isAvailable {
-                    Toggle("While sharing or recording the screen", isOn: $state.muteWhileSharing)
+                    Toggle("Screen sharing and recording", isOn: $state.muteWhileSharing)
                 }
-                Toggle("On speakers (headphones only)", isOn: $state.headphonesOnly)
-                Picker("After no typing for", selection: $state.idleTimeoutMinutes) {
+                if AudioActivityMonitor.isSupported {
+                    Toggle("Other apps playing sound", isOn: $state.muteWhileMedia)
+                }
+                Toggle("Games", isOn: $state.muteWhileGaming)
+            } header: {
+                Text("Mute During")
+            } footer: {
+                formFooter((AudioActivityMonitor.isSupported
+                      ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts; some apps (call apps, a browser just after a video) keep their sound open while silent and count too. "
+                      : "")
+                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam. Screen sharing also counts screen mirroring and apps that watch the screen in the background.")
+            }
+
+            Section {
+                Toggle("The screen is locked", isOn: $state.muteWhenLocked)
+                Toggle("Playing on speakers (headphones only)", isOn: $state.headphonesOnly)
+                Picker("No typing for", selection: $state.idleTimeoutMinutes) {
                     Text("Never").tag(0)
                     Text("1 minute").tag(1)
                     Text("5 minutes").tag(5)
@@ -308,12 +352,9 @@ private struct MutingPage: View {
                     Text("1 hour").tag(60)
                 }
             } header: {
-                Text("Mute Automatically")
+                Text("Mute When")
             } footer: {
-                formFooter((MicrophoneMonitor.isSupported
-                      ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. "
-                      : "")
-                     + "Calendar events don't count when they last all day, are marked free, or you declined them. Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
+                formFooter("Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
             }
 
             Section {
@@ -347,7 +388,23 @@ private struct ActivityPage: View {
                     KeystrokeChart(store: store)
                 }
             }
+
+            Section {
+                LabeledContent("Daily counts") {
+                    Button("Export…") { exportCSV() }
+                }
+            } footer: {
+                formFooter("A CSV of the last 30 days, for a spreadsheet. Only counts are kept, never what you typed.")
+            }
         }
+    }
+
+    private func exportCSV() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "ThockBox Keystrokes.csv"
+        panel.allowedContentTypes = [.commaSeparatedText]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        try? store.shown.csv().write(to: url, atomically: true, encoding: .utf8)
     }
 }
 
@@ -379,6 +436,19 @@ private struct GeneralPage: View {
                         }
                     }
                 }
+                Picker(selection: $state.dockIconStyle) {
+                    ForEach(DockIconStyle.allCases) { Text($0.title).tag($0) }
+                } label: {
+                    Text("App icon")
+                    Text("Shown in the Dock and ThockBox's windows.")
+                }
+                Toggle("Show today's keystrokes in the menu bar", isOn: $state.showKeystrokesInMenuBar)
+                Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)
+                    .disabled(!state.showMenuBarIcon)
+                Toggle(isOn: $state.notifySetChanges) {
+                    Text("Notify when the switch set changes")
+                    Text("When a Focus, Shortcuts or AppleScript picks a different set.")
+                }
             }
 
             Section {
@@ -404,6 +474,12 @@ private struct GeneralPage: View {
                         Text("Allowed")
                     } else {
                         Button("Open System Settings") { Permissions.openSystemSettings() }
+                    }
+                }
+                LabeledContent("Getting started") {
+                    HStack {
+                        Button("Welcome…") { WelcomeWindow.shared.show() }
+                        Button("What's New…") { WhatsNewWindow.shared.show() }
                     }
                 }
                 Link("Troubleshooting", destination: URL(string: "https://github.com/Bruno-Alumn/ThockBox#troubleshooting")!)
