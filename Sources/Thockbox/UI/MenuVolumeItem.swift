@@ -18,6 +18,8 @@ final class MenuVolumeItem: NSObject {
     private let slider = NSSlider(value: 0.55, minValue: 0, maxValue: 1, target: nil, action: nil)
     private weak var state: AppState?
     private var unsaved: Float?
+    /// Where the knob was, for a trackpad tap at each 10% (as in Settings).
+    private var lastValue: Double = 0.55
 
     func install(state: AppState) {
         self.state = state
@@ -49,6 +51,7 @@ final class MenuVolumeItem: NSObject {
               let heading = menu.items.firstIndex(where: { $0.title == Self.heading && $0 !== item })
         else { return }
         slider.floatValue = state.volume
+        lastValue = slider.doubleValue
         slider.isEnabled = state.enabled
         if item.menu !== menu {
             item.menu?.removeItem(item)
@@ -57,6 +60,10 @@ final class MenuVolumeItem: NSObject {
     }
 
     @objc private func slid(_ sender: NSSlider) {
+        if SliderDetents.crossed(from: lastValue, to: sender.doubleValue, in: 0...1, step: 0.1) {
+            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+        }
+        lastValue = sender.doubleValue
         unsaved = sender.floatValue
         state?.engine.volume = sender.floatValue
         // Play a sample once the knob is let go, so the new level can be heard.

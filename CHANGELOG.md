@@ -25,8 +25,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - **Safer updates:** ThockBox only installs an update signed with its own
   release certificate, not just any valid signature, and release builds
   always check GitHub for updates.
-- The volume slider taps the trackpad at every 10%, and the brightness and
-  pitch sliders at their middle (Force Touch trackpads).
+- The volume sliders (Settings and the menu) tap the trackpad at every 10%,
+  and the brightness and pitch sliders at their middle (Force Touch
+  trackpads).
 - **Scrolling sounds** (Settings › Keys, off by default): a soft tick per
   notch, like a mouse wheel, and a trackpad tap with it when the trackpad
   tap is on.
