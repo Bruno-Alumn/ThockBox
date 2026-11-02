@@ -11,6 +11,9 @@ struct KeystrokeChart: View {
                     y: .value("Keystrokes", day.count))
                 .foregroundStyle(Color.thockCoral)
                 .cornerRadius(3)
+                // VoiceOver reads each bar as "Monday, 1,234 keystrokes".
+                .accessibilityLabel(day.date.formatted(.dateTime.weekday(.wide)))
+                .accessibilityValue(Self.spoken(day.count))
         }
         .chartXAxis {
             AxisMarks(values: .stride(by: .day)) {
@@ -26,6 +29,9 @@ struct KeystrokeChart: View {
             }
         }
         .frame(height: 110)
-        .accessibilityLabel("Keystrokes in the last week")
+    }
+
+    static func spoken(_ count: Int) -> String {
+        count == 1 ? "1 keystroke" : "\(count.formatted()) keystrokes"
     }
 }
