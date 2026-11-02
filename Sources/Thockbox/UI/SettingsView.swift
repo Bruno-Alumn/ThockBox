@@ -365,6 +365,7 @@ private struct GeneralPage: View {
                     }
                 }
                 Link("Troubleshooting", destination: URL(string: "https://github.com/Bruno-Alumn/ThockBox#troubleshooting")!)
+                Link("Report a Problem…", destination: ProblemReport.url())
             }
         }
     }
