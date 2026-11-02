@@ -5,14 +5,15 @@ import SwiftUI
 /// the two things a menu bar app can't show on its own: that it lives in the
 /// menu bar, and that it needs Accessibility access. Granting access
 /// relaunches ThockBox, so the window comes back after that until it's done.
+@MainActor
 final class WelcomeWindow: NSObject, NSWindowDelegate {
     static let shared = WelcomeWindow()
 
-    private static let finishedKey = "hasFinishedWelcome"
+    private nonisolated static let finishedKey = "hasFinishedWelcome"
     private var window: NSWindow?
 
     /// New installs only: someone who has used Settings before isn't new.
-    static func isNeeded(defaults: UserDefaults = .standard) -> Bool {
+    nonisolated static func isNeeded(defaults: UserDefaults = .standard) -> Bool {
         !defaults.bool(forKey: finishedKey) && !defaults.bool(forKey: "hasShownSettingsWindow")
     }
 

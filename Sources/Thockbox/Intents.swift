@@ -6,8 +6,8 @@ import AppIntents
 /// scripts/build_intents_metadata.sh.)
 
 struct SetSoundsIntent: AppIntent {
-    static var title: LocalizedStringResource = "Turn ThockBox Sounds On or Off"
-    static var description = IntentDescription("Turns keyboard sounds on or off.")
+    static let title: LocalizedStringResource = "Turn ThockBox Sounds On or Off"
+    static let description = IntentDescription("Turns keyboard sounds on or off.")
 
     @Parameter(title: "Sounds", default: true, displayName: Bool.IntentDisplayName(true: "On", false: "Off"))
     var on: Bool
@@ -24,8 +24,8 @@ struct SetSoundsIntent: AppIntent {
 }
 
 struct ToggleSoundsIntent: AppIntent {
-    static var title: LocalizedStringResource = "Toggle ThockBox Sounds"
-    static var description = IntentDescription("Turns keyboard sounds on if they're off, and off if they're on.")
+    static let title: LocalizedStringResource = "Toggle ThockBox Sounds"
+    static let description = IntentDescription("Turns keyboard sounds on if they're off, and off if they're on.")
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<Bool> {
@@ -35,8 +35,8 @@ struct ToggleSoundsIntent: AppIntent {
 }
 
 struct SetSwitchSetIntent: AppIntent {
-    static var title: LocalizedStringResource = "Set ThockBox Switch Set"
-    static var description = IntentDescription("Chooses which switch set ThockBox plays.")
+    static let title: LocalizedStringResource = "Set ThockBox Switch Set"
+    static let description = IntentDescription("Chooses which switch set ThockBox plays.")
 
     @Parameter(title: "Switch Set")
     var switchSet: SwitchSetEntity
@@ -53,8 +53,8 @@ struct SetSwitchSetIntent: AppIntent {
 }
 
 struct SetVolumeIntent: AppIntent {
-    static var title: LocalizedStringResource = "Set ThockBox Volume"
-    static var description = IntentDescription("Sets the volume of keyboard sounds, from 0 to 100 percent.")
+    static let title: LocalizedStringResource = "Set ThockBox Volume"
+    static let description = IntentDescription("Sets the volume of keyboard sounds, from 0 to 100 percent.")
 
     @Parameter(title: "Volume", inclusiveRange: (0, 100))
     var percent: Int
@@ -72,8 +72,8 @@ struct SetVolumeIntent: AppIntent {
 
 /// A switch set, as Shortcuts lists and picks it.
 struct SwitchSetEntity: AppEntity {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Switch Set"
-    static var defaultQuery = SwitchSetQuery()
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Switch Set"
+    static let defaultQuery = SwitchSetQuery()
 
     let id: String
     let name: String
