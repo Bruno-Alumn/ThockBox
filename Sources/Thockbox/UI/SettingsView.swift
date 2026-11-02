@@ -1,26 +1,162 @@
 import SwiftUI
 
-/// The desktop window: every setting, with room to breathe. The menu bar
-/// panel (MenuView) keeps only the quick ones.
+/// The settings window: a sidebar with the master switch, the current status
+/// and five pages, each about one thing.
 struct SettingsView: View {
     @ObservedObject var state: AppState
-    @ObservedObject var updater = Updater.shared
+    @ObservedObject var navigation = SettingsNavigation.shared
+
+    var body: some View {
+        HStack(spacing: 0) {
+            sidebar
+                .frame(width: 210)
+            Divider()
+            page
+                .frame(minWidth: 460, maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(minWidth: 680, minHeight: 520)
+        .tint(.thockCoral)
+        .onAppear { state.refreshAccessibilityStatus() }
+    }
+
+    private var sidebar: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .frame(width: 36, height: 36)
+                Text("ThockBox")
+                    .font(.headline)
+                Spacer()
+                Toggle("Sounds", isOn: $state.enabled)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .labelsHidden()
+                    .help("Turn sounds on or off (\(state.toggleShortcut.display))")
+            }
+            .padding(.horizontal, 14)
+            .padding(.top, 14)
+            .padding(.bottom, 8)
+            StatusView(state: state, showsDetailOnlyForProblems: true)
+                .padding(.horizontal, 14)
+                .padding(.bottom, 10)
+            Divider()
+                .padding(.horizontal, 14)
+            VStack(spacing: 2) {
+                ForEach(SettingsPage.allCases) { page in
+                    sidebarRow(page)
+                }
+            }
+            .padding(8)
+            Spacer()
+        }
+        .background(Color(nsColor: .underPageBackgroundColor).opacity(0.5))
+    }
+
+    private func sidebarRow(_ page: SettingsPage) -> some View {
+        let selected = navigation.page == page
+        return Button {
+            navigation.page = page
+        } label: {
+            Label(page.title, systemImage: page.symbol)
+                .labelStyle(SidebarLabelStyle(selected: selected))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(RoundedRectangle(cornerRadius: 6)
+                    .fill(selected ? Color.thockCoral.opacity(0.18) : Color.clear))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    @ViewBuilder private var page: some View {
+        switch navigation.page {
+        case .sound: SoundPage(state: state)
+        case .keys: KeysPage(state: state)
+        case .muting: MutingPage(state: state)
+        case .activity: ActivityPage(store: state.stats)
+        case .general: GeneralPage(state: state)
+        }
+    }
+}
+
+private struct SidebarLabelStyle: LabelStyle {
+    let selected: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 8) {
+            configuration.icon
+                .foregroundStyle(selected ? Color.thockCoral : Color.secondary)
+                .frame(width: 20)
+            configuration.title
+                .fontWeight(selected ? .medium : .regular)
+        }
+    }
+}
+
+enum SettingsPage: String, CaseIterable, Identifiable {
+    case sound, keys, muting, activity, general
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .sound: "Sound"
+        case .keys: "Keys"
+        case .muting: "Muting"
+        case .activity: "Activity"
+        case .general: "General"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .sound: "speaker.wave.2"
+        case .keys: "keyboard"
+        case .muting: "speaker.slash"
+        case .activity: "chart.bar"
+        case .general: "gearshape"
+        }
+    }
+}
+
+/// Which page the settings window shows; the menu bar panel can open it on
+/// a specific one (e.g. General, for an update).
+final class SettingsNavigation: ObservableObject {
+    static let shared = SettingsNavigation()
+    @Published var page: SettingsPage = .sound
+}
+
+/// A page title over a grouped form.
+private struct SettingsPageLayout<Content: View>: View {
+    let page: SettingsPage
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(page.title)
+                .font(.title2.bold())
+                .padding(.horizontal, 20)
+                .padding(.top, 18)
+            Form { content }
+                .formStyle(.grouped)
+        }
+    }
+}
+
+// MARK: - Sound
+
+/// How it sounds: which switches, how loud, what tone, through what.
+private struct SoundPage: View {
+    @ObservedObject var state: AppState
     @State private var isDropTarget = false
 
     var body: some View {
-        Form {
+        SettingsPageLayout(page: .sound) {
             Section {
-                header
-                if !state.accessibilityTrusted {
-                    PermissionBanner()
-                }
-                if let app = state.secureInputApp {
-                    SecureInputBanner(app: app)
-                }
-            }
-
-            Section {
-                SwitchList(state: state, allowsRemoving: true)
+                SwitchList(state: state)
                     // Dropping a folder of recordings here adds it, like the button.
                     .dropDestination(for: URL.self) { urls, _ in
                         importSwitchSet(from: urls)
@@ -33,45 +169,23 @@ struct SettingsView: View {
                                 .padding(-4)
                         }
                     }
-                Button("Add Your Own…") { addSwitchSet() }
+                Button("Add Your Own…", action: addSwitchSet)
             } header: {
-                HStack {
-                    Text("Switches")
-                    Spacer()
-                    PreviewButton(state: state)
-                        .controlSize(.small)
-                }
+                Text("Switch")
             } footer: {
-                Text("Pick or drop a folder of recordings (WAV, MP3, CAF, AIFF or M4A). Files with space, enter or backspace in the name play for those keys, and files with up or release in the name play when a key is let go.")
-            }
-
-            Section("Volume") {
-                // labelsHidden: in a grouped Form an unlabeled slider would
-                // otherwise sit in the value column, at half width.
-                VolumeControl(state: state)
-                    .labelsHidden()
+                Text("Choose a set to hear it. To use your own recordings, add a folder of them or drop it on the list. Name files with space, enter or backspace to give those keys their own sound, and with up or release for the sound of a key being let go.")
             }
 
             Section {
-                HStack(alignment: .top, spacing: 16) {
-                    TonePadView(x: $state.toneX, y: $state.toneY)
-                        .frame(width: 150, height: 150)
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Drag left for a darker, deeper sound and right for a brighter, crisper one. Drag up or down to raise or lower the pitch.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text("Randomize pitch")
-                            .font(.caption)
-                            .padding(.top, 4)
-                        Slider(value: $state.pitchVariation, in: 0...150)
-                            .labelsHidden()
-                        Text("Small random pitch changes so repeated keys don't sound identical.")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
+                VolumeSlider(state: state)
+            } header: {
+                Text("Volume")
+            } footer: {
+                Text("Each output device keeps its own volume, so headphones and speakers can differ.")
+            }
+
+            Section {
+                ToneControl(state: state)
             } header: {
                 HStack {
                     Text("Tone")
@@ -79,95 +193,17 @@ struct SettingsView: View {
                     Button("Reset") {
                         state.toneX = 0
                         state.toneY = 0
+                        state.pitchVariation = 60
                     }
                     .controlSize(.small)
-                    .disabled(state.toneX == 0 && state.toneY == 0)
+                    .disabled(state.toneX == 0 && state.toneY == 0 && state.pitchVariation == 60)
                 }
-            }
-
-            Section("Keys") {
-                LabeledContent("Toggle sounds") {
-                    ShortcutRecorder(state: state)
-                }
-                Toggle("Mute modifier keys (⌘ ⌥ ⌃ ⇧)", isOn: $state.muteModifiers)
-                Toggle("Play sounds for function keys", isOn: $state.functionKeysAudible)
-                Toggle("Ding on Return", isOn: $state.returnDing)
-                Toggle("Mouse click sounds", isOn: $state.mouseClicks)
-                Toggle("Haptic feedback on the trackpad", isOn: $state.hapticFeedback)
-            }
-
-            Section {
-                Toggle("Mute when the screen is locked", isOn: $state.muteWhenLocked)
-                if MicrophoneMonitor.isSupported {
-                    Toggle("Mute while another app uses the microphone", isOn: $state.muteDuringCalls)
-                        .help("Keeps key sounds out of calls and recordings")
-                }
-                Picker("Mute after inactivity", selection: $state.idleTimeoutMinutes) {
-                    Text("Off").tag(0)
-                    Text("1 minute").tag(1)
-                    Text("5 minutes").tag(5)
-                    Text("15 minutes").tag(15)
-                    Text("30 minutes").tag(30)
-                    Text("60 minutes").tag(60)
-                }
-            } header: {
-                Text("Automatic mute")
-            } footer: {
-                if let mute = state.automaticMute {
-                    Text(mute.message)
-                }
-            }
-
-            Section {
-                MutedAppsList(state: state)
-            } header: {
-                Text("Muted apps")
-            } footer: {
-                Text("ThockBox stays quiet while one of these apps is in front.")
             }
 
             Section("Output") {
                 OutputDevicePicker(state: state)
             }
-
-            Section("General") {
-                Toggle("Launch at login", isOn: $state.launchAtLogin)
-                Toggle(isOn: $state.showMenuBarIcon) {
-                    Text("Show in menu bar")
-                    if !state.showMenuBarIcon {
-                        Text("Open ThockBox from Applications or Spotlight to get back here.")
-                    }
-                }
-                Toggle("Notify when the switch changes", isOn: $state.notifyOnSwitchChange)
-                LabeledContent("Keystrokes") {
-                    StatsLine(store: state.stats)
-                        .foregroundStyle(.secondary)
-                }
-                KeystrokeChart(store: state.stats)
-            }
-
-            Section {
-                Toggle("Check for updates automatically", isOn: $updater.checksAutomatically)
-                UpdateStatusView(updater: updater)
-                if let notes = updater.availableRelease?.notesPreview {
-                    Text(notes)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            } header: {
-                Text("Updates")
-            } footer: {
-                if updater.availableRelease != nil && Updater.isAdHocSigned {
-                    Text("After updating, macOS may ask you to allow Accessibility access again.")
-                }
-            }
         }
-        .formStyle(.grouped)
-        .tint(.thockCoral)
-        .frame(minWidth: 460, idealWidth: 480, minHeight: 520, idealHeight: 720)
-        .onAppear { state.refreshAccessibilityStatus() }
     }
 
     private func addSwitchSet() {
@@ -188,23 +224,173 @@ struct SettingsView: View {
             NSAlert(error: error).runModal()
         }
     }
+}
 
-    private var header: some View {
-        HStack(spacing: 12) {
-            Image(nsImage: NSApp.applicationIconImage)
-                .resizable()
-                .frame(width: 48, height: 48)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("ThockBox")
-                    .font(.title2.bold())
-                Text("Sounds are \(state.enabled ? "on" : "off"). Toggle anytime with \(state.toggleShortcut.display).")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+// MARK: - Keys
+
+/// What makes a sound, and the shortcut that turns it all off.
+private struct KeysPage: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        SettingsPageLayout(page: .keys) {
+            Section("Shortcut") {
+                LabeledContent("Turn sounds on or off") {
+                    ShortcutRecorder(state: state)
+                }
             }
-            Spacer()
-            Toggle("Sounds", isOn: $state.enabled)
-                .toggleStyle(.switch)
-                .labelsHidden()
+
+            Section {
+                Toggle("Modifier keys (⌘ ⌥ ⌃ ⇧)", isOn: Binding(
+                    get: { !state.muteModifiers },
+                    set: { state.muteModifiers = !$0 }))
+                Toggle("Function keys", isOn: $state.functionKeysAudible)
+                Toggle("Mouse clicks", isOn: $state.mouseClicks)
+            } header: {
+                Text("Also play sounds for")
+            } footer: {
+                Text("Letters, numbers, Space, Return and the other typing keys always play.")
+            }
+
+            Section {
+                Toggle("Typewriter ding on Return", isOn: $state.returnDing)
+                Toggle("Trackpad tap with each key", isOn: $state.hapticFeedback)
+            } header: {
+                Text("Extras")
+            } footer: {
+                Text("The trackpad tap needs a Force Touch trackpad.")
+            }
+        }
+    }
+}
+
+// MARK: - Muting
+
+/// When ThockBox goes quiet by itself.
+private struct MutingPage: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        SettingsPageLayout(page: .muting) {
+            Section {
+                if MicrophoneMonitor.isSupported {
+                    Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
+                }
+                Toggle("While the screen is locked", isOn: $state.muteWhenLocked)
+                Picker("After no typing for", selection: $state.idleTimeoutMinutes) {
+                    Text("Never").tag(0)
+                    Text("1 minute").tag(1)
+                    Text("5 minutes").tag(5)
+                    Text("15 minutes").tag(15)
+                    Text("30 minutes").tag(30)
+                    Text("1 hour").tag(60)
+                }
+            } header: {
+                Text("Mute automatically")
+            } footer: {
+                if MicrophoneMonitor.isSupported {
+                    Text("Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count.")
+                }
+            }
+
+            Section {
+                MutedAppsList(state: state)
+            } header: {
+                Text("Mute in these apps")
+            } footer: {
+                Text("ThockBox stays quiet while one of these apps is in front. The menu bar panel can also mute the app you're in.")
+            }
+        }
+    }
+}
+
+// MARK: - Activity
+
+private struct ActivityPage: View {
+    @ObservedObject var store: StatsStore
+
+    var body: some View {
+        SettingsPageLayout(page: .activity) {
+            Section {
+                HStack(spacing: 0) {
+                    tile("Today", store.shown.today)
+                    Divider()
+                    tile("All time", store.shown.total)
+                }
+                .frame(height: 64)
+            }
+
+            Section("Last 7 days") {
+                if store.shown.lastWeek().allSatisfy({ $0.count == 0 }) {
+                    Text("Nothing yet. Start typing and this fills in day by day.")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, minHeight: 80)
+                } else {
+                    KeystrokeChart(store: store)
+                }
+            }
+        }
+    }
+
+    private func tile(_ title: String, _ count: Int) -> some View {
+        VStack(spacing: 2) {
+            Text(count.formatted())
+                .font(.title.weight(.semibold).monospacedDigit())
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - General
+
+private struct GeneralPage: View {
+    @ObservedObject var state: AppState
+    @ObservedObject var updater = Updater.shared
+
+    var body: some View {
+        SettingsPageLayout(page: .general) {
+            Section {
+                Toggle("Open at login", isOn: $state.launchAtLogin)
+                Toggle(isOn: $state.showMenuBarIcon) {
+                    Text("Show in menu bar")
+                    if !state.showMenuBarIcon {
+                        Text("Open ThockBox from Applications or Spotlight to get back here.")
+                    }
+                }
+            }
+
+            Section {
+                Toggle("Check automatically", isOn: $updater.checksAutomatically)
+                UpdateStatusView(updater: updater)
+                if let notes = updater.availableRelease?.notesPreview {
+                    Text(notes)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            } header: {
+                Text("Updates")
+            } footer: {
+                if updater.availableRelease != nil && Updater.isAdHocSigned {
+                    Text("After updating, macOS may ask you to allow Accessibility access again.")
+                }
+            }
+
+            Section("Help") {
+                LabeledContent("Accessibility access") {
+                    if state.accessibilityTrusted {
+                        Text("Allowed").foregroundStyle(.secondary)
+                    } else {
+                        Button("Open System Settings") { Permissions.openSystemSettings() }
+                    }
+                }
+                Link("Troubleshooting", destination: URL(string: "https://github.com/Bruno-Alumn/ThockBox#troubleshooting")!)
+            }
         }
     }
 }

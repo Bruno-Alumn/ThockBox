@@ -18,12 +18,12 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/menu-dark.png">
-    <img src="docs/screenshots/menu-light.png" alt="Menu bar panel" width="290">
+    <img src="docs/screenshots/menu-light.png" alt="Menu bar panel" width="300">
   </picture>
   &nbsp;
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/settings-dark.png">
-    <img src="docs/screenshots/settings-light.png" alt="Settings window" width="420">
+    <img src="docs/screenshots/settings-light.png" alt="Settings window" width="560">
   </picture>
 </p>
 
@@ -57,16 +57,26 @@ Oreo and Super Red.
 
 ## Menu bar and settings window
 
-The menu bar panel holds the everyday controls: on and off, switch set,
-volume, a switch to mute the app you were just using, and today's keystroke
-count. When sounds are muted automatically, the panel says why.
+The menu bar panel shows what ThockBox is doing (playing, off, muted and
+why, or what needs fixing) and holds what you change day to day: the on/off
+switch, the switch set, the volume, and a switch to mute the app you were
+just using.
 
-**Settings…** (⌘,) opens the settings window with everything else: the Tone
-Pad, the toggle shortcut and other key options, automatic mute, muted apps,
-the output device, launch at login, a chart of the last week's keystrokes,
-and updates. While the window is open ThockBox appears in the Dock; closing
-the window returns it to the menu bar. Opening ThockBox from Finder,
-Launchpad or Spotlight while it is running also brings up the window.
+**Settings…** (⌘,) opens the settings window. Its sidebar has the same
+on/off switch and status, and five pages:
+
+- **Sound:** switch sets (including your own), volume, the Tone Pad and the
+  output device.
+- **Keys:** the on/off shortcut, which keys play, and extras like the Return
+  ding.
+- **Muting:** when ThockBox goes quiet by itself, and the apps it stays quiet
+  in.
+- **Activity:** keystrokes today, in total, and over the last week.
+- **General:** login, the menu bar icon, updates and help.
+
+While the window is open ThockBox appears in the Dock; closing it returns
+ThockBox to the menu bar. Opening ThockBox from Finder, Launchpad or
+Spotlight while it is running also brings up the window.
 
 ### Automatic mute
 
@@ -129,10 +139,10 @@ the toggle is on (⌃⌘K by default) and the volume isn't at zero.
 **Sound stops in some apps.** While a password field is focused, or while
 Terminal's Secure Keyboard Entry is on, macOS doesn't pass key presses to
 other apps. That's expected. If it stays that way after you leave the field,
-quit and reopen the app the panel names. Also check Settings → Muted apps.
+quit and reopen the app the panel names. Also check Settings → Muting.
 
 **Sound is late.** Bluetooth headphones add around 100 to 250 ms that no app
-can remove. Settings → Output shows the delay for the current device. Built-in
+can remove. Settings → Sound → Output shows the delay for the current device. Built-in
 speakers and wired headphones respond within a few milliseconds.
 
 **Access was granted but nothing plays after rebuilding.** Builds made
@@ -148,12 +158,12 @@ store or transmit what you type. The code that receives key events is in
 to read in a few minutes.
 
 Once a day ThockBox asks the GitHub API for the latest release. The request
-contains nothing but the app version. Turn it off in Settings → Updates.
+contains nothing but the app version. Turn it off in Settings → General.
 
 ## Updates
 
 When a newer release is out, the menu bar panel says so, and Settings →
-Updates offers **Install and Relaunch**. ThockBox downloads the release zip,
+General offers **Install and Relaunch**. ThockBox downloads the release zip,
 checks that it is a correctly signed ThockBox of that version, replaces the
 installed copy and reopens. Accessibility access carries over, since every
 release is signed with the same certificate.
@@ -196,7 +206,7 @@ whether to allow it.
 
 ## Custom switch sets
 
-The quickest way is **Settings → Switches → Add Your Own…**, or dropping a folder onto the switch list. Pick a folder
+The quickest way is **Settings → Sound → Add Your Own…**, or dropping a folder onto the switch list. Pick a folder
 of recordings (or the files themselves) and it becomes a switch set named
 after the folder. Files with *space*, *enter*/*return* or
 *backspace*/*delete* in the name play for those keys. Files with *up* or
@@ -256,7 +266,8 @@ opening a pull request.
   its own pitch shifter, into an EQ for the Tone Pad. Samples are decoded
   into memory when a pack loads, so a key press is a single buffer schedule.
 - The interface is SwiftUI: `MenuView` for the menu bar, `SettingsView` for
-  the settings window.
+  the settings window. Both show `AppState.status`, so they always agree on
+  what's happening.
 
 ## Credits
 
