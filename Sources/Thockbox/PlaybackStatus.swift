@@ -9,6 +9,7 @@ struct FrontApp: Equatable {
 enum AutomaticMute: Equatable {
     case call
     case screenLocked
+    case media
     case speakers
     case app(String)
     case idle
@@ -17,6 +18,7 @@ enum AutomaticMute: Equatable {
         switch self {
         case .call: "Muted while another app uses the microphone."
         case .screenLocked: "Muted while the screen is locked."
+        case .media: "Muted while another app plays sound."
         case .speakers: "Muted on speakers. Plays through headphones only."
         case .app(let name): "Muted in \(name)."
         case .idle: "Muted after inactivity. Press any key to wake it."
@@ -27,6 +29,7 @@ enum AutomaticMute: Equatable {
         switch self {
         case .call: "mic.fill"
         case .screenLocked: "lock.fill"
+        case .media: "music.note"
         case .speakers: "headphones"
         case .app: "speaker.slash.fill"
         case .idle: "moon.zzz.fill"
@@ -61,6 +64,7 @@ enum PlaybackStatus: Equatable {
         case .blocked(let app): "Paused by \(app)"
         case .muted(.call): "Muted during a call"
         case .muted(.screenLocked): "Muted while locked"
+        case .muted(.media): "Muted while media plays"
         case .muted(.speakers): "Muted on speakers"
         case .muted(.app(let name)): "Muted in \(name)"
         case .muted(.idle): "Muted after inactivity"

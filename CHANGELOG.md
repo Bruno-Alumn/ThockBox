@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Mute while other apps play sound** (Settings → Muting): music, videos
+  and games quiet the keys; alerts don't. Needs macOS 14.2 or later.
 - **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain
   click often showed nothing and only a Control-click opened it.
 

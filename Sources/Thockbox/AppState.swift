@@ -130,6 +130,13 @@ final class AppState: ObservableObject {
             updateLoginItem()
         }
     }
+    /// Quiet while another app plays sound: music, a video, a game.
+    @Published var muteWhileMedia: Bool {
+        didSet {
+            defaults.set(muteWhileMedia, forKey: "muteWhileMedia")
+            updateMediaMonitor()
+        }
+    }
     @Published var muteWhenLocked: Bool {
         didSet {
             defaults.set(muteWhenLocked, forKey: "muteWhenLocked")
@@ -240,12 +247,15 @@ final class AppState: ObservableObject {
     var isAutomaticallyMuted: Bool { automaticMute != nil }
     /// Another app is recording (only tracked while muteDuringCalls is on).
     @Published private(set) var microphoneInUse = false
+    /// Another app is playing sound (only tracked while muteWhileMedia is on).
+    @Published private(set) var mediaPlaying = false
 
     private let defaults: UserDefaults
     private var idleMode = IdleMode()
     private var dynamics = TypingDynamics()
     private var screenLocked = false
-    private var microphoneMonitor: MicrophoneMonitor?
+    private var microphoneMonitor: AudioActivityMonitor?
+    private var mediaMonitor: AudioActivityMonitor?
     /// Each output device keeps its own volume, as macOS does for system
     /// volume: headphones usually want less than speakers.
     private var volumeByDevice: [String: Float]
@@ -269,6 +279,7 @@ final class AppState: ObservableObject {
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false,
             "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "headphonesOnly": false, "muteDuringCalls": false,
+            "muteWhileMedia": false,
             "idleTimeoutMinutes": 0,
         ])
         enabled = defaults.bool(forKey: "enabled")
@@ -286,6 +297,7 @@ final class AppState: ObservableObject {
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
+        muteWhileMedia = defaults.bool(forKey: "muteWhileMedia")
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
         toggleShortcut = defaults.data(forKey: "toggleShortcut")
@@ -316,6 +328,7 @@ final class AppState: ObservableObject {
             screenLocked = session["CGSSessionScreenIsLocked"] as? Bool ?? false
         }
         updateMicrophoneMonitor()
+        updateMediaMonitor()
         outputRouteChanged()
         outputListeners = SystemAudioListener.outputRoute { [weak self] in self?.outputRouteChanged() }
         setFrontApp(NSWorkspace.shared.frontmostApplication)
@@ -698,9 +711,27 @@ final class AppState: ObservableObject {
             return
         }
         guard microphoneMonitor == nil else { return }
-        let monitor = MicrophoneMonitor { [weak self] inUse in self?.setMicrophoneInUse(inUse) }
+        let monitor = AudioActivityMonitor(.recording) { [weak self] inUse in self?.setMicrophoneInUse(inUse) }
         microphoneMonitor = monitor
         microphoneInUse = monitor.inUse
+    }
+
+    private func updateMediaMonitor() {
+        guard muteWhileMedia else {
+            mediaMonitor = nil
+            setMediaPlaying(false)
+            return
+        }
+        guard mediaMonitor == nil else { return }
+        let monitor = AudioActivityMonitor(.playing) { [weak self] playing in self?.setMediaPlaying(playing) }
+        mediaMonitor = monitor
+        setMediaPlaying(monitor.inUse)
+    }
+
+    /// Called by the media monitor (and by tests).
+    func setMediaPlaying(_ playing: Bool) {
+        mediaPlaying = playing
+        updateAutomaticMute()
     }
 
     /// `now` is a parameter so tests can check the idle timeout without waiting.
@@ -710,6 +741,8 @@ final class AppState: ObservableObject {
             reason = .call
         } else if muteWhenLocked && screenLocked {
             reason = .screenLocked
+        } else if muteWhileMedia && mediaPlaying {
+            reason = .media
         } else if headphonesOnly && outputIsSpeaker {
             reason = .speakers
         } else if let frontApp, mutedApps.contains(frontApp.id) {

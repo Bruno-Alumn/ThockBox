@@ -285,8 +285,9 @@ private struct MutingPage: View {
     var body: some View {
         Form {
             Section {
-                if MicrophoneMonitor.isSupported {
+                if AudioActivityMonitor.isSupported {
                     Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
+                    Toggle("While other apps play sound", isOn: $state.muteWhileMedia)
                 }
                 Toggle("While the screen is locked", isOn: $state.muteWhenLocked)
                 Toggle("On speakers (headphones only)", isOn: $state.headphonesOnly)
@@ -301,8 +302,8 @@ private struct MutingPage: View {
             } header: {
                 Text("Mute Automatically")
             } footer: {
-                formFooter((MicrophoneMonitor.isSupported
-                      ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. "
+                formFooter((AudioActivityMonitor.isSupported
+                      ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. Other apps playing sound includes music, videos and games, but not alerts. "
                       : "")
                      + "Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
             }

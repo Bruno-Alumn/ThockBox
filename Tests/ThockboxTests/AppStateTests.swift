@@ -207,6 +207,18 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertFalse(state.isAutomaticallyMuted)
     }
 
+    func testMediaMutesOnlyWhenEnabledAndUntilItStops() {
+        let state = AppState(defaults: defaults)
+        state.setMediaPlaying(true)
+        XCTAssertFalse(state.isAutomaticallyMuted, "mute-while-media is off")
+
+        state.muteWhileMedia = true
+        state.setMediaPlaying(true)
+        XCTAssertEqual(state.automaticMute, .media)
+        state.setMediaPlaying(false)
+        XCTAssertFalse(state.isAutomaticallyMuted)
+    }
+
     func testMutedAppMutesOnlyWhileInFront() {
         let state = AppState(defaults: defaults)
         state.setFrontApp(id: "com.example.game", name: "Game")
