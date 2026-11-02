@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The settings window's pages, one per toolbar tab (see MainWindow). Each is
 /// a grouped Form of standard controls.
@@ -335,9 +336,9 @@ private struct MutingPage: View {
                 Text("Mute During")
             } footer: {
                 formFooter((AudioActivityMonitor.isSupported
-                      ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts. "
+                      ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts; some apps (call apps, a browser just after a video) keep their sound open while silent and count too. "
                       : "")
-                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam.")
+                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam. Screen sharing also counts screen mirroring and apps that watch the screen in the background.")
             }
 
             Section {
@@ -388,7 +389,23 @@ private struct ActivityPage: View {
                     KeystrokeChart(store: store)
                 }
             }
+
+            Section {
+                LabeledContent("Daily counts") {
+                    Button("Export…") { exportCSV() }
+                }
+            } footer: {
+                formFooter("A CSV of the last 30 days, for a spreadsheet. Only counts are kept, never what you typed.")
+            }
         }
+    }
+
+    private func exportCSV() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "ThockBox Keystrokes.csv"
+        panel.allowedContentTypes = [.commaSeparatedText]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        try? store.shown.csv().write(to: url, atomically: true, encoding: .utf8)
     }
 }
 
