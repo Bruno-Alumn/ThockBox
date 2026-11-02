@@ -241,8 +241,8 @@ tell application "ThockBox"
 end tell
 ```
 
-Read-only: `automatically muted`, `mute reason`, `keystrokes today` and
-`keystrokes total`. The first time a script controls ThockBox, macOS asks
+Read-only: `automatically muted`, `mute reason`, `off until` (when a timed
+off ends, or `missing value`), `keystrokes today` and `keystrokes total`. The first time a script controls ThockBox, macOS asks
 whether to allow it.
 
 ## Custom switch sets

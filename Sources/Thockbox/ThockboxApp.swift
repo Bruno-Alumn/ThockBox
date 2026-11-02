@@ -56,7 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func application(_ sender: NSApplication, delegateHandlesKey key: String) -> Bool {
         ["soundsEnabled", "soundPack", "soundVolume", "muteDuringCalls", "headphonesOnly",
-         "muteWhenLocked", "automaticallyMuted", "muteReason", "keystrokesToday",
+         "muteWhenLocked", "automaticallyMuted", "muteReason", "offUntil", "keystrokesToday",
          "keystrokesTotal"].contains(key)
     }
 
@@ -97,6 +97,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc var automaticallyMuted: Bool { AppState.shared.isAutomaticallyMuted }
+
+    @objc var offUntil: Date? { AppState.shared.offUntil }
 
     @objc var muteReason: String { AppState.shared.automaticMute?.message ?? "" }
 
