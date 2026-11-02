@@ -38,14 +38,17 @@ final class AudioActivityMonitor {
     ]
 
     let activity: Activity
-    private(set) var inUse = false
-    private let onChange: (Bool) -> Void
+    /// The other apps doing it now, by bundle ID ("" for a process without
+    /// one), so the user can see and ignore them.
+    private(set) var apps: Set<String> = []
+    var inUse: Bool { !apps.isEmpty }
+    private let onChange: (Set<String>) -> Void
     private var watched: [(AudioObjectID, AudioObjectPropertyAddress)] = []
     private lazy var listener: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
         self?.rewatch()
     }
 
-    init(_ activity: Activity, onChange: @escaping (Bool) -> Void) {
+    init(_ activity: Activity, onChange: @escaping (Set<String>) -> Void) {
         self.activity = activity
         self.onChange = onChange
         rewatch()
@@ -68,9 +71,9 @@ final class AudioActivityMonitor {
                 watch(process, Self.selector(activity))
             }
         }
-        let now = Self.someoneElseIs(activity)
-        guard now != inUse else { return }
-        inUse = now
+        let now = Self.others(activity)
+        guard now != apps else { return }
+        apps = now
         onChange(now)
     }
 
@@ -99,21 +102,26 @@ final class AudioActivityMonitor {
     }
 
     static func someoneElseIs(_ activity: Activity) -> Bool {
-        guard #available(macOS 14.2, *) else { return false }
+        !others(activity).isEmpty
+    }
+
+    /// Bundle IDs of the other apps recording or playing right now.
+    static func others(_ activity: Activity) -> Set<String> {
+        guard #available(macOS 14.2, *) else { return [] }
         let me = getpid()
-        return objects(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyProcessObjectList)
-            .contains { process in
-                let running: UInt32 = value(process, selector(activity)) ?? 0
-                let pid: pid_t = value(process, kAudioProcessPropertyPID) ?? me
-                switch activity {
-                case .recording:
-                    return countsAsCall(recording: running != 0, pid: pid, ownPID: me,
-                                        bundleID: bundleID(process))
-                case .playing:
-                    return countsAsMedia(playing: running != 0, pid: pid, ownPID: me,
-                                         bundleID: bundleID(process))
-                }
+        var found: Set<String> = []
+        for process in objects(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyProcessObjectList) {
+            let running: UInt32 = value(process, selector(activity)) ?? 0
+            guard running != 0 else { continue }
+            let pid: pid_t = value(process, kAudioProcessPropertyPID) ?? me
+            let id = bundleID(process)
+            let counts = switch activity {
+            case .recording: countsAsCall(recording: true, pid: pid, ownPID: me, bundleID: id)
+            case .playing: countsAsMedia(playing: true, pid: pid, ownPID: me, bundleID: id)
             }
+            if counts { found.insert(id ?? Self.processKey(pid)) }
+        }
+        return found
     }
 
     /// Whether one audio process means a call or recording: it's taking
@@ -128,7 +136,20 @@ final class AudioActivityMonitor {
     /// sound out, it isn't ThockBox, and it isn't a system alert or voice.
     static func countsAsMedia(playing: Bool, pid: pid_t, ownPID: pid_t,
                               bundleID: @autoclosure () -> String?) -> Bool {
-        playing && pid != ownPID && !systemSounds.contains(bundleID() ?? "")
+        guard playing, pid != ownPID else { return false }
+        // The "Hey Siri" and Voice Control services keep output open too.
+        let id = bundleID() ?? ""
+        return !systemSounds.contains(id) && !alwaysListening.contains(id)
+    }
+
+    /// Stands in for a bundle ID for a process without one (a command-line
+    /// player, an audio daemon), so it can still be named and ignored.
+    static let processPrefix = "process:"
+
+    static func processKey(_ pid: pid_t) -> String {
+        var buffer = [CChar](repeating: 0, count: 256)
+        guard proc_name(pid, &buffer, UInt32(buffer.count)) > 0 else { return processPrefix }
+        return processPrefix + String(cString: buffer)
     }
 
     @available(macOS 14.2, *)

@@ -3,6 +3,14 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- **See and ignore what counts as playing sound.** With Mute while other apps
+  play sound on, Settings › Muting lists the apps holding sound open now; uncheck
+  one (a call app, a browser) to stop it muting ThockBox.
+- Fixed: the "Hey Siri" listener counted as an app playing sound, so that
+  mute could stay on with nothing playing.
+
 ## 1.2.0
 
 - **Mute during calendar events,** from the calendars you choose. All-day,
