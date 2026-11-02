@@ -9,6 +9,9 @@ final class KeyListener {
         case keyUp(keycode: UInt16)
         case mouseDown
         case mouseUp
+        /// Vertical scrolling: pixels from a trackpad (`precise`), lines
+        /// from a wheel. Momentum after a swipe isn't reported.
+        case scroll(delta: Double, precise: Bool)
         case optionStatusItemClick
     }
 
@@ -25,6 +28,13 @@ final class KeyListener {
     var listensToMouse = false {
         didSet {
             if isRunning, listensToMouse != oldValue { updateMouseMonitors() }
+        }
+    }
+
+    /// Same for scrolling, which sends far more events than clicks.
+    var listensToScroll = false {
+        didSet {
+            if isRunning, listensToScroll != oldValue { updateMouseMonitors() }
         }
     }
 
@@ -78,8 +88,11 @@ final class KeyListener {
     private func updateMouseMonitors() {
         for m in mouseMonitors { NSEvent.removeMonitor(m) }
         mouseMonitors.removeAll()
-        guard listensToMouse else { return }
-        if let m = NSEvent.addGlobalMonitorForEvents(matching: Self.mouseMask, handler: { [weak self] event in
+        var mask: NSEvent.EventTypeMask = []
+        if listensToMouse { mask.formUnion(Self.mouseMask) }
+        if listensToScroll { mask.insert(.scrollWheel) }
+        guard !mask.isEmpty else { return }
+        if let m = NSEvent.addGlobalMonitorForEvents(matching: mask, handler: { [weak self] event in
             self?.process(event)
         }) {
             mouseMonitors.append(m)
@@ -143,6 +156,8 @@ final class KeyListener {
             handler?(.mouseDown)
         case .leftMouseUp, .rightMouseUp, .otherMouseUp:
             handler?(.mouseUp)
+        case .scrollWheel where event.momentumPhase.isEmpty:
+            handler?(.scroll(delta: event.scrollingDeltaY, precise: event.hasPreciseScrollingDeltas))
         default:
             break
         }

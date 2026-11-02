@@ -122,6 +122,7 @@ private struct SoundPage: View {
                     Image(systemName: "speaker.wave.3.fill")
                 }
                 .accessibilityValue(SpokenValue.percent(state.volume))
+                .sliderHaptics(state.volume, in: 0...1, step: 0.1)
                 OutputDevicePicker(state: state)
             } footer: {
                 formFooter("Each output device keeps its own volume.")
@@ -136,6 +137,7 @@ private struct SoundPage: View {
                     Text("Brighter")
                 }
                 .accessibilityValue(SpokenValue.direction(state.toneX, up: "brighter", down: "darker"))
+                .sliderHaptics(state.toneX, in: -1...1, step: 1)
                 Slider(value: $state.toneY, in: -1...1) {
                     Text("Pitch")
                 } minimumValueLabel: {
@@ -144,6 +146,7 @@ private struct SoundPage: View {
                     Text("Higher")
                 }
                 .accessibilityValue(SpokenValue.direction(state.toneY, up: "higher", down: "lower"))
+                .sliderHaptics(state.toneY, in: -1...1, step: 1)
                 Slider(value: $state.pitchVariation, in: 0...150) {
                     Text("Variation")
                 } minimumValueLabel: {
@@ -259,10 +262,11 @@ private struct KeysPage: View {
                     set: { state.muteModifiers = !$0 }))
                 Toggle("Function keys", isOn: $state.functionKeysAudible)
                 Toggle("Mouse clicks", isOn: $state.mouseClicks)
+                Toggle("Scrolling", isOn: $state.scrollSounds)
             } header: {
                 Text("Also Play Sounds For")
             } footer: {
-                formFooter("Letters, numbers, Space, Return and the other typing keys always play.")
+                formFooter("Letters, numbers, Space, Return and the other typing keys always play. Scrolling ticks softly, like a mouse wheel.")
             }
 
             Section {
@@ -271,7 +275,7 @@ private struct KeysPage: View {
             } header: {
                 Text("Extras")
             } footer: {
-                formFooter("The trackpad tap needs a Force Touch trackpad.")
+                formFooter("The trackpad tap needs a Force Touch trackpad. With scrolling sounds on, each scroll tick taps too.")
             }
         }
     }
@@ -395,6 +399,12 @@ private struct GeneralPage: View {
                     if !state.showMenuBarIcon {
                         Text("Open ThockBox from Applications or Spotlight to get back here.")
                     }
+                }
+                Picker(selection: $state.dockIconStyle) {
+                    ForEach(DockIconStyle.allCases) { Text($0.title).tag($0) }
+                } label: {
+                    Text("App icon")
+                    Text("Shown in the Dock and ThockBox's windows.")
                 }
                 Toggle("Show today's keystrokes in the menu bar", isOn: $state.showKeystrokesInMenuBar)
                 Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)
