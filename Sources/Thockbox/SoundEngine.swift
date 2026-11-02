@@ -477,6 +477,9 @@ final class SoundEngine {
 
     /// The next voice in turn that isn't sounding. Only when every voice is
     /// busy (e.g. under a long ding) does the next one in turn get cut off.
+    /// Voices still rendering a sound (for tests: they must free up again).
+    var busyVoiceCount: Int { voices.filter(\.isSounding).count }
+
     static func voiceIndex(next: Int, count: Int, isBusy: (Int) -> Bool) -> Int {
         (0..<count).lazy.map { (next + $0) % count }.first { !isBusy($0) } ?? next
     }

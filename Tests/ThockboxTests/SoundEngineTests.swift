@@ -50,6 +50,46 @@ final class SoundEngineTests: XCTestCase {
         XCTAssertFalse(engine.isIdlePaused)
     }
 
+    /// A running engine with a pack loaded and the volume at zero, or a skip
+    /// where there's no audio output (CI).
+    private func runningEngine() throws -> SoundEngine {
+        let engine = SoundEngine()
+        engine.volume = 0
+        engine.load(pack: try XCTUnwrap(Self.packs.first { $0.id == "cream" }))
+        do { try engine.start() } catch { throw XCTSkip("no audio output (CI)") }
+        return engine
+    }
+
+    /// Lets the engine's completion callbacks, which arrive on the main
+    /// queue, run.
+    private func settle(_ seconds: TimeInterval) {
+        RunLoop.main.run(until: Date().addingTimeInterval(seconds))
+    }
+
+    /// Typing faster than the 8 voices can keep up with still plays every
+    /// key (the oldest sound is cut), and every voice is free again once
+    /// the sounds have played, so the next burst isn't cut short.
+    func testABurstPlaysEveryKeyAndFreesEveryVoice() throws {
+        let engine = try runningEngine()
+        defer { engine.stop() }
+        for i in 0..<30 {
+            XCTAssertTrue(engine.playKey(keyClass: .row2, up: false, x: Float(i % 10) / 10), "key \(i)")
+        }
+        XCTAssertEqual(engine.busyVoiceCount, 8, "all voices in use during the burst")
+        settle(0.6)
+        XCTAssertEqual(engine.busyVoiceCount, 0, "voices free once the sounds have played")
+    }
+
+    func testReleaseRightAfterItsPressBothPlay() throws {
+        let engine = try runningEngine()
+        defer { engine.stop() }
+        XCTAssertTrue(engine.playKey(keyClass: .space, up: false, x: 0.5))
+        XCTAssertTrue(engine.playKey(keyClass: .space, up: true, x: 0.5))
+        XCTAssertEqual(engine.busyVoiceCount, 2)
+        settle(0.6)
+        XCTAssertEqual(engine.busyVoiceCount, 0)
+    }
+
     /// Every file a pack lists gets decoded (and trimmed) once.
     func testLoadDecodesEveryFileEachPackLists() throws {
         XCTAssertFalse(Self.packs.isEmpty)
