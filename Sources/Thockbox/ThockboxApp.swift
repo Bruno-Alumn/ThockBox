@@ -108,7 +108,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc var automaticallyMuted: Bool { AppState.shared.isAutomaticallyMuted }
 
-    @objc var offUntil: Date? { AppState.shared.offUntil }
+    /// Setting a future date turns sounds off until then, like Turn Off for
+    /// an Hour; missing value (or a time that has passed) turns them on.
+    @objc var offUntil: Date? {
+        get { AppState.shared.offUntil }
+        set {
+            if let newValue, newValue > Date() {
+                AppState.shared.turnOff(for: newValue.timeIntervalSinceNow)
+            } else {
+                AppState.shared.enabled = true
+            }
+        }
+    }
 
     @objc var muteReason: String { AppState.shared.automaticMute?.message ?? "" }
 

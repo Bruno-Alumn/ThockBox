@@ -32,7 +32,7 @@
             <property name="automatically muted" code="Tbam" type="boolean" access="r" description="Whether sounds are muted right now by a call, the lock screen, a muted app or inactivity.">
                 <cocoa key="automaticallyMuted"/>
             </property>
-            <property name="off until" code="Tbou" type="date" access="r" description="When sounds turn back on by themselves after Turn Off for an Hour, or missing value.">
+            <property name="off until" code="Tbou" type="date" access="rw" description="When sounds turn back on by themselves after Turn Off for an Hour, or missing value. Set a date to turn sounds off until then; set missing value to turn them back on.">
                 <cocoa key="offUntil"/>
             </property>
             <property name="mute reason" code="Tbmr" type="text" access="r" description="Why sounds are automatically muted, or empty text when they aren't.">
