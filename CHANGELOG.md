@@ -13,9 +13,10 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - **VoiceOver** reads the settings properly: brightness and pitch as
   "30% brighter" or "20% lower", volume as a percentage, the shortcut as
   "Control Command K", and labels on the muted-app buttons.
-
 - **AppleScript** can turn "headphones only" and "mute when locked" on and
   off.
+- **Sets removed in Finder** drop out of the menu the next time it opens,
+  and sound falls back to Cream instead of going silent.
 
 ## 1.1.1
 
