@@ -244,7 +244,13 @@ private struct KeysPage: View {
             } header: {
                 Text("Shortcut")
             } footer: {
-                if shortcutRejected { formFooter(Shortcut.requirement) }
+                if shortcutRejected {
+                    formFooter(Shortcut.requirement)
+                } else if !Shortcut.isAllowed(state.toggleShortcut.flags) {
+                    // Saved before the current rule: it still works, but the
+                    // app in front gets the key too.
+                    formFooter("The app in front also gets \(state.toggleShortcut.display). Record one with ⌃, or ⌘ with ⌥, to keep it to ThockBox.")
+                }
             }
 
             Section {
