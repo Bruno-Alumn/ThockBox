@@ -312,10 +312,9 @@ private struct MutingPage: View {
         Form {
             Section {
                 if AudioActivityMonitor.isSupported {
-                    Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
-                    Toggle("While other apps play sound", isOn: $state.muteWhileMedia)
+                    Toggle("Calls and recordings", isOn: $state.muteDuringCalls)
                 }
-                Toggle("During calendar events", isOn: $state.muteDuringMeetings)
+                Toggle("Calendar events", isOn: $state.muteDuringMeetings)
                 if state.muteDuringMeetings && !state.calendars.isEmpty {
                     CalendarChoice(state: state)
                 }
@@ -324,13 +323,26 @@ private struct MutingPage: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                Toggle("While playing a game", isOn: $state.muteWhileGaming)
-                Toggle("While the screen is locked", isOn: $state.muteWhenLocked)
                 if ScreenCapture.isAvailable {
-                    Toggle("While sharing or recording the screen", isOn: $state.muteWhileSharing)
+                    Toggle("Screen sharing and recording", isOn: $state.muteWhileSharing)
                 }
-                Toggle("On speakers (headphones only)", isOn: $state.headphonesOnly)
-                Picker("After no typing for", selection: $state.idleTimeoutMinutes) {
+                if AudioActivityMonitor.isSupported {
+                    Toggle("Other apps playing sound", isOn: $state.muteWhileMedia)
+                }
+                Toggle("Games", isOn: $state.muteWhileGaming)
+            } header: {
+                Text("Mute During")
+            } footer: {
+                formFooter((AudioActivityMonitor.isSupported
+                      ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts. "
+                      : "")
+                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam.")
+            }
+
+            Section {
+                Toggle("The screen is locked", isOn: $state.muteWhenLocked)
+                Toggle("Playing on speakers (headphones only)", isOn: $state.headphonesOnly)
+                Picker("No typing for", selection: $state.idleTimeoutMinutes) {
                     Text("Never").tag(0)
                     Text("1 minute").tag(1)
                     Text("5 minutes").tag(5)
@@ -339,12 +351,9 @@ private struct MutingPage: View {
                     Text("1 hour").tag(60)
                 }
             } header: {
-                Text("Mute Automatically")
+                Text("Mute When")
             } footer: {
-                formFooter((AudioActivityMonitor.isSupported
-                      ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. Other apps playing sound includes music, videos and games, but not alerts. "
-                      : "")
-                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam. Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
+                formFooter("Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
             }
 
             Section {
