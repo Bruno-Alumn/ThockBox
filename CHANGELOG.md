@@ -7,6 +7,7 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 - **Focus filter:** turn sounds off, or pick a switch set, while a Focus is on
   (System Settings › Focus › Focus Filters). It goes back when the Focus ends.
+- The ThockBox icon in the Welcome window presses like a key.
 - **The menu bar icon dims while sounds are off,** so it's easy to tell at a
   glance. Turn it off in Settings › General.
 - **Today's keystrokes in the menu bar,** next to the icon, if you turn it
