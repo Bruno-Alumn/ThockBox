@@ -205,6 +205,8 @@ struct MutedAppsList: View {
 /// Click, then press the new shortcut. Esc cancels.
 struct ShortcutRecorder: View {
     @ObservedObject var state: AppState
+    /// Set when a combination was refused, so the page can say what works.
+    @Binding var rejected: Bool
     @State private var monitor: Any?
 
     var body: some View {
@@ -223,6 +225,7 @@ struct ShortcutRecorder: View {
     }
 
     private func start() {
+        rejected = false
         state.isRecordingShortcut = true
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             if event.keyCode == 53 { // Esc
@@ -230,8 +233,12 @@ struct ShortcutRecorder: View {
             } else if let shortcut = Shortcut(event: event) {
                 state.toggleShortcut = shortcut
                 stop()
+            } else if !event.modifierFlags.intersection([.command, .control, .option]).isEmpty {
+                // A real attempt that would clash: say what works.
+                NSSound.beep()
+                rejected = true
             } else {
-                NSSound.beep() // needs ⌘, ⌃ or ⌥
+                NSSound.beep()
             }
             return nil
         }

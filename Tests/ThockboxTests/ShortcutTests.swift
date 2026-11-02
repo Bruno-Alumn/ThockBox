@@ -11,13 +11,18 @@ final class ShortcutTests: XCTestCase {
 
     func testRecordsCombinationsWithACommandKey() {
         XCTAssertEqual(Shortcut(event: event(40, "k", [.command, .control]))?.display, "⌃⌘K")
-        XCTAssertEqual(Shortcut(event: event(49, " ", [.option, .shift]))?.display, "⌥⇧Space")
+        XCTAssertEqual(Shortcut(event: event(49, " ", [.control, .option]))?.display, "⌃⌥Space")
+        XCTAssertEqual(Shortcut(event: event(40, "k", [.command, .option]))?.display, "⌥⌘K")
         XCTAssertEqual(Shortcut(event: event(40, "k", [.command, .control])), .standard)
     }
 
     func testRejectsKeysThatWouldFireWhileTyping() {
         XCTAssertNil(Shortcut(event: event(40, "k", [])))
         XCTAssertNil(Shortcut(event: event(40, "K", [.shift])))
+        XCTAssertNil(Shortcut(event: event(14, "e", [.option])), "types an accent")
+        XCTAssertNil(Shortcut(event: event(49, " ", [.option, .shift])), "types a character")
+        XCTAssertNil(Shortcut(event: event(8, "c", [.command])), "copy")
+        XCTAssertNil(Shortcut(event: event(1, "S", [.command, .shift])), "save as")
     }
 
     func testIgnoresNonModifierFlags() {
