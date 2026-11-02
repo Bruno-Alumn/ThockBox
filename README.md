@@ -245,6 +245,8 @@ folder onto the switch list. Two kinds of folder work:
   Both the current format, with press and release sounds for every key, and
   the older one are read. Each key's sound goes to its row, so a pack gives
   many different recordings per row.
+- **A set exported from ThockBox**, or any folder with a `pack.json` (see
+  below). It's added as it is.
 - **Your own recordings.** Files with *space*, *enter*/*return* or
   *backspace*/*delete* in the name play for those keys, files with *up* or
   *release* in the name play when a key is let go, and everything else plays
@@ -252,8 +254,9 @@ folder onto the switch list. Two kinds of folder work:
 
 Added sets are converted into `~/Library/Application Support/ThockBox/Sounds/`,
 so they survive updates. They get the same noise trimming and loudness
-matching as the built-in sets. The button next to one in Settings moves it
-to the Trash.
+matching as the built-in sets. **Your Sets** in Settings → Sound can export
+one as a folder to share (anyone can add it with Add Your Own, mapping and
+all) or move it to the Trash.
 
 For full control (per-row sounds, a gain trim), add a folder under
 `Resources/Sounds/` with your samples and a `pack.json`, then run

@@ -94,16 +94,19 @@ private struct SoundPage: View {
                     Button("Add Your Own…", action: addSwitchSet)
                     let added = state.packs.filter { UserPacks.isUserPack($0) }
                     if !added.isEmpty {
-                        Menu("Remove") {
+                        Menu("Your Sets") {
                             ForEach(added) { pack in
-                                Button(pack.name) { remove(pack) }
+                                Menu(pack.name) {
+                                    Button("Export…") { export(pack) }
+                                    Button("Remove…") { remove(pack) }
+                                }
                             }
                         }
                         .fixedSize()
                     }
                 }
             } footer: {
-                formFooter("Choosing a set plays a sample of it. Add a Mechvibes sound pack or a folder of your own recordings, or drop one on this window.")
+                formFooter("Choosing a set plays a sample of it. Add a Mechvibes sound pack, a set exported from ThockBox, or a folder of your own recordings, or drop one on this window.")
             }
 
             Section {
@@ -178,6 +181,22 @@ private struct SoundPage: View {
     private func importSwitchSet(from urls: [URL]) {
         do {
             try state.importSwitchSet(from: urls)
+        } catch {
+            NSAlert(error: error).runModal()
+        }
+    }
+
+    private func export(_ pack: SoundPack) {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.prompt = "Export"
+        panel.message = "Choose where to save \(pack.name). It can be added again with Add Your Own."
+        guard panel.runModal() == .OK, let destination = panel.url else { return }
+        do {
+            let folder = try UserPacks.export(pack, to: destination)
+            NSWorkspace.shared.activateFileViewerSelecting([folder])
         } catch {
             NSAlert(error: error).runModal()
         }
