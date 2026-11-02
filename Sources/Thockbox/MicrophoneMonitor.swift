@@ -80,9 +80,17 @@ final class MicrophoneMonitor {
             .contains { process in
                 let recording: UInt32 = value(process, kAudioProcessPropertyIsRunningInput) ?? 0
                 let pid: pid_t = value(process, kAudioProcessPropertyPID) ?? me
-                return recording != 0 && pid != me
-                    && !alwaysListening.contains(bundleID(process) ?? "")
+                return countsAsCall(recording: recording != 0, pid: pid, ownPID: me,
+                                    bundleID: bundleID(process))
             }
+    }
+
+    /// Whether one audio process means a call or recording: it's taking
+    /// input, it isn't ThockBox, and it isn't a system service that listens
+    /// all the time. The bundle ID is looked up last, only when needed.
+    static func countsAsCall(recording: Bool, pid: pid_t, ownPID: pid_t,
+                             bundleID: @autoclosure () -> String?) -> Bool {
+        recording && pid != ownPID && !alwaysListening.contains(bundleID() ?? "")
     }
 
     @available(macOS 14.2, *)
