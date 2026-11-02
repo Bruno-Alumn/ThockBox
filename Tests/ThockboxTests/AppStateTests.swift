@@ -34,6 +34,19 @@ final class AppStateTests: XCTestCase {
         XCTAssertFalse(state.mouseClicks)
     }
 
+    func testSetChangesFromElsewhereNotifyOnlyWhenAsked() {
+        let state = AppState(defaults: defaults)
+        state.postsNotifications = false
+        let other = "holy-panda"
+        XCTAssertFalse(state.notifySetChanges, "off by default")
+        XCTAssertFalse(state.selectPackFromElsewhere(other))
+        XCTAssertEqual(state.selectedPackID, other)
+
+        state.notifySetChanges = true
+        XCTAssertFalse(state.selectPackFromElsewhere(other), "no change, no notification")
+        XCTAssertTrue(state.selectPackFromElsewhere("cream"))
+    }
+
     func testStoredValuesAreClampedOnLoad() {
         defaults.set(5.0, forKey: "volume")
         defaults.set(-9.0, forKey: "toneX")

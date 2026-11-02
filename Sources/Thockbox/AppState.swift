@@ -36,13 +36,13 @@ final class AppState: ObservableObject {
         guard !soundsOn || packID != nil else {
             if let before = beforeFocus {
                 beforeFocus = nil
-                selectedPackID = before.packID
+                selectPackFromElsewhere(before.packID)
                 enabled = before.enabled
             }
             return
         }
         if beforeFocus == nil { beforeFocus = (enabled, selectedPackID) }
-        if let packID { selectedPackID = packID }
+        if let packID { selectPackFromElsewhere(packID) }
         enabled = soundsOn
     }
 
@@ -94,6 +94,15 @@ final class AppState: ObservableObject {
             applyPack(notify: oldValue != selectedPackID)
         }
     }
+    /// Notify when Shortcuts or AppleScript changes the switch set.
+    @Published var notifySetChanges: Bool {
+        didSet {
+            defaults.set(notifySetChanges, forKey: "notifySetChanges")
+            if notifySetChanges && postsNotifications { SetChangeNotifier.requestPermission() }
+        }
+    }
+    /// Tests turn this off: notifications need a signed app bundle.
+    var postsNotifications = true
     @Published var toneX: Float {
         didSet {
             defaults.set(toneX, forKey: "toneX")
@@ -342,11 +351,12 @@ final class AppState: ObservableObject {
             "muteDuringMeetings": false,
             "muteWhileMedia": false,
             "muteWhileGaming": false,
-            "idleTimeoutMinutes": 0,
+            "idleTimeoutMinutes": 0, "notifySetChanges": false,
         ])
         enabled = defaults.bool(forKey: "enabled")
         volume = min(max(defaults.float(forKey: "volume"), 0), 1)
         selectedPackID = defaults.string(forKey: "pack") ?? "cream"
+        notifySetChanges = defaults.bool(forKey: "notifySetChanges")
         toneX = min(max(defaults.float(forKey: "toneX"), -1), 1)
         toneY = min(max(defaults.float(forKey: "toneY"), -1), 1)
         pitchVariation = min(max(defaults.float(forKey: "pitchVariation"), 0), 150)
@@ -566,6 +576,19 @@ final class AppState: ObservableObject {
     /// comes back if it's restored.
     var currentPack: SoundPack? {
         packs.first { $0.id == selectedPackID } ?? packs.first { $0.id == "cream" } ?? packs.first
+    }
+
+    /// Changes the set from outside ThockBox's own controls (a Focus,
+    /// Shortcuts, AppleScript), with a notification if the user asked for one.
+    /// Returns whether a notification was posted.
+    @discardableResult
+    func selectPackFromElsewhere(_ id: String) -> Bool {
+        guard id != selectedPackID else { return false }
+        selectedPackID = id
+        guard notifySetChanges else { return false }
+        let name = packs.first { $0.id == id }?.name ?? id
+        if postsNotifications { SetChangeNotifier.post(setName: name) }
+        return true
     }
 
     private func applyPack(notify: Bool) {

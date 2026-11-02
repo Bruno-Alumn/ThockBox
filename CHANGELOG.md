@@ -5,6 +5,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Notify when the switch set changes** (Settings › General, off by
+  default): a notification says which set a Focus, Shortcuts or AppleScript
+  picked.
 - **Mute while playing a game** (Settings › Muting): any app filed under
   Games, or installed by Steam.
 - **Mute while other apps play sound** (Settings → Muting): music, videos
