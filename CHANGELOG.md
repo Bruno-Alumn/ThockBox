@@ -30,6 +30,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   "Couldn't reach GitHub".
 - **Muted apps** show their real names ("Safari", not "Safari.app"), and
   the Delete key removes the selected ones.
+- **Settings** reopens on the tab you used last and where you left the
+  window.
 
 ## 1.1.1
 

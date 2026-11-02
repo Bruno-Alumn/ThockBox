@@ -11,6 +11,8 @@ final class MainWindow: NSObject, NSWindowDelegate {
 
     private var window: NSWindow?
     private var tabs: NSTabViewController?
+    private var tabObservation: NSKeyValueObservation?
+    private nonisolated static let lastTabKey = "settingsLastTab"
 
     /// Brings up the window, on `page` if given.
     func show(_ page: SettingsPage? = nil) {
@@ -38,12 +40,20 @@ final class MainWindow: NSObject, NSWindowDelegate {
             item.image = NSImage(systemSymbolName: page.symbol, accessibilityDescription: page.title)
             tabs.addTabViewItem(item)
         }
+        // Opens on the tab used last time, like other Mac settings windows.
+        let last = UserDefaults.standard.integer(forKey: Self.lastTabKey)
+        if tabs.tabViewItems.indices.contains(last) { tabs.selectedTabViewItemIndex = last }
+        tabObservation = tabs.observe(\.selectedTabViewItemIndex) { tabs, _ in
+            UserDefaults.standard.set(tabs.selectedTabViewItemIndex, forKey: MainWindow.lastTabKey)
+        }
         self.tabs = tabs
         let window = NSWindow(contentViewController: tabs)
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.isReleasedWhenClosed = false
         window.delegate = self
         window.center()
+        // Reopens where it was left; centered the first time.
+        window.setFrameAutosaveName("Settings")
         return window
     }
 
