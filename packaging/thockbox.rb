@@ -3,7 +3,7 @@
 # `make cask` sets the version and sha256 from the release disk image.
 cask "thockbox" do
   version "1.1.0"
-  sha256 "008462855cce4df6fdc24f03274903c8305a94aa163a30987be6512aeb00c9f0"
+  sha256 "59bfe5362d7d89522a93cc2c3b446ec93d883157a9251115401ee326f934abd8"
 
   url "https://github.com/Bruno-Alumn/ThockBox/releases/download/v#{version}/ThockBox-#{version}.dmg"
   name "ThockBox"
