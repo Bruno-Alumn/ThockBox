@@ -74,10 +74,21 @@ enum MechvibesPack {
             struct Slice: Hashable { let file: String; let span: ClosedRange<Double>?; let up: Bool }
             var written: [Slice: String?] = [:]
             var files: [(Clip, String)] = []
-            for clip in plan.clips {
+            // Community packs often name a file or two that isn't there.
+            // Those keys fall back to the pack's other sounds; the import
+            // fails only if nothing usable is left.
+            var unusable: [String: Error] = [:]
+            for clip in plan.clips where unusable[clip.file] == nil {
                 let key = Slice(file: clip.file, span: clip.span, up: clip.up)
                 if written[key] == nil {
-                    let source = try audio[clip.file] ?? decode(folder.appendingPathComponent(clip.file))
+                    let source: AVAudioPCMBuffer
+                    do {
+                        source = try audio[clip.file] ?? decode(clip.file, in: folder)
+                    } catch {
+                        klog.error("Mechvibes import: skipping \(clip.file, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                        unusable[clip.file] = error
+                        continue
+                    }
                     audio[clip.file] = source
                     var name: String?
                     if let slice = slice(source, clip.span) {
@@ -88,7 +99,13 @@ enum MechvibesPack {
                 }
                 if let name = written[key] ?? nil { files.append((clip, name)) }
             }
-            let manifest = try manifest(id: id, name: plan.name ?? folder.lastPathComponent, clips: files)
+            let manifest: SoundPackManifest
+            do {
+                manifest = try self.manifest(id: id, name: plan.name ?? folder.lastPathComponent, clips: files)
+            } catch {
+                // Say what went wrong with the files, not just that no sounds are left.
+                throw unusable.sorted { $0.key < $1.key }.first?.value ?? error
+            }
             try UserPacks.write(manifest, to: pack)
             return id
         } catch {
@@ -128,7 +145,12 @@ enum MechvibesPack {
 
     // MARK: - Audio
 
-    private static func decode(_ url: URL) throws -> AVAudioPCMBuffer {
+    private static func decode(_ name: String, in folder: URL) throws -> AVAudioPCMBuffer {
+        let url = folder.appendingPathComponent(name).standardizedFileURL
+        guard url.path.hasPrefix(folder.standardizedFileURL.path + "/"),
+              FileManager.default.fileExists(atPath: url.path) else {
+            throw UserPacks.ImportError(errorDescription: "The pack's sound file \(name) is missing.")
+        }
         do {
             let file = try AVAudioFile(forReading: url)
             guard let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat,
