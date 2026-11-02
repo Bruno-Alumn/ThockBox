@@ -539,6 +539,12 @@ final class AppState: ObservableObject {
 
     private var volumePreview: DispatchWorkItem?
 
+    /// The app icon in ThockBox's windows plays like a space bar.
+    func pressAppIcon(down: Bool) {
+        guard enabled, !isAutomaticallyMuted else { return }
+        engine.playKey(keyClass: .space, up: !down, x: 0.5)
+    }
+
     /// A short down/up pair so a new switch or volume can be judged instantly.
     func playSwitchPreview() {
         engine.playKey(keyClass: .row2, up: false, x: 0.5)
