@@ -14,6 +14,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   "30% brighter" or "20% lower", volume as a percentage, the shortcut as
   "Control Command K", and labels on the muted-app buttons.
 
+- **AppleScript** can turn "headphones only" and "mute when locked" on and
+  off.
+
 ## 1.1.1
 
 - Downloads are a disk image: open it and drag ThockBox to Applications.
