@@ -95,6 +95,13 @@ enum PlaybackStatus: Equatable {
     }
 
     /// Something the user has to act on, not a choice they made.
+    /// Whether key presses make a sound right now; the menu bar icon shows
+    /// "off" otherwise, including while access is missing or input is blocked.
+    var isPlaying: Bool {
+        if case .playing = self { return true }
+        return false
+    }
+
     var needsAttention: Bool {
         switch self {
         case .needsAccess, .blocked: true

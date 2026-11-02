@@ -21,7 +21,7 @@ struct ThockboxApp: App {
         )) {
             MenuView(state: state)
         } label: {
-            Image(nsImage: state.enabled && !state.isAutomaticallyMuted ? MenuBarIcon.on : MenuBarIcon.off)
+            Image(nsImage: state.status.isPlaying ? MenuBarIcon.on : MenuBarIcon.off)
         }
         .menuBarExtraStyle(.menu)
     }
