@@ -222,6 +222,11 @@ struct ShortcutRecorder: View {
             }
         }
         .onDisappear(perform: stop)
+        // Recording turns the shortcut off; don't leave it off while the
+        // user is in another app, where key presses never reach the recorder.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
+            stop()
+        }
     }
 
     private func start() {
@@ -245,8 +250,9 @@ struct ShortcutRecorder: View {
     }
 
     private func stop() {
-        if let monitor { NSEvent.removeMonitor(monitor) }
-        monitor = nil
+        guard let monitor else { return } // not recording
+        NSEvent.removeMonitor(monitor)
+        self.monitor = nil
         state.isRecordingShortcut = false
     }
 }

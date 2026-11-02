@@ -598,6 +598,8 @@ final class AppState: ObservableObject {
         refreshAccessibilityStatus()
         refreshPacks()
         resumeIfDue()
+        // Picks up "Open at login" changed in System Settings meanwhile.
+        reconcileLoginItem()
     }
 
     func refreshAccessibilityStatus() {
@@ -623,8 +625,11 @@ final class AppState: ObservableObject {
     /// Keep the checkbox truthful: reflect the actual SMAppService status
     /// (registration can fail, or be changed in System Settings).
     func reconcileLoginItem() {
+        let enabled = SMAppService.mainApp.status == .enabled
+        // Only on a change: it also runs whenever the menu or Settings opens.
+        guard launchAtLogin != enabled else { return }
         reconcilingLoginItem = true
-        launchAtLogin = SMAppService.mainApp.status == .enabled
+        launchAtLogin = enabled
         reconcilingLoginItem = false
     }
 

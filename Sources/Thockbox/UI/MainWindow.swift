@@ -58,6 +58,15 @@ final class MainWindow: NSObject, NSWindowDelegate {
     }
 
     func windowWillClose(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory)
+        Self.backToMenuBar(closing: notification.object as? NSWindow)
+    }
+
+    /// Hides the Dock icon and app menu again, unless another ThockBox
+    /// window (Settings or the welcome window) is still open.
+    static func backToMenuBar(closing: NSWindow?) {
+        let othersOpen = NSApp.windows.contains {
+            $0 !== closing && $0.isVisible && $0.styleMask.contains(.titled)
+        }
+        if !othersOpen { NSApp.setActivationPolicy(.accessory) }
     }
 }

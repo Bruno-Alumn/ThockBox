@@ -35,7 +35,8 @@ struct MenuView: View {
         }
         .disabled(!state.enabled)
         Picker("Volume", selection: Binding(
-            get: { Int((state.volume * 10).rounded()) * 10 },
+            // Below 5% rounds to 0, which isn't a step; show 10% checked.
+            get: { max(10, Int((state.volume * 10).rounded()) * 10) },
             set: { state.volume = Float($0) / 100 }
         )) {
             ForEach(Self.volumeSteps, id: \.self) { step in
