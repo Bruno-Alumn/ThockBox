@@ -45,7 +45,7 @@ check.
 
 | Sound | Control | Automation |
 |---|---|---|
-| Seven switch sets | ⌃⌘K (or your own shortcut) or option-click to toggle | Mute when the screen locks or during calls |
+| Seven switch sets, plus your own recordings | ⌃⌘K (or your own shortcut) or option-click to toggle | Mute when the screen locks or during calls |
 | Press and release samples (most sets) | Volume presets, remembered per output device | Mute after 1 to 60 minutes idle |
 | Per-row samples, panned by key position | Choose any output device | Mute in apps you choose |
 | Tone Pad for darker or brighter sound | Mute modifier or function keys | AppleScript control |
@@ -196,8 +196,18 @@ whether to allow it.
 
 ## Custom switch sets
 
-Add a folder under `Resources/Sounds/` containing your samples and a
-`pack.json`, then run `make bundle`.
+The quickest way is **Settings → Switches → Add Your Own…**. Pick a folder
+of recordings (or the files themselves) and it becomes a switch set named
+after the folder. Files with *space*, *enter*/*return* or
+*backspace*/*delete* in the name play for those keys. Files with *up* or
+*release* in the name play when a key is let go. Everything else plays for
+any key. Added sets are kept in `~/Library/Application Support/ThockBox/Sounds/`,
+so they survive updates, and the button next to one in Settings moves it to
+the Trash.
+
+For full control (per-row sounds, a gain trim), add a folder under
+`Resources/Sounds/` with your samples and a `pack.json`, then run
+`make bundle`.
 
 ```json
 {

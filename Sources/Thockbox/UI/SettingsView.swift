@@ -19,7 +19,8 @@ struct SettingsView: View {
             }
 
             Section {
-                SwitchList(state: state)
+                SwitchList(state: state, allowsRemoving: true)
+                Button("Add Your Own…") { addSwitchSet() }
             } header: {
                 HStack {
                     Text("Switches")
@@ -27,6 +28,8 @@ struct SettingsView: View {
                     PreviewButton(state: state)
                         .controlSize(.small)
                 }
+            } footer: {
+                Text("Pick a folder of recordings (WAV, MP3, CAF, AIFF or M4A). Files with space, enter or backspace in the name play for those keys, and files with up or release in the name play when a key is let go.")
             }
 
             Section("Volume") {
@@ -152,6 +155,21 @@ struct SettingsView: View {
         .tint(.thockCoral)
         .frame(minWidth: 460, idealWidth: 480, minHeight: 520, idealHeight: 720)
         .onAppear { state.refreshAccessibilityStatus() }
+    }
+
+    private func addSwitchSet() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.allowedContentTypes = [.audio, .folder]
+        panel.allowsMultipleSelection = true
+        panel.prompt = "Add"
+        panel.message = "Choose a folder of key recordings, or the files themselves."
+        guard panel.runModal() == .OK else { return }
+        do {
+            try state.importSwitchSet(from: panel.urls)
+        } catch {
+            NSAlert(error: error).runModal()
+        }
     }
 
     private var header: some View {

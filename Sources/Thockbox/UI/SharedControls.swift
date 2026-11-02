@@ -43,6 +43,9 @@ struct SecureInputBanner: View {
 
 struct SwitchList: View {
     @ObservedObject var state: AppState
+    /// Settings shows a remove button on sets the user added; the menu
+    /// bar panel doesn't, so a stray click there can't delete one.
+    var allowsRemoving = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -57,11 +60,29 @@ struct SwitchList: View {
                                              ? Color.thockCoral : Color.secondary)
                         Text(pack.name)
                         Spacer()
+                        if allowsRemoving && UserPacks.isUserPack(pack) {
+                            Button {
+                                remove(pack)
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                            }
+                            .buttonStyle(.borderless)
+                            .foregroundStyle(.secondary)
+                            .help("Remove \(pack.name) (moves its files to the Trash)")
+                        }
                     }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
+        }
+    }
+
+    private func remove(_ pack: SoundPack) {
+        do {
+            try state.removeSwitchSet(pack)
+        } catch {
+            NSAlert(error: error).runModal()
         }
     }
 }

@@ -11,7 +11,8 @@ final class AppState: ObservableObject {
 
     let engine = SoundEngine()
     let listener = KeyListener()
-    private(set) var packs: [SoundPack] = []
+    /// Bundled switch sets plus any the user added (see UserPacks).
+    @Published private(set) var packs: [SoundPack] = []
 
     // MARK: - Persisted settings
 
@@ -209,7 +210,7 @@ final class AppState: ObservableObject {
     // MARK: - Lifecycle
 
     func startUp() {
-        packs = SoundPack.discover(in: Self.soundsDirectory())
+        reloadPacks()
         engine.volume = volume
         engine.pitchVariationCents = pitchVariation
         engine.setTone(x: toneX, y: toneY)
@@ -319,6 +320,26 @@ final class AppState: ObservableObject {
                 }
             }
         }
+    }
+
+    func reloadPacks() {
+        packs = (SoundPack.discover(in: Self.soundsDirectory()) + SoundPack.discover(in: UserPacks.directory))
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    /// Makes a switch set from the user's recordings and switches to it.
+    func importSwitchSet(from sources: [URL]) throws {
+        let id = try UserPacks.importPack(from: sources)
+        reloadPacks()
+        selectedPackID = id
+    }
+
+    func removeSwitchSet(_ pack: SoundPack) throws {
+        guard UserPacks.isUserPack(pack) else { return }
+        let wasSelected = currentPack?.id == pack.id
+        try UserPacks.remove(pack)
+        reloadPacks()
+        if wasSelected { selectedPackID = "cream" }
     }
 
     var currentPack: SoundPack? {
