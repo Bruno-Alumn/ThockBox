@@ -34,6 +34,24 @@ struct ToggleSoundsIntent: AppIntent {
     }
 }
 
+struct TurnOffForIntent: AppIntent {
+    static let title: LocalizedStringResource = "Turn Off ThockBox Sounds for a While"
+    static let description = IntentDescription("Turns keyboard sounds off, and back on by themselves after the time you choose.")
+
+    @Parameter(title: "Minutes", default: 60, inclusiveRange: (1, 1440))
+    var minutes: Int
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Turn off ThockBox sounds for \(\.$minutes) minutes")
+    }
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        AppState.shared.turnOff(for: TimeInterval(min(max(minutes, 1), 1440) * 60))
+        return .result()
+    }
+}
+
 struct SetSwitchSetIntent: AppIntent {
     static let title: LocalizedStringResource = "Set ThockBox Switch Set"
     static let description = IntentDescription("Chooses which switch set ThockBox plays.")

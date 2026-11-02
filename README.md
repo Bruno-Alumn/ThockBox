@@ -222,8 +222,8 @@ speakers or wired headphones give the most immediate response.
 ## Shortcuts
 
 ThockBox adds actions to the Shortcuts app: **Turn ThockBox Sounds On or
-Off**, **Toggle ThockBox Sounds**, **Set ThockBox Switch Set** and **Set
-ThockBox Volume**. Use them in a Focus automation (Work Focus → Holy Panda,
+Off**, **Toggle ThockBox Sounds**, **Turn Off ThockBox Sounds for a While**,
+**Set ThockBox Switch Set** and **Set ThockBox Volume**. Use them in a Focus automation (Work Focus → Holy Panda,
 Sleep → off) or any shortcut. "Toggle ThockBox sounds" and "Change ThockBox
 switches" also work from Spotlight and Siri with no setup.
 

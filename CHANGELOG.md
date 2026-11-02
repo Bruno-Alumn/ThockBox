@@ -8,6 +8,7 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - **Turn Off for an Hour** in the menu bar menu: sounds come back by
   themselves, even if ThockBox is restarted in between. The menu and
   Settings say until when.
+  Shortcuts has a matching action, **Turn Off ThockBox Sounds for a While**.
 - **Share your switch sets.** Settings → Sound → Your Sets → Export… saves a
   set you added as a folder, named in a standard save panel. Anyone can add
   it with Add Your Own, with its key mapping intact.
