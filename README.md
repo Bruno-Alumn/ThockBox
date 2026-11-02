@@ -50,8 +50,8 @@ or endorsed by Klack or its developer.
 
 **Quiet when it should be**
 
-- Mutes itself during calls, when the screen locks, on speakers, or in apps
-  you choose.
+- Mutes itself during calls and meetings, while sharing your screen, when the screen
+  locks, on speakers, or in apps you choose.
 - Turn it off for an hour with one click; it comes back by itself.
 - Toggle anywhere with <kbd>⌃</kbd><kbd>⌘</kbd><kbd>K</kbd>, Shortcuts or AppleScript.
 
@@ -116,11 +116,14 @@ loudness-matched like the built-in ones, and survive updates.
   output device, and tone (brightness, pitch and variation).
 - **Keys:** the on/off shortcut, which keys play (and mouse clicks), the
   Return ding, and a trackpad tap with each key.
-- **Muting:** during calls (macOS 14.2 or later), when the screen locks, on
+- **Muting:** during calls (macOS 14.2 or later), during calendar events,
+  when the screen locks, while
+  the screen is shared or recorded, on
   speakers only (“headphones only”), in chosen apps, and after 1 to 60
   minutes without typing.
 - **Activity:** keystrokes today, in total, and over the last week.
-- **General:** login, the menu bar icon, updates and help.
+- **General:** login, the menu bar icon (dimmed while sounds are off, if you
+  like, and today's keystrokes beside it), updates and help.
 
 </details>
 
@@ -144,13 +147,15 @@ tell application "ThockBox"
     set sound volume to 0.55 -- 0.0 to 1.0
     set mute during calls to true
     set headphones only to true
+    set off until to (current date) + 30 * minutes -- back on by itself
     get mute reason -- e.g. "Muted in Safari.", or "" when not muted
     get keystrokes today
 end tell
 ```
 
-Read-only: `automatically muted`, `mute reason`, `off until`,
-`keystrokes today` and `keystrokes total`.
+Read-only: `automatically muted`, `mute reason`, `keystrokes today` and
+`keystrokes total`. Setting `off until` to `missing value` turns sounds back
+on.
 
 </details>
 

@@ -17,16 +17,22 @@
             <property name="mute during calls" code="Tbmc" type="boolean" access="rw" description="Whether sounds stop while another app uses the microphone (macOS 14.2 or later).">
                 <cocoa key="muteDuringCalls"/>
             </property>
+            <property name="mute during meetings" code="Tbmt" type="boolean" access="rw" description="Whether sounds stop during calendar events (once Calendars access is allowed).">
+                <cocoa key="muteDuringMeetings"/>
+            </property>
             <property name="headphones only" code="Tbho" type="boolean" access="rw" description="Whether sounds stay quiet on speakers and play only through headphones.">
                 <cocoa key="headphonesOnly"/>
             </property>
             <property name="mute when locked" code="Tbml" type="boolean" access="rw" description="Whether sounds stop while the screen is locked.">
                 <cocoa key="muteWhenLocked"/>
             </property>
+            <property name="mute while sharing" code="Tbms" type="boolean" access="rw" description="Whether sounds stop while the screen is shared or recorded.">
+                <cocoa key="muteWhileSharing"/>
+            </property>
             <property name="automatically muted" code="Tbam" type="boolean" access="r" description="Whether sounds are muted right now by a call, the lock screen, a muted app or inactivity.">
                 <cocoa key="automaticallyMuted"/>
             </property>
-            <property name="off until" code="Tbou" type="date" access="r" description="When sounds turn back on by themselves after Turn Off for an Hour, or missing value.">
+            <property name="off until" code="Tbou" type="date" access="rw" description="When sounds turn back on by themselves after Turn Off for an Hour, or missing value. Set a date to turn sounds off until then; set missing value to turn them back on.">
                 <cocoa key="offUntil"/>
             </property>
             <property name="mute reason" code="Tbmr" type="text" access="r" description="Why sounds are automatically muted, or empty text when they aren't.">
