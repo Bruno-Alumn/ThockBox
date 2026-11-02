@@ -57,6 +57,11 @@ struct OutputDevicePicker: View {
                 ForEach(devices) { device in
                     Text(device.name).tag(device.uid)
                 }
+                // The picked device stays listed while it's unplugged; sound
+                // goes to the default until it's back.
+                if let uid = state.outputDeviceUID, !devices.contains(where: { $0.uid == uid }) {
+                    Text("\(state.outputDeviceName ?? "Picked Device") (Not Connected)").tag(uid)
+                }
             }
             // Bluetooth headphones buffer ~100–250 ms on their own; say so,
             // since it reads as the app lagging.
