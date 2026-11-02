@@ -95,8 +95,28 @@ The first line of the menu bar menu says which one is active.
 
 ## Installation
 
-ThockBox is built from source. It needs macOS 13 or later and the Xcode
-command line tools.
+ThockBox needs macOS 13 or later.
+
+### Download
+
+1. Download `ThockBox-<version>.zip` from the
+   [latest release](https://github.com/Bruno-Alumn/ThockBox/releases/latest).
+2. Unzip it and move **ThockBox** to Applications.
+3. Open it. ThockBox isn't notarized by Apple, so the first time macOS asks
+   whether to open it. Choose **Open**, or go to System Settings → Privacy &
+   Security and click **Open Anyway**.
+
+After that, ThockBox updates itself from new releases.
+
+### Homebrew
+
+```sh
+brew install --cask bruno-alumn/thockbox/thockbox
+```
+
+### Build from source
+
+Building needs the Xcode command line tools.
 
 ```sh
 git clone https://github.com/Bruno-Alumn/ThockBox.git
@@ -261,6 +281,7 @@ make bench         # CPU per key press and idle CPU (typing and paused), fails o
 make icon          # rebuild the app icon from art/logo-source.png
 make sounds        # rebuild the bundled sound sets (requires uv)
 make signing-cert  # one-time: create the certificate builds are signed with
+make cask          # point packaging/thockbox.rb (the Homebrew cask) at this version's zip
 make release       # publish dist/ThockBox-<version>.zip as a GitHub release (requires gh)
 ```
 
