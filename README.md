@@ -43,8 +43,8 @@ or endorsed by Klack or its developer.
 
 - Seven recorded switch sets: Cardboard, Cream, Holy Panda, Japanese Black,
   Milky Yellow, Oreo and Super Red.
-- Separate sounds per keyboard row, for Space, Return and Backspace, and for
-  releasing a key.
+- Separate sounds per keyboard row and for Space, Return and Backspace, and
+  in most sets for releasing a key.
 - Subtle pitch variation and stereo position, so typing never sounds looped.
 - Brightness and pitch controls to tune any set to your taste.
 
@@ -58,7 +58,8 @@ or endorsed by Klack or its developer.
 **Yours to shape**
 
 - Add Mechvibes packs or your own recordings by dropping a folder in.
-- Plays within about 5 ms and uses no CPU once you stop typing.
+- Plays within about 5 ms and uses no CPU about 30 seconds after you stop
+  typing.
 
 ## Install
 
@@ -93,7 +94,7 @@ brew install --cask bruno-alumn/thockbox/thockbox
 | <kbd>⌃</kbd><kbd>⌘</kbd><kbd>K</kbd> | Turn sounds on or off (change it in Settings › Keys) |
 | <kbd>⌥</kbd>-click the menu bar icon | Turn sounds on or off |
 | Click the menu bar icon | Switch set, volume, mute in this app, turn off for an hour |
-| <kbd>⌘</kbd><kbd>,</kbd> | Open Settings |
+| <kbd>⌘</kbd><kbd>,</kbd> in the menu | Open Settings |
 
 The first line of the menu always says what ThockBox is doing: playing, off,
 or muted and why.
@@ -172,8 +173,8 @@ Settings › Muting.
 <details>
 <summary><strong>Sound arrives late</strong></summary>
 
-Bluetooth headphones add about 100 to 250 ms that no app can remove. Settings
-› Sound › Output shows the delay for the current device. Built-in speakers
+Bluetooth headphones add about 100 to 250 ms that no app can remove. When the
+delay is noticeable, Settings › Sound shows it under **Play through**. Built-in speakers
 and wired headphones respond within a few milliseconds.
 </details>
 
@@ -297,7 +298,7 @@ Measured on Apple Silicon with `make bench`:
 | CPU while typing | about 0.6% |
 | CPU after 30 s idle | 0% (the next key adds about 8 ms) |
 | Memory | about 26 MB |
-| App size | about 2.6 MB |
+| App size | about 2.8 MB |
 
 </details>
 
