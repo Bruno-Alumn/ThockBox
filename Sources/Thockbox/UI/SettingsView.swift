@@ -288,6 +288,12 @@ private struct MutingPage: View {
                 if MicrophoneMonitor.isSupported {
                     Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
                 }
+                Toggle("During calendar events", isOn: $state.muteDuringMeetings)
+                if state.muteDuringMeetings && state.calendarAccess == .denied {
+                    Text("ThockBox can't see your calendars. Allow it in System Settings › Privacy & Security › Calendars.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
                 Toggle("While the screen is locked", isOn: $state.muteWhenLocked)
                 if ScreenCapture.isAvailable {
                     Toggle("While sharing or recording the screen", isOn: $state.muteWhileSharing)
@@ -307,7 +313,7 @@ private struct MutingPage: View {
                 formFooter((MicrophoneMonitor.isSupported
                       ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. "
                       : "")
-                     + "Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
+                     + "Calendar events don't count when they last all day, are marked free, or you declined them. Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
             }
 
             Section {
