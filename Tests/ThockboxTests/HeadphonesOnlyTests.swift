@@ -50,4 +50,16 @@ final class HeadphonesOnlyTests: XCTestCase {
         XCTAssertTrue(AppState.needsReapply(picked: "usb", available: 57, applied: nil), "plugged back in")
         XCTAssertTrue(AppState.needsReapply(picked: "usb", available: 57, applied: 42), "came back with a new id")
     }
+
+    /// A picked device keeps its last known name while it's unplugged, so
+    /// Settings can show "AirPods Pro (Not Connected)" instead of a blank.
+    func testUnpluggedDeviceKeepsItsName() throws {
+        let suite = "ThockboxTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set("AirPods Pro", forKey: "outputDeviceName")
+        let state = AppState(defaults: defaults)
+        state.outputDeviceUID = "not-connected-uid"
+        XCTAssertEqual(state.outputDeviceName, "AirPods Pro")
+    }
 }

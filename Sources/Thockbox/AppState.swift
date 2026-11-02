@@ -139,10 +139,17 @@ final class AppState: ObservableObject {
     @Published var outputDeviceUID: String? {
         didSet {
             defaults.set(outputDeviceUID, forKey: "outputDeviceUID")
+            // Kept so Settings can still name the device while it's unplugged.
+            if let uid = outputDeviceUID,
+               let device = AudioDevices.outputDevices().first(where: { $0.uid == uid }) {
+                defaults.set(device.name, forKey: "outputDeviceName")
+            }
             outputRouteChanged()
             applyOutputDevice()
         }
     }
+    /// The picked device's name as last seen connected.
+    var outputDeviceName: String? { defaults.string(forKey: "outputDeviceName") }
     /// A picker change made while sounds are off or automatically muted is
     /// applied on resume; otherwise System Default could keep the old device.
     private var outputChangedWhileDisabled = false
