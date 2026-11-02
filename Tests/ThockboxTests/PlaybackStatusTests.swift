@@ -23,6 +23,15 @@ final class PlaybackStatusTests: XCTestCase {
         XCTAssertFalse(status(mute: .call).needsAttention)
     }
 
+    /// The menu bar icon only looks "on" when keys actually make a sound.
+    func testIconIsOnOnlyWhilePlaying() {
+        XCTAssertTrue(status().isPlaying)
+        XCTAssertFalse(status(trusted: false).isPlaying, "no access, nothing plays")
+        XCTAssertFalse(status(secure: "Terminal").isPlaying, "blocked by secure input")
+        XCTAssertFalse(status(enabled: false).isPlaying)
+        XCTAssertFalse(status(mute: .idle).isPlaying)
+    }
+
     func testWording() {
         XCTAssertEqual(status(mute: .app("Safari")).title, "Muted in Safari")
         XCTAssertEqual(status(enabled: false).detail, "Turn it on here or with ⌃⌘K.")
