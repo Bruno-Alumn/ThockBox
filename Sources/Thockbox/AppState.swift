@@ -18,8 +18,39 @@ final class AppState: ObservableObject {
     @Published var enabled: Bool {
         didSet {
             defaults.set(enabled, forKey: "enabled")
+            // Turning sounds on by hand ends a timed off.
+            if enabled { setOffUntil(nil) }
             syncEngineState()
         }
+    }
+    /// When sounds come back after Turn Off for an Hour; nil otherwise.
+    @Published private(set) var offUntil: Date?
+    private var resumeTimer: Timer?
+
+    /// Turns sounds off and back on by themselves after `duration`, even
+    /// across a relaunch. Turning them on sooner cancels it.
+    func turnOff(for duration: TimeInterval, now: Date = Date()) {
+        enabled = false
+        setOffUntil(now.addingTimeInterval(duration))
+    }
+
+    private func setOffUntil(_ date: Date?) {
+        resumeTimer?.invalidate()
+        resumeTimer = nil
+        if offUntil != date { offUntil = date }
+        defaults.set(date, forKey: "offUntil")
+        guard let date else { return }
+        let timer = Timer(fire: date, interval: 0, repeats: false) { [weak self] _ in
+            self?.resumeIfDue()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        resumeTimer = timer
+    }
+
+    /// Internal so tests can pass a time.
+    func resumeIfDue(now: Date = Date()) {
+        guard let offUntil, now >= offUntil else { return }
+        enabled = true
     }
     @Published var volume: Float {
         didSet {
@@ -245,6 +276,12 @@ final class AppState: ObservableObject {
         outputDeviceUID = defaults.string(forKey: "outputDeviceUID")
         volumeByDevice = defaults.dictionary(forKey: "volumeByDevice") as? [String: Float] ?? [:]
         stats = StatsStore(defaults: defaults)
+        // A timed off still running from before a relaunch: keep its timer,
+        // or turn sounds back on if it ran out while ThockBox was closed.
+        if !enabled, let until = defaults.object(forKey: "offUntil") as? Date {
+            setOffUntil(until)
+            resumeIfDue()
+        }
     }
 
     // MARK: - Lifecycle
@@ -406,7 +443,8 @@ final class AppState: ObservableObject {
     /// What ThockBox is doing right now; the first thing that stops sound
     /// wins. The menu bar panel and the settings sidebar both show it.
     var status: PlaybackStatus {
-        .from(trusted: accessibilityTrusted, enabled: enabled, shortcut: toggleShortcut.display,
+        .from(trusted: accessibilityTrusted, enabled: enabled, offUntil: offUntil,
+              shortcut: toggleShortcut.display,
               secureInputApp: secureInputApp, mute: automaticMute, pack: currentPack?.name ?? "")
     }
 

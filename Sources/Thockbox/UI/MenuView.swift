@@ -22,6 +22,9 @@ struct MenuView: View {
         Divider()
 
         Toggle("Sounds On", isOn: $state.enabled)
+        if state.enabled {
+            Button("Turn Off for an Hour") { state.turnOff(for: 3600) }
+        }
         Picker("Switch", selection: Binding(
             get: { state.currentPack?.id ?? "" },
             set: { state.selectedPackID = $0 }

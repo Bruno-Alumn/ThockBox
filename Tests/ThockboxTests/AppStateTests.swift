@@ -65,6 +65,30 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(counted(state), 0)
     }
 
+    /// Turn Off for an Hour comes back by itself, survives a relaunch, and
+    /// is cancelled by turning sounds on sooner.
+    func testTurnOffForAnHour() {
+        let now = Date()
+        let state = AppState(defaults: defaults)
+        state.turnOff(for: 3600, now: now)
+        XCTAssertFalse(state.enabled)
+        XCTAssertEqual(state.offUntil, now.addingTimeInterval(3600))
+        XCTAssertTrue(state.status.title.hasPrefix("Off until "))
+
+        state.resumeIfDue(now: now.addingTimeInterval(1800))
+        XCTAssertFalse(state.enabled, "not yet")
+        XCTAssertEqual(AppState(defaults: defaults).offUntil, now.addingTimeInterval(3600), "kept across a relaunch")
+
+        state.resumeIfDue(now: now.addingTimeInterval(3600))
+        XCTAssertTrue(state.enabled)
+        XCTAssertNil(state.offUntil)
+
+        state.turnOff(for: 3600, now: now)
+        state.enabled = true
+        XCTAssertNil(state.offUntil, "turning on by hand cancels it")
+        XCTAssertNil(AppState(defaults: defaults).offUntil)
+    }
+
     func testCustomShortcutReplacesTheDefaultAndMatchesExactly() {
         let state = AppState(defaults: defaults)
         state.toggleShortcut = Shortcut(keyCode: 49, flags: [.option, .command], key: "Space")
