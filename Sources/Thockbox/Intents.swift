@@ -65,7 +65,7 @@ struct SetSwitchSetIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        AppState.shared.selectedPackID = switchSet.id
+        AppState.shared.selectPackFromElsewhere(switchSet.id)
         return .result()
     }
 }
@@ -84,6 +84,34 @@ struct SetVolumeIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult {
         AppState.shared.volume = Float(min(max(percent, 0), 100)) / 100
+        return .result()
+    }
+}
+
+/// A Focus filter (System Settings › Focus › Focus Filters): sounds off, or
+/// a particular switch set, while that Focus is on. When the Focus ends,
+/// macOS runs the filter again with its default values, and ThockBox goes
+/// back to how it was before.
+struct ThockBoxFocusFilter: SetFocusFilterIntent {
+    static let title: LocalizedStringResource = "Set ThockBox Sounds"
+    static let description: IntentDescription? = IntentDescription(
+        "Turns keyboard sounds off, or picks a switch set, while this Focus is on.")
+
+    @Parameter(title: "Play Sounds", default: true)
+    var soundsOn: Bool
+
+    @Parameter(title: "Switch Set")
+    var switchSet: SwitchSetEntity?
+
+    var displayRepresentation: DisplayRepresentation {
+        if !soundsOn { return DisplayRepresentation(title: "Sounds off") }
+        if let switchSet { return DisplayRepresentation(title: "\(switchSet.name)") }
+        return DisplayRepresentation(title: "No change")
+    }
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        AppState.shared.applyFocusFilter(soundsOn: soundsOn, packID: switchSet?.id)
         return .result()
     }
 }
