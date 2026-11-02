@@ -27,6 +27,25 @@ final class AppState: ObservableObject {
     @Published private(set) var offUntil: Date?
     private var resumeTimer: Timer?
 
+    /// What the Focus filter changed from, to put back when the Focus ends.
+    private var beforeFocus: (enabled: Bool, packID: String)?
+
+    /// Applies a Focus filter. Default values (sounds on, no set) mean the
+    /// Focus ended: put back what was there before it started.
+    func applyFocusFilter(soundsOn: Bool, packID: String?) {
+        guard !soundsOn || packID != nil else {
+            if let before = beforeFocus {
+                beforeFocus = nil
+                selectedPackID = before.packID
+                enabled = before.enabled
+            }
+            return
+        }
+        if beforeFocus == nil { beforeFocus = (enabled, selectedPackID) }
+        if let packID { selectedPackID = packID }
+        enabled = soundsOn
+    }
+
     /// Turns sounds off and back on by themselves after `duration`, even
     /// across a relaunch. Turning them on sooner cancels it.
     func turnOff(for duration: TimeInterval, now: Date = Date()) {
@@ -123,6 +142,14 @@ final class AppState: ObservableObject {
     @Published var showMenuBarIcon: Bool {
         didSet { defaults.set(showMenuBarIcon, forKey: "showMenuBarIcon") }
     }
+    /// The menu bar icon is drawn fainter while keys make no sound.
+    @Published var dimIconWhenOff: Bool {
+        didSet { defaults.set(dimIconWhenOff, forKey: "dimIconWhenOff") }
+    }
+    /// Today's keystrokes next to the menu bar icon.
+    @Published var showKeystrokesInMenuBar: Bool {
+        didSet { defaults.set(showKeystrokesInMenuBar, forKey: "showKeystrokesInMenuBar") }
+    }
     @Published var launchAtLogin: Bool {
         didSet {
             defaults.set(launchAtLogin, forKey: "launchAtLogin")
@@ -130,11 +157,26 @@ final class AppState: ObservableObject {
             updateLoginItem()
         }
     }
+    /// Quiet while another app plays sound: music, a video, a game.
+    @Published var muteWhileMedia: Bool {
+        didSet {
+            defaults.set(muteWhileMedia, forKey: "muteWhileMedia")
+            updateMediaMonitor()
+        }
+    }
     /// Quiet while the screen is shared or recorded (a call, QuickTime).
     @Published var muteWhileSharing: Bool {
         didSet {
             defaults.set(muteWhileSharing, forKey: "muteWhileSharing")
             updateScreenShareWatch()
+        }
+    }
+    /// Quiet during calendar events (meetings), once Calendars access is
+    /// allowed.
+    @Published var muteDuringMeetings: Bool {
+        didSet {
+            defaults.set(muteDuringMeetings, forKey: "muteDuringMeetings")
+            updateCalendarMonitor()
         }
     }
     @Published var muteWhenLocked: Bool {
@@ -247,6 +289,12 @@ final class AppState: ObservableObject {
     var isAutomaticallyMuted: Bool { automaticMute != nil }
     /// Another app is recording (only tracked while muteDuringCalls is on).
     @Published private(set) var microphoneInUse = false
+    /// Another app is playing sound (only tracked while muteWhileMedia is on).
+    @Published private(set) var mediaPlaying = false
+    /// A calendar event is on (only tracked while muteDuringMeetings is on).
+    @Published private(set) var inCalendarEvent = false
+    /// Whether ThockBox may read calendars, once it has asked.
+    @Published private(set) var calendarAccess = CalendarMonitor.Access.unknown
 
     private let defaults: UserDefaults
     private var idleMode = IdleMode()
@@ -254,7 +302,13 @@ final class AppState: ObservableObject {
     private var screenLocked = false
     private var screenShared = false
     private var screenShareTimer: Timer?
-    private var microphoneMonitor: MicrophoneMonitor?
+    /// Whether something captures the screen right now; tests replace it.
+    var isScreenCaptured: () -> Bool = { ScreenCapture.isActive }
+    private var microphoneMonitor: AudioActivityMonitor?
+    private var mediaMonitor: AudioActivityMonitor?
+    private var calendarMonitor: CalendarMonitor?
+    /// Tests turn this off: reading calendars asks the user for access.
+    var readsCalendars = true
     /// Each output device keeps its own volume, as macOS does for system
     /// volume: headphones usually want less than speakers.
     private var volumeByDevice: [String: Float]
@@ -277,7 +331,9 @@ final class AppState: ObservableObject {
             "muteModifiers": false, "functionKeysAudible": true,
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false,
-            "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
+            "launchAtLogin": false, "showMenuBarIcon": true, "dimIconWhenOff": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
+            "muteDuringMeetings": false,
+            "muteWhileMedia": false,
             "idleTimeoutMinutes": 0,
         ])
         enabled = defaults.bool(forKey: "enabled")
@@ -293,9 +349,13 @@ final class AppState: ObservableObject {
         hapticFeedback = defaults.bool(forKey: "hapticFeedback")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
+        dimIconWhenOff = defaults.bool(forKey: "dimIconWhenOff")
+        showKeystrokesInMenuBar = defaults.bool(forKey: "showKeystrokesInMenuBar")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteWhileSharing = defaults.bool(forKey: "muteWhileSharing")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
+        muteWhileMedia = defaults.bool(forKey: "muteWhileMedia")
+        muteDuringMeetings = defaults.bool(forKey: "muteDuringMeetings")
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
         toggleShortcut = defaults.data(forKey: "toggleShortcut")
@@ -326,6 +386,7 @@ final class AppState: ObservableObject {
             screenLocked = session["CGSSessionScreenIsLocked"] as? Bool ?? false
         }
         updateMicrophoneMonitor()
+        updateMediaMonitor()
         updateScreenShareWatch()
         outputRouteChanged()
         outputListeners = SystemAudioListener.outputRoute { [weak self] in self?.outputRouteChanged() }
@@ -512,6 +573,12 @@ final class AppState: ObservableObject {
 
     private var volumePreview: DispatchWorkItem?
 
+    /// The app icon in ThockBox's windows plays like a space bar.
+    func pressAppIcon(down: Bool) {
+        guard enabled, !isAutomaticallyMuted else { return }
+        engine.playKey(keyClass: .space, up: !down, x: 0.5)
+    }
+
     /// A short down/up pair so a new switch or volume can be judged instantly.
     func playSwitchPreview() {
         engine.playKey(keyClass: .row2, up: false, x: 0.5)
@@ -680,9 +747,10 @@ final class AppState: ObservableObject {
             setScreenShared(false)
             return
         }
-        setScreenShared(ScreenCapture.isActive)
+        setScreenShared(isScreenCaptured())
         let timer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in
-            self?.setScreenShared(ScreenCapture.isActive)
+            guard let self else { return }
+            setScreenShared(isScreenCaptured())
         }
         timer.tolerance = 0.5
         RunLoop.main.add(timer, forMode: .common)
@@ -690,8 +758,9 @@ final class AppState: ObservableObject {
     }
 
     /// Internal so tests can set it.
+    /// Always re-checks the mute, even when the value didn't change: turning
+    /// the setting on while something is already capturing must mute.
     func setScreenShared(_ shared: Bool) {
-        guard shared != screenShared else { return }
         screenShared = shared
         updateAutomaticMute()
     }
@@ -734,9 +803,45 @@ final class AppState: ObservableObject {
             return
         }
         guard microphoneMonitor == nil else { return }
-        let monitor = MicrophoneMonitor { [weak self] inUse in self?.setMicrophoneInUse(inUse) }
+        let monitor = AudioActivityMonitor(.recording) { [weak self] inUse in self?.setMicrophoneInUse(inUse) }
         microphoneMonitor = monitor
         microphoneInUse = monitor.inUse
+    }
+
+    private func updateMediaMonitor() {
+        guard muteWhileMedia else {
+            mediaMonitor = nil
+            setMediaPlaying(false)
+            return
+        }
+        guard mediaMonitor == nil else { return }
+        let monitor = AudioActivityMonitor(.playing) { [weak self] playing in self?.setMediaPlaying(playing) }
+        mediaMonitor = monitor
+        setMediaPlaying(monitor.inUse)
+    }
+
+    /// Called by the media monitor (and by tests).
+    func setMediaPlaying(_ playing: Bool) {
+        mediaPlaying = playing
+        updateAutomaticMute()
+    }
+
+    private func updateCalendarMonitor() {
+        guard muteDuringMeetings else {
+            calendarMonitor = nil
+            setInCalendarEvent(false)
+            return
+        }
+        guard calendarMonitor == nil, readsCalendars else { return }
+        calendarMonitor = CalendarMonitor(
+            onChange: { [weak self] inEvent in self?.setInCalendarEvent(inEvent) },
+            onAccess: { [weak self] access in self?.calendarAccess = access })
+    }
+
+    /// Called by the calendar monitor (and by tests).
+    func setInCalendarEvent(_ inEvent: Bool) {
+        inCalendarEvent = inEvent
+        updateAutomaticMute()
     }
 
     /// `now` is a parameter so tests can check the idle timeout without waiting.
@@ -744,10 +849,14 @@ final class AppState: ObservableObject {
         let reason: AutomaticMute?
         if muteDuringCalls && microphoneInUse {
             reason = .call
+        } else if muteDuringMeetings && inCalendarEvent {
+            reason = .meeting
         } else if muteWhenLocked && screenLocked {
             reason = .screenLocked
         } else if muteWhileSharing && screenShared {
             reason = .screenShared
+        } else if muteWhileMedia && mediaPlaying {
+            reason = .media
         } else if headphonesOnly && outputIsSpeaker {
             reason = .speakers
         } else if let frontApp, mutedApps.contains(frontApp.id) {
