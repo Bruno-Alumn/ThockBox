@@ -275,4 +275,19 @@ final class AutoMuteTests: XCTestCase {
         state.setScreenLocked(false)
         XCTAssertNil(state.automaticMute)
     }
+
+    /// Quiet while the screen is shared or recorded, only with the setting
+    /// on, and back once sharing stops.
+    func testMutesWhileTheScreenIsShared() {
+        let defaults = UserDefaults(suiteName: "AutoMute.sharing.\(UUID().uuidString)")!
+        let state = AppState(defaults: defaults)
+        state.setScreenShared(true)
+        XCTAssertNil(state.automaticMute, "setting off")
+        state.muteWhileSharing = true
+        state.setScreenShared(true)
+        XCTAssertEqual(state.automaticMute, .screenShared)
+        XCTAssertEqual(state.status.title, "Muted while sharing")
+        state.setScreenShared(false)
+        XCTAssertNil(state.automaticMute)
+    }
 }

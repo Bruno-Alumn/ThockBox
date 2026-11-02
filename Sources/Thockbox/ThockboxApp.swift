@@ -56,7 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func application(_ sender: NSApplication, delegateHandlesKey key: String) -> Bool {
         ["soundsEnabled", "soundPack", "soundVolume", "muteDuringCalls", "headphonesOnly",
-         "muteWhenLocked", "automaticallyMuted", "muteReason", "offUntil", "keystrokesToday",
+         "muteWhenLocked", "muteWhileSharing", "automaticallyMuted", "muteReason", "offUntil", "keystrokesToday",
          "keystrokesTotal"].contains(key)
     }
 
@@ -89,6 +89,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc var headphonesOnly: Bool {
         get { AppState.shared.headphonesOnly }
         set { AppState.shared.headphonesOnly = newValue }
+    }
+
+    @objc var muteWhileSharing: Bool {
+        get { AppState.shared.muteWhileSharing }
+        set { AppState.shared.muteWhileSharing = newValue }
     }
 
     @objc var muteWhenLocked: Bool {

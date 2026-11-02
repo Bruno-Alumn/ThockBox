@@ -130,6 +130,13 @@ final class AppState: ObservableObject {
             updateLoginItem()
         }
     }
+    /// Quiet while the screen is shared or recorded (a call, QuickTime).
+    @Published var muteWhileSharing: Bool {
+        didSet {
+            defaults.set(muteWhileSharing, forKey: "muteWhileSharing")
+            updateScreenShareWatch()
+        }
+    }
     @Published var muteWhenLocked: Bool {
         didSet {
             defaults.set(muteWhenLocked, forKey: "muteWhenLocked")
@@ -245,6 +252,8 @@ final class AppState: ObservableObject {
     private var idleMode = IdleMode()
     private var dynamics = TypingDynamics()
     private var screenLocked = false
+    private var screenShared = false
+    private var screenShareTimer: Timer?
     private var microphoneMonitor: MicrophoneMonitor?
     /// Each output device keeps its own volume, as macOS does for system
     /// volume: headphones usually want less than speakers.
@@ -268,7 +277,7 @@ final class AppState: ObservableObject {
             "muteModifiers": false, "functionKeysAudible": true,
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false,
-            "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "headphonesOnly": false, "muteDuringCalls": false,
+            "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
             "idleTimeoutMinutes": 0,
         ])
         enabled = defaults.bool(forKey: "enabled")
@@ -285,6 +294,7 @@ final class AppState: ObservableObject {
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
+        muteWhileSharing = defaults.bool(forKey: "muteWhileSharing")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
@@ -316,6 +326,7 @@ final class AppState: ObservableObject {
             screenLocked = session["CGSSessionScreenIsLocked"] as? Bool ?? false
         }
         updateMicrophoneMonitor()
+        updateScreenShareWatch()
         outputRouteChanged()
         outputListeners = SystemAudioListener.outputRoute { [weak self] in self?.outputRouteChanged() }
         setFrontApp(NSWorkspace.shared.frontmostApplication)
@@ -660,6 +671,31 @@ final class AppState: ObservableObject {
     }
 
     /// Called from the screen lock/unlock notifications (and by tests).
+    /// Screen capture has no notification, so it's checked every 2 s, and
+    /// only while the setting is on.
+    private func updateScreenShareWatch() {
+        screenShareTimer?.invalidate()
+        screenShareTimer = nil
+        guard muteWhileSharing, ScreenCapture.isAvailable else {
+            setScreenShared(false)
+            return
+        }
+        setScreenShared(ScreenCapture.isActive)
+        let timer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in
+            self?.setScreenShared(ScreenCapture.isActive)
+        }
+        timer.tolerance = 0.5
+        RunLoop.main.add(timer, forMode: .common)
+        screenShareTimer = timer
+    }
+
+    /// Internal so tests can set it.
+    func setScreenShared(_ shared: Bool) {
+        guard shared != screenShared else { return }
+        screenShared = shared
+        updateAutomaticMute()
+    }
+
     func setScreenLocked(_ locked: Bool) {
         screenLocked = locked
         updateAutomaticMute()
@@ -710,6 +746,8 @@ final class AppState: ObservableObject {
             reason = .call
         } else if muteWhenLocked && screenLocked {
             reason = .screenLocked
+        } else if muteWhileSharing && screenShared {
+            reason = .screenShared
         } else if headphonesOnly && outputIsSpeaker {
             reason = .speakers
         } else if let frontApp, mutedApps.contains(frontApp.id) {

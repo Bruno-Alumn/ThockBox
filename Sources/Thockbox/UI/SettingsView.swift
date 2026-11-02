@@ -289,6 +289,9 @@ private struct MutingPage: View {
                     Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
                 }
                 Toggle("While the screen is locked", isOn: $state.muteWhenLocked)
+                if ScreenCapture.isAvailable {
+                    Toggle("While sharing or recording the screen", isOn: $state.muteWhileSharing)
+                }
                 Toggle("On speakers (headphones only)", isOn: $state.headphonesOnly)
                 Picker("After no typing for", selection: $state.idleTimeoutMinutes) {
                     Text("Never").tag(0)

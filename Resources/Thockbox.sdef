@@ -23,6 +23,9 @@
             <property name="mute when locked" code="Tbml" type="boolean" access="rw" description="Whether sounds stop while the screen is locked.">
                 <cocoa key="muteWhenLocked"/>
             </property>
+            <property name="mute while sharing" code="Tbms" type="boolean" access="rw" description="Whether sounds stop while the screen is shared or recorded.">
+                <cocoa key="muteWhileSharing"/>
+            </property>
             <property name="automatically muted" code="Tbam" type="boolean" access="r" description="Whether sounds are muted right now by a call, the lock screen, a muted app or inactivity.">
                 <cocoa key="automaticallyMuted"/>
             </property>
