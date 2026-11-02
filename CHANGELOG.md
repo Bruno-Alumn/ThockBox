@@ -15,6 +15,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   "Control Command K", and labels on the muted-app buttons.
 - **AppleScript** can turn "headphones only" and "mute when locked" on and
   off.
+- **Sets removed in Finder** drop out of the menu the next time it opens,
+  and sound falls back to Cream instead of going silent.
 - **Report a Problem…** in Settings → General opens a new GitHub issue with
   your ThockBox and macOS versions filled in, and nothing else.
 

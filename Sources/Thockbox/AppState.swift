@@ -277,7 +277,7 @@ final class AppState: ObservableObject {
         NotificationCenter.default.addObserver(
             forName: NSMenu.didBeginTrackingNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            self?.refreshAccessibilityStatus()
+            self?.refreshOnOpen()
         }
         // Posted when any app's Accessibility access changes, so a revoke is
         // usually seen right away instead of at the next slow poll. The
@@ -336,9 +336,21 @@ final class AppState: ObservableObject {
         }
     }
 
-    func reloadPacks() {
-        packs = (SoundPack.discover(in: Self.soundsDirectory()) + SoundPack.discover(in: UserPacks.directory))
+    func reloadPacks(bundled: URL = soundsDirectory(), added: URL = UserPacks.directory) {
+        packs = (SoundPack.discover(in: bundled) + SoundPack.discover(in: added))
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    /// Picks up sets added or removed outside ThockBox, e.g. one of yours
+    /// deleted in Finder, which would otherwise stay listed and play
+    /// nothing. Discovery takes ~2 ms, so it runs whenever the menu or
+    /// Settings opens. If the playing set is gone, the one now current loads.
+    func refreshPacks(bundled: URL = soundsDirectory(), added: URL = UserPacks.directory) {
+        let before = packs.map(\.id)
+        let playing = currentPack?.id
+        reloadPacks(bundled: bundled, added: added)
+        guard packs.map(\.id) != before else { return }
+        if currentPack?.id != playing { applyPack(notify: false) }
     }
 
     /// Makes a switch set from the user's recordings and switches to it.
@@ -363,8 +375,11 @@ final class AppState: ObservableObject {
               secureInputApp: secureInputApp, mute: automaticMute, pack: currentPack?.name ?? "")
     }
 
+    /// The selected set, or Cream (the default) if it's gone, e.g. a set of
+    /// yours deleted in Finder. The selection itself is kept, so the set
+    /// comes back if it's restored.
     var currentPack: SoundPack? {
-        packs.first { $0.id == selectedPackID } ?? packs.first
+        packs.first { $0.id == selectedPackID } ?? packs.first { $0.id == "cream" } ?? packs.first
     }
 
     private func applyPack(notify: Bool) {
@@ -472,6 +487,12 @@ final class AppState: ObservableObject {
     }
 
     // MARK: - System integration
+
+    /// What the menu and the settings windows refresh when they open.
+    func refreshOnOpen() {
+        refreshAccessibilityStatus()
+        refreshPacks()
+    }
 
     func refreshAccessibilityStatus() {
         let trusted = Permissions.isTrusted

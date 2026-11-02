@@ -45,7 +45,7 @@ struct SettingsPageView: View {
         .formStyle(.grouped)
         .frame(width: 500)
         .fixedSize(horizontal: false, vertical: true)
-        .onAppear { state.refreshAccessibilityStatus() }
+        .onAppear { state.refreshOnOpen() }
     }
 }
 

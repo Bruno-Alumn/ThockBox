@@ -117,4 +117,32 @@ final class UserPacksTests: XCTestCase {
         engine.load(pack: pack)
         XCTAssertFalse(engine.buffers.isEmpty, "files in press/ and release/ came along")
     }
+
+    /// A set of yours deleted in Finder disappears the next time the menu or
+    /// Settings opens, sound falls back to Cream, and the set comes back
+    /// selected if it's restored.
+    func testSetDeletedOutsideTheAppIsDropped() throws {
+        let bundled = Self.cream.deletingLastPathComponent()
+        let suite = "ThockboxTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let state = AppState(defaults: defaults)
+
+        let folder = try recordings("Gone Soon", ["a.mp3": "press/GENERIC_R1.mp3"])
+        let id = try UserPacks.importPack(from: [folder], into: library)
+        state.refreshPacks(bundled: bundled, added: library)
+        state.selectedPackID = id
+        XCTAssertEqual(state.currentPack?.id, id)
+
+        let moved = work.appendingPathComponent("Trash")
+        try FileManager.default.moveItem(at: library.appendingPathComponent(id), to: moved)
+        state.refreshPacks(bundled: bundled, added: library)
+        XCTAssertFalse(state.packs.contains { $0.id == id })
+        XCTAssertEqual(state.currentPack?.id, "cream", "falls back to the default set")
+        XCTAssertEqual(state.selectedPackID, id, "the choice is kept")
+
+        try FileManager.default.moveItem(at: moved, to: library.appendingPathComponent(id))
+        state.refreshPacks(bundled: bundled, added: library)
+        XCTAssertEqual(state.currentPack?.id, id, "restored, and selected again")
+    }
 }
