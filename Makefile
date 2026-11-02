@@ -4,12 +4,13 @@ BUILD := .build/release
 BUNDLE := dist/$(NAME).app
 VERSION := $(shell /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Resources/Info.plist)
 ZIP := dist/$(NAME)-$(VERSION).zip
+DMG := dist/$(NAME)-$(VERSION).dmg
 # Signed with the "ThockBox Signing" identity when this Mac has it (see
 # `make signing-cert`), so the Accessibility grant survives rebuilds and
 # updates. Otherwise ad-hoc ("-"), where every rebuild needs a new grant.
 CODESIGN_ID ?= $(or $(shell security find-identity -p codesigning 2>/dev/null | awk -F'"' '/"ThockBox Signing"/ {split($$1, a, " "); print a[2]; exit}'),-)
 
-.PHONY: all build bundle zip release cask signing-cert test bench sounds icon clean run
+.PHONY: all build bundle zip dmg release cask signing-cert test bench sounds icon clean run
 
 all: bundle
 
@@ -68,16 +69,21 @@ zip: bundle
 	ditto -c -k --keepParent --sequesterRsrc $(BUNDLE) $(ZIP)
 	@echo "$(ZIP)"
 
-# Publish the zip as GitHub release v<version>. The app's updater looks for
-# the newest release and its ThockBox-<version>.zip asset.
-release: zip cask
+# The disk image people download: the app next to an Applications link.
+dmg: bundle
+	scripts/make_dmg.sh $(BUNDLE) $(DMG) "$(CODESIGN_ID)"
+
+# Publish the disk image as GitHub release v<version>. GitHub adds the
+# source archives itself. The app's updater installs from the newest
+# release's ThockBox-<version>.dmg.
+release: dmg cask
 	@if [ "$(CODESIGN_ID)" = "-" ]; then echo "refusing to release an ad-hoc build; run 'make signing-cert'"; exit 1; fi
-	gh release create v$(VERSION) $(ZIP) --title "ThockBox $(VERSION)" --generate-notes
+	gh release create v$(VERSION) $(DMG) --title "ThockBox $(VERSION)" --generate-notes
 	@echo "Now copy packaging/thockbox.rb to Casks/thockbox.rb in Bruno-Alumn/homebrew-thockbox."
 
-# Point the Homebrew cask (packaging/thockbox.rb) at this version's zip.
-cask: zip
-	scripts/update_cask.sh $(VERSION) $(ZIP)
+# Point the Homebrew cask (packaging/thockbox.rb) at this version's disk image.
+cask: dmg
+	scripts/update_cask.sh $(VERSION) $(DMG)
 
 clean:
-	rm -rf .build dist/$(NAME).app dist/$(NAME)-*.zip
+	rm -rf .build dist/$(NAME).app dist/$(NAME)-*.zip dist/$(NAME)-*.dmg
