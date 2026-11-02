@@ -31,21 +31,32 @@ struct ThockboxApp: App {
 /// this label watches the counts, so typing doesn't re-lay out the menu.
 private struct MenuBarLabel: View {
     @ObservedObject var state: AppState
-    @ObservedObject var stats: StatsStore
+    let stats: StatsStore
 
     var body: some View {
         let icon = Image(nsImage: state.status.isPlaying ? MenuBarIcon.on
                          : state.dimIconWhenOff ? MenuBarIcon.offDimmed : MenuBarIcon.off)
         if state.showKeystrokesInMenuBar {
-            Label {
-                Text(stats.shown.today, format: .number.notation(.compactName))
-            } icon: {
-                icon
-            }
-            .labelStyle(.titleAndIcon)
+            KeystrokeLabel(stats: stats, icon: icon)
         } else {
             icon
         }
+    }
+}
+
+/// Watches the counts only while they're shown, so typing doesn't rebuild
+/// the label when the count is off.
+private struct KeystrokeLabel: View {
+    @ObservedObject var stats: StatsStore
+    let icon: Image
+
+    var body: some View {
+        Label {
+            Text(stats.shown.today, format: .number.notation(.compactName))
+        } icon: {
+            icon
+        }
+        .labelStyle(.titleAndIcon)
     }
 }
 

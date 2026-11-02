@@ -335,9 +335,9 @@ private struct MutingPage: View {
                 Text("Mute During")
             } footer: {
                 formFooter((AudioActivityMonitor.isSupported
-                      ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts. "
+                      ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts; some apps (call apps, a browser just after a video) keep their sound open while silent and count too. "
                       : "")
-                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam.")
+                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam. Screen sharing also counts screen mirroring and apps that watch the screen in the background.")
             }
 
             Section {

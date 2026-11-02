@@ -5,6 +5,11 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- Fixed: **Mute during calendar events** didn't work after ThockBox
+  restarted until the switch was turned off and on.
+- Fixed: a Focus that turned sounds off could leave them off for good if
+  ThockBox restarted during it. A Focus that only picks a set no longer turns
+  sounds on.
 - **Export daily keystroke counts** as a CSV from Settings › Activity.
 - **AppleScript** can turn mouse clicks, scroll sounds and the Return ding
   on and off.

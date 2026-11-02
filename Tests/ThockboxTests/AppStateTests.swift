@@ -148,6 +148,31 @@ final class AppStateTests: XCTestCase {
         XCTAssertFalse(state.enabled, "no Focus active: nothing to put back")
     }
 
+    /// A relaunch during a Focus that turned sounds off still turns them
+    /// back on when the Focus ends.
+    func testFocusRestoreSurvivesARelaunch() {
+        let state = AppState(defaults: defaults)
+        state.applyFocusFilter(soundsOn: false, packID: nil)
+        XCTAssertFalse(state.enabled)
+        let relaunched = AppState(defaults: defaults)
+        XCTAssertFalse(relaunched.enabled)
+        relaunched.applyFocusFilter(soundsOn: true, packID: nil)
+        XCTAssertTrue(relaunched.enabled)
+    }
+
+    /// A Focus that only picks a set doesn't turn sounds on, so it neither
+    /// undoes turning them off by hand nor cancels a timed off.
+    func testSetOnlyFocusLeavesOnOffAlone() {
+        let state = AppState(defaults: defaults)
+        state.turnOff(for: 3600)
+        state.applyFocusFilter(soundsOn: true, packID: "holy-panda")
+        XCTAssertFalse(state.enabled)
+        XCTAssertNotNil(state.offUntil, "the timed off keeps running")
+        state.applyFocusFilter(soundsOn: true, packID: nil)
+        XCTAssertFalse(state.enabled)
+        XCTAssertEqual(state.selectedPackID, "cream", "the set goes back")
+    }
+
     /// Like Klack, the icon dims while sounds are off unless that's turned off.
     func testIconDimsWhenOffByDefault() {
         XCTAssertTrue(AppState(defaults: defaults).dimIconWhenOff)
