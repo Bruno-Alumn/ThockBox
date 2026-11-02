@@ -182,7 +182,7 @@ private struct SoundPage: View {
         do {
             try state.importSwitchSet(from: urls)
         } catch {
-            NSAlert(error: error).runModal()
+            showError("Couldn't Add the Switch Set", error)
         }
     }
 
@@ -197,8 +197,17 @@ private struct SoundPage: View {
             try UserPacks.export(pack, as: target)
             NSWorkspace.shared.activateFileViewerSelecting([target])
         } catch {
-            NSAlert(error: error).runModal()
+            showError("Couldn't Export \(pack.name)", error)
         }
+    }
+
+    /// A short title saying what failed, with the reason under it.
+    private func showError(_ title: String, _ error: Error) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = title
+        alert.informativeText = error.localizedDescription
+        alert.runModal()
     }
 
     private func remove(_ pack: SoundPack) {
@@ -211,7 +220,7 @@ private struct SoundPage: View {
         do {
             try state.removeSwitchSet(pack)
         } catch {
-            NSAlert(error: error).runModal()
+            showError("Couldn't Remove \(pack.name)", error)
         }
     }
 }
