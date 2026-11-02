@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.2.1
 
 - **See and ignore what counts as playing sound.** With Mute while other apps
   play sound on, Settings › Muting lists the apps holding sound open now; uncheck
