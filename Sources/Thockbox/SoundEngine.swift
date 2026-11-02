@@ -36,6 +36,13 @@ final class SoundEngine {
     /// few voices busy; idle voices still cost CPU (8: ~0.8%, 20: ~1.2%).
     private let voiceCount = 8
     private var outputDeviceID: AudioDeviceID?
+    /// A restart that failed (say, Bluetooth audio not ready after wake) is
+    /// tried again a few times before giving up on the device.
+    private var restartAttempts = 0
+    private var restartRetry: DispatchWorkItem?
+    /// Called when the picked device kept failing and sound moved to the
+    /// system default, so the owner can record where it actually plays.
+    var onFallbackToDefault: (() -> Void)?
     private var shouldRun = false
     private var isSleeping = false
 
@@ -125,6 +132,8 @@ final class SoundEngine {
     /// Re-negotiate the mixer→output connection (the hardware format may have
     /// changed) and get every voice playing again.
     private func restart() {
+        restartRetry?.cancel()
+        restartRetry = nil
         guard shouldRun, !isSleeping else { return }
         isIdlePaused = false
         engine.stop()
@@ -138,11 +147,22 @@ final class SoundEngine {
             try engine.start()
         } catch {
             klog.error("engine restart failed: \(error, privacy: .public)")
-            if outputDeviceID != nil {
-                setOutputDevice(nil)
+            restartAttempts += 1
+            if restartAttempts <= 5 {
+                let retry = DispatchWorkItem { [weak self] in self?.restart() }
+                restartRetry = retry
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5 * pow(2, Double(restartAttempts - 1)),
+                                              execute: retry)
+            } else {
+                restartAttempts = 0
+                if outputDeviceID != nil {
+                    setOutputDevice(nil)
+                    onFallbackToDefault?()
+                }
             }
             return
         }
+        restartAttempts = 0
         reviveVoices()
         klog.notice("engine restarted (hw \(hwFormat.sampleRate, privacy: .public) Hz, output latency \(self.outputLatency * 1000, privacy: .public) ms)")
     }

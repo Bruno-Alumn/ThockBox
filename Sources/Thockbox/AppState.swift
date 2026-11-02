@@ -342,6 +342,9 @@ final class AppState: ObservableObject {
 
         // NSEvent monitor callbacks arrive on the main thread already; calling
         // straight through keeps keystroke→sound latency at one buffer.
+        engine.onFallbackToDefault = { [weak self] in
+            self?.appliedOutputDevice = AudioDevices.defaultOutputDevice()
+        }
         listener.handler = { [weak self] event in
             self?.handle(event)
         }
@@ -734,8 +737,7 @@ final class AppState: ObservableObject {
         let picked = devices.first { $0.uid == outputDeviceUID }
         // A picked device that was unplugged and comes back gets the sound
         // again; one that just left hands it to the default right away.
-        if Self.needsReapply(picked: outputDeviceUID,
-                             target: picked?.id ?? AudioDevices.defaultOutputDevice(),
+        if Self.needsReapply(target: picked?.id ?? AudioDevices.defaultOutputDevice(),
                              applied: appliedOutputDevice) {
             applyOutputDevice()
         }
@@ -782,11 +784,12 @@ final class AppState: ObservableObject {
     private var appliedOutputDevice: AudioDeviceID?
 
     /// Whether the engine should be pointed again after the device list or
-    /// default changes: only with a device picked, and only if where it
-    /// should play now (the picked device, or the default while it's
-    /// unplugged) differs from where it was sent.
-    static func needsReapply(picked uid: String?, target: AudioDeviceID, applied: AudioDeviceID?) -> Bool {
-        uid != nil && target != applied
+    /// default changes: when where it should play now (the picked device,
+    /// or the default when none is picked or it's unplugged) differs from
+    /// where it was sent. Pointing the engine pins a device, so this also
+    /// keeps System Default following the default.
+    static func needsReapply(target: AudioDeviceID, applied: AudioDeviceID?) -> Bool {
+        target != applied
     }
 
 
