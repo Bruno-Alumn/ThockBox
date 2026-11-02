@@ -28,22 +28,47 @@ final class AppState: ObservableObject {
     private var resumeTimer: Timer?
 
     /// What the Focus filter changed from, to put back when the Focus ends.
-    private var beforeFocus: (enabled: Bool, packID: String)?
+    /// Saved, so a relaunch during a Focus still restores it afterwards.
+    struct FocusBefore: Codable, Equatable {
+        var enabled: Bool
+        var packID: String
+        /// Whether a Focus turned sounds off; only then are they turned back.
+        var turnedOff = false
+    }
+
+    private var beforeFocus: FocusBefore? {
+        get {
+            defaults.data(forKey: "focusBefore").flatMap { try? JSONDecoder().decode(FocusBefore.self, from: $0) }
+        }
+        set {
+            defaults.set(newValue.flatMap { try? JSONEncoder().encode($0) }, forKey: "focusBefore")
+        }
+    }
 
     /// Applies a Focus filter. Default values (sounds on, no set) mean the
-    /// Focus ended: put back what was there before it started.
+    /// Focus ended: put back what was there before it started. A Focus that
+    /// only picks a set leaves on/off alone, so it doesn't cancel a timed
+    /// off or undo turning sounds off by hand.
     func applyFocusFilter(soundsOn: Bool, packID: String?) {
         guard !soundsOn || packID != nil else {
             if let before = beforeFocus {
                 beforeFocus = nil
                 selectPackFromElsewhere(before.packID)
-                enabled = before.enabled
+                if before.turnedOff { enabled = before.enabled }
             }
             return
         }
-        if beforeFocus == nil { beforeFocus = (enabled, selectedPackID) }
+        var before = beforeFocus ?? FocusBefore(enabled: enabled, packID: selectedPackID)
         if let packID { selectPackFromElsewhere(packID) }
-        enabled = soundsOn
+        if !soundsOn {
+            before.turnedOff = true
+            enabled = false
+        } else if before.turnedOff {
+            // Switched from a Focus that turned sounds off to one that doesn't.
+            before.turnedOff = false
+            enabled = before.enabled
+        }
+        beforeFocus = before
     }
 
     /// Turns sounds off and back on by themselves after `duration`, even
@@ -430,6 +455,7 @@ final class AppState: ObservableObject {
         }
         updateMicrophoneMonitor()
         updateMediaMonitor()
+        updateCalendarMonitor()
         updateScreenShareWatch()
         outputRouteChanged()
         outputListeners = SystemAudioListener.outputRoute { [weak self] in self?.outputRouteChanged() }
