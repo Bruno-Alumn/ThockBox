@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **App icon style** (Settings › General): Color, Graphite, or Graphite
+  while sounds are off, for the Dock and ThockBox's windows.
 - **Today's keystrokes in the menu bar,** next to the icon, if you turn it
   on in Settings › General.
 - **AppleScript can turn sounds off for a while:** `set off until to (current

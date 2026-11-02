@@ -127,6 +127,9 @@ final class AppState: ObservableObject {
     @Published var showKeystrokesInMenuBar: Bool {
         didSet { defaults.set(showKeystrokesInMenuBar, forKey: "showKeystrokesInMenuBar") }
     }
+    @Published var dockIconStyle: DockIconStyle {
+        didSet { defaults.set(dockIconStyle.rawValue, forKey: "dockIconStyle") }
+    }
     @Published var launchAtLogin: Bool {
         didSet {
             defaults.set(launchAtLogin, forKey: "launchAtLogin")
@@ -313,6 +316,7 @@ final class AppState: ObservableObject {
         hapticFeedback = defaults.bool(forKey: "hapticFeedback")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
+        dockIconStyle = defaults.string(forKey: "dockIconStyle").flatMap(DockIconStyle.init) ?? .color
         showKeystrokesInMenuBar = defaults.bool(forKey: "showKeystrokesInMenuBar")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteWhileSharing = defaults.bool(forKey: "muteWhileSharing")

@@ -369,6 +369,12 @@ private struct GeneralPage: View {
                         Text("Open ThockBox from Applications or Spotlight to get back here.")
                     }
                 }
+                Picker(selection: $state.dockIconStyle) {
+                    ForEach(DockIconStyle.allCases) { Text($0.title).tag($0) }
+                } label: {
+                    Text("App icon")
+                    Text("Shown in the Dock and ThockBox's windows.")
+                }
                 Toggle("Show today's keystrokes in the menu bar", isOn: $state.showKeystrokesInMenuBar)
                     .disabled(!state.showMenuBarIcon)
             }
