@@ -375,7 +375,7 @@ private struct GeneralPage: View {
                     } label: {
                         Text("Clicking the icon")
                         if state.iconClickAction == .toggleSounds {
-                            Text("Control-click or Option-click opens the menu.")
+                            Text("Control-click opens the menu.")
                         }
                     }
                 }

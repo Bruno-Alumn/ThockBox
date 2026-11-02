@@ -6,8 +6,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 ## Unreleased
 
 - **Choose what clicking the menu bar icon does** (Settings › General):
-  open the menu, or turn sounds on or off. Control-click or Option-click
-  always opens the menu.
+  open the menu, or turn sounds on or off. Control-click always opens the
+  menu.
 - **Mute during calendar events** (Settings › Muting). ThockBox asks for
   Calendars access the first time; all-day, free and declined events don't
   count.

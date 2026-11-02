@@ -1,7 +1,8 @@
 import AppKit
 
-/// What a plain click on the menu bar icon does. Control-click and
-/// Option-click always open the menu, so it's never out of reach.
+/// What a plain click on the menu bar icon does. Control-click always opens
+/// the menu, so it's never out of reach; Option-click toggles sounds either
+/// way (see KeyListener).
 enum IconClickAction: String, CaseIterable, Identifiable {
     case openMenu
     case toggleSounds

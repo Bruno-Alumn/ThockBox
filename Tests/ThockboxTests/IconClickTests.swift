@@ -8,7 +8,8 @@ final class IconClickTests: XCTestCase {
         XCTAssertTrue(IconClickAction.toggleSounds.toggles(with: []))
     }
 
-    /// The menu stays reachable: modifier clicks always open it.
+    /// The menu stays reachable with Control-click. Option-click is left to
+    /// KeyListener, which toggles sounds whatever this setting says.
     func testModifierClicksOpenTheMenu() {
         for flags: NSEvent.ModifierFlags in [.control, .option, .command, .shift] {
             XCTAssertFalse(IconClickAction.toggleSounds.toggles(with: flags), "\(flags)")
