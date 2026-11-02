@@ -201,7 +201,7 @@ Measured on Apple Silicon with `make bench`:
 | CPU per key press | ~1 ms |
 | CPU while typing | ~0.6% |
 | CPU after 30 s without a key | 0% (the audio engine pauses; the next key adds ~8 ms) |
-| Memory | ~85 MB |
+| Memory | ~26 MB (what Activity Monitor shows) |
 | App size | ~2.6 MB |
 
 `make test` also launches the built app and fails if its CPU or memory runs

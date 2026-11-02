@@ -16,7 +16,7 @@ ID=io.github.bruno-alumn.thockbox.healthcheck
 # runaway loop by a wide margin (#23 ran at 96%).
 MAX_CPU=${MAX_CPU:-5}          # percent of one core, averaged over the window
 MEASURE_SECONDS=${MEASURE_SECONDS:-15}
-MAX_RSS_MB=250   # ~85 MB today
+MAX_RSS_MB=250   # resident size, ~85-120 MB today; most of it is shared system frameworks
 
 work=$(mktemp -d)
 pid=""
