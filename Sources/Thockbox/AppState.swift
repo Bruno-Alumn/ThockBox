@@ -309,6 +309,14 @@ final class AppState: ObservableObject {
             updateAutomaticMute()
         }
     }
+    /// The idle timeouts Settings offers, in minutes (0 is never).
+    static let idleTimeoutChoices = [0, 1, 5, 15, 30, 60]
+
+    /// The offered timeout closest to `minutes`, for values from scripts.
+    static func nearestIdleTimeout(_ minutes: Int) -> Int {
+        idleTimeoutChoices.min { abs($0 - minutes) < abs($1 - minutes) } ?? 0
+    }
+
     @Published var idleTimeoutMinutes: Int {
         didSet {
             defaults.set(idleTimeoutMinutes, forKey: "idleTimeoutMinutes")
@@ -494,6 +502,7 @@ final class AppState: ObservableObject {
         engine.onFallbackToDefault = { [weak self] in
             self?.appliedOutputDevice = AudioDevices.defaultOutputDevice()
         }
+        MainActor.assumeIsolated { MenuVolumeItem.shared.install(state: self) }
         listener.handler = { [weak self] event in
             self?.handle(event)
         }

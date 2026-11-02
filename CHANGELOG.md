@@ -7,6 +7,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 - **Spatial audio on headphones** (Settings › Sound): each key comes from its
   place around you in 3D. Speakers stay as they are.
+- **A volume slider in the menu bar menu,** like the system Sound menu,
+  instead of 10% steps.
 - Fixed: **Mute during calendar events** didn't work after ThockBox
   restarted until the switch was turned off and on.
 - Fixed: a Focus that turned sounds off could leave them off for good if
@@ -14,7 +16,7 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   sounds on.
 - **Export daily keystroke counts** as a CSV from Settings › Activity.
 - **AppleScript** can turn mouse clicks, scroll sounds and the Return ding
-  on and off.
+  on and off, and set `mute after idle` (minutes).
 - **App icon style** (Settings › General): Color, Graphite, or Graphite
   while sounds are off, for the Dock and ThockBox's windows.
 - **Safer updates:** ThockBox only installs an update signed with its own

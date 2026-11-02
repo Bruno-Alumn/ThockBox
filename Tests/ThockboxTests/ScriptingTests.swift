@@ -47,4 +47,13 @@ final class ScriptingTests: XCTestCase {
         XCTAssertEqual(state.returnDing, !was)
         XCTAssertEqual(delegate.value(forKey: "returnDing") as? Bool, !was)
     }
+
+    /// Scripts can set any number; it lands on a choice Settings can show.
+    func testIdleTimeoutRoundsToAnOfferedChoice() {
+        XCTAssertEqual(AppState.nearestIdleTimeout(0), 0)
+        XCTAssertEqual(AppState.nearestIdleTimeout(4), 5)
+        XCTAssertEqual(AppState.nearestIdleTimeout(20), 15)
+        XCTAssertEqual(AppState.nearestIdleTimeout(500), 60)
+        XCTAssertEqual(AppState.nearestIdleTimeout(-3), 0)
+    }
 }
