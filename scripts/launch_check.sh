@@ -23,6 +23,8 @@ pid=""
 cleanup() {
     [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
     defaults delete "$ID" >/dev/null 2>&1 || true
+    # defaults delete leaves an empty plist behind.
+    rm -f "$HOME/Library/Preferences/$ID.plist"
     rm -rf "$work"
 }
 trap cleanup EXIT

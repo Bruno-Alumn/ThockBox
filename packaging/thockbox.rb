@@ -20,6 +20,8 @@ cask "thockbox" do
 
   zap trash: [
     "~/Library/Application Support/ThockBox",
+    "~/Library/Caches/io.github.bruno-alumn.thockbox",
+    "~/Library/HTTPStorages/io.github.bruno-alumn.thockbox",
     "~/Library/Preferences/io.github.bruno-alumn.thockbox.plist",
   ]
 
