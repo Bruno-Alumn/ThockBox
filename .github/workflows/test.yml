@@ -5,14 +5,23 @@ on:
     branches: [main]
   pull_request:
 
+# The unit tests and the app check run side by side, so a run takes about as
+# long as the slower of the two instead of both added together.
 jobs:
-  test:
+  unit:
+    name: Unit tests
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
       - name: Unit tests
         run: swift test
+
+  app:
+    name: App bundle and launch check
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
 
       # The audio smoke test (`make test`) needs a sound output device, which
       # CI runners don't have, so CI stops at building the signed app bundle.
@@ -26,3 +35,17 @@ jobs:
         env:
           MAX_CPU: 10
           MEASURE_SECONDS: 30
+
+  # The status check branch protection requires. It runs even when a job
+  # above fails (GitHub counts a skipped required check as passed), and
+  # passes only if both did.
+  test:
+    needs: [unit, app]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Both jobs passed
+        run: |
+          echo "unit: ${{ needs.unit.result }}, app: ${{ needs.app.result }}"
+          test "${{ needs.unit.result }}" = success
+          test "${{ needs.app.result }}" = success
