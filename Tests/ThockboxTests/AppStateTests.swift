@@ -104,6 +104,28 @@ final class AppStateTests: XCTestCase {
         XCTAssertTrue(state.suppressedKeyUps.isEmpty, "a new press ends it")
     }
 
+    /// A Focus filter turns sounds off or picks a set while the Focus is on,
+    /// and the Focus ending (default values) puts back what was there.
+    func testFocusFilterAppliesAndRestores() {
+        let state = AppState(defaults: defaults)
+        state.selectedPackID = "cream"
+        state.applyFocusFilter(soundsOn: false, packID: nil)
+        XCTAssertFalse(state.enabled)
+        state.applyFocusFilter(soundsOn: true, packID: nil)
+        XCTAssertTrue(state.enabled, "back on when the Focus ends")
+
+        state.applyFocusFilter(soundsOn: true, packID: "holy-panda")
+        XCTAssertEqual(state.selectedPackID, "holy-panda")
+        state.applyFocusFilter(soundsOn: false, packID: nil)   // switching Focus
+        state.applyFocusFilter(soundsOn: true, packID: nil)
+        XCTAssertEqual(state.selectedPackID, "cream", "the set from before any Focus")
+        XCTAssertTrue(state.enabled)
+
+        state.enabled = false
+        state.applyFocusFilter(soundsOn: true, packID: nil)
+        XCTAssertFalse(state.enabled, "no Focus active: nothing to put back")
+    }
+
     /// Like Klack, the icon dims while sounds are off unless that's turned off.
     func testIconDimsWhenOffByDefault() {
         XCTAssertTrue(AppState(defaults: defaults).dimIconWhenOff)
