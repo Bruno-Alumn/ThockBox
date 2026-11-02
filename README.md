@@ -59,7 +59,8 @@ something does, an item under it helps: **Open Accessibility Settings…**,
 or **Why Is Sound Paused?** when another app's secure input is blocking key
 presses. Then:
 
-- **Sounds On**, checked while sounds play.
+- **Sounds On**, checked while sounds play, and **Turn Off for an Hour**,
+  after which sounds come back by themselves.
 - **Switch** and **Volume** submenus.
 - **Mute in** the app you were just using.
 - **Update to** the new version, when there is one.

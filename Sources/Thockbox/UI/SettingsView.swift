@@ -84,7 +84,11 @@ private struct SoundPage: View {
             Section {
                 Toggle("Play keyboard sounds", isOn: $state.enabled)
             } footer: {
-                formFooter("Turn sounds on or off anytime with \(state.toggleShortcut.display).")
+                if let until = state.offUntil {
+                    formFooter("Off until \(until.formatted(date: .omitted, time: .shortened)), then back on by itself.")
+                } else {
+                    formFooter("Turn sounds on or off anytime with \(state.toggleShortcut.display).")
+                }
             }
 
             Section {

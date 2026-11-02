@@ -12,7 +12,7 @@ final class PlaybackStatusTests: XCTestCase {
         XCTAssertEqual(status(), .playing(pack: "Cream"))
         XCTAssertEqual(status(mute: .idle), .muted(.idle))
         XCTAssertEqual(status(secure: "Terminal", mute: .idle), .blocked(app: "Terminal"))
-        XCTAssertEqual(status(enabled: false, secure: "Terminal"), .off(shortcut: "⌃⌘K"))
+        XCTAssertEqual(status(enabled: false, secure: "Terminal"), .off(shortcut: "⌃⌘K", until: nil))
         XCTAssertEqual(status(trusted: false, enabled: false), .needsAccess)
     }
 

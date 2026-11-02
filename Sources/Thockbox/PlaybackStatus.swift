@@ -38,15 +38,16 @@ enum AutomaticMute: Equatable {
 /// sidebar, so both always agree on what's happening and why.
 enum PlaybackStatus: Equatable {
     case needsAccess
-    case off(shortcut: String)
+    /// `until` is when sounds come back by themselves, if they will.
+    case off(shortcut: String, until: Date? = nil)
     case blocked(app: String)
     case muted(AutomaticMute)
     case playing(pack: String)
 
-    static func from(trusted: Bool, enabled: Bool, shortcut: String, secureInputApp: String?,
-                     mute: AutomaticMute?, pack: String) -> PlaybackStatus {
+    static func from(trusted: Bool, enabled: Bool, offUntil: Date? = nil, shortcut: String,
+                     secureInputApp: String?, mute: AutomaticMute?, pack: String) -> PlaybackStatus {
         if !trusted { return .needsAccess }
-        if !enabled { return .off(shortcut: shortcut) }
+        if !enabled { return .off(shortcut: shortcut, until: offUntil) }
         if let app = secureInputApp { return .blocked(app: app) }
         if let mute { return .muted(mute) }
         return .playing(pack: pack)
@@ -55,6 +56,7 @@ enum PlaybackStatus: Equatable {
     var title: String {
         switch self {
         case .needsAccess: "Needs Accessibility access"
+        case .off(_, let until?): "Off until \(until.formatted(date: .omitted, time: .shortened))"
         case .off: "Off"
         case .blocked(let app): "Paused by \(app)"
         case .muted(.call): "Muted during a call"
@@ -71,7 +73,7 @@ enum PlaybackStatus: Equatable {
         switch self {
         case .needsAccess:
             "Allow ThockBox in System Settings so it can hear key presses. Nothing you type leaves your Mac."
-        case .off(let shortcut):
+        case .off(let shortcut, _):
             "Turn it on here or with \(shortcut)."
         case .blocked(let app):
             "\(app) has secure input on, which hides key presses from other apps. That's normal in a password field. If it lasts, quit and reopen \(app)."
