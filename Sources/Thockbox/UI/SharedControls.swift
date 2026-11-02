@@ -155,6 +155,7 @@ struct MutedAppsList: View {
             HStack(spacing: 4) {
                 Button(action: chooseApps) { Image(systemName: "plus") }
                     .help("Add apps")
+                    .accessibilityLabel("Add Apps")
                 Button {
                     if let selection { state.setMuted(false, appID: selection) }
                     selection = nil
@@ -163,6 +164,7 @@ struct MutedAppsList: View {
                 }
                 .disabled(selection == nil)
                 .help("Remove the selected app")
+                .accessibilityLabel("Remove Selected App")
             }
             .buttonStyle(.borderless)
         }
@@ -191,6 +193,8 @@ struct ShortcutRecorder: View {
                 monitor == nil ? start() : stop()
             }
             .frame(minWidth: 90)
+            .accessibilityLabel(monitor == nil ? "Shortcut" : "Recording shortcut")
+            .accessibilityValue(monitor == nil ? state.toggleShortcut.spoken : "Press the new keys")
             if monitor == nil && state.toggleShortcut != .standard {
                 Button("Reset") { state.toggleShortcut = .standard }
             }

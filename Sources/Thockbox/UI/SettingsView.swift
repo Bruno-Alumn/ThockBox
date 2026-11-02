@@ -114,6 +114,7 @@ private struct SoundPage: View {
                 } maximumValueLabel: {
                     Image(systemName: "speaker.wave.3.fill")
                 }
+                .accessibilityValue(SpokenValue.percent(state.volume))
                 OutputDevicePicker(state: state)
             } footer: {
                 formFooter("Each output device keeps its own volume.")
@@ -127,6 +128,7 @@ private struct SoundPage: View {
                 } maximumValueLabel: {
                     Text("Brighter")
                 }
+                .accessibilityValue(SpokenValue.direction(state.toneX, up: "brighter", down: "darker"))
                 Slider(value: $state.toneY, in: -1...1) {
                     Text("Pitch")
                 } minimumValueLabel: {
@@ -134,6 +136,7 @@ private struct SoundPage: View {
                 } maximumValueLabel: {
                     Text("Higher")
                 }
+                .accessibilityValue(SpokenValue.direction(state.toneY, up: "higher", down: "lower"))
                 Slider(value: $state.pitchVariation, in: 0...150) {
                     Text("Variation")
                 } minimumValueLabel: {
@@ -141,6 +144,7 @@ private struct SoundPage: View {
                 } maximumValueLabel: {
                     Text("More")
                 }
+                .accessibilityValue(SpokenValue.percent(state.pitchVariation, of: 150))
                 Button("Reset Tone") {
                     state.toneX = 0
                     state.toneY = 0
