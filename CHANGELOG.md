@@ -12,7 +12,7 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   sounds on.
 - **Export daily keystroke counts** as a CSV from Settings › Activity.
 - **AppleScript** can turn mouse clicks, scroll sounds and the Return ding
-  on and off.
+  on and off, and set `mute after idle` (minutes).
 - **App icon style** (Settings › General): Color, Graphite, or Graphite
   while sounds are off, for the Dock and ThockBox's windows.
 - **Safer updates:** ThockBox only installs an update signed with its own
