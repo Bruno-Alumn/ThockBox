@@ -226,6 +226,7 @@ tell application "ThockBox"
     set sound pack to "cream" -- pack ID or display name
     set sound volume to 0.55 -- 0.0 to 1.0
     set mute during calls to true
+    set headphones only to true
     get mute reason -- e.g. "Muted in Safari.", or "" when not muted
     get keystrokes today
 end tell
