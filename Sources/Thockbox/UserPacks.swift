@@ -22,9 +22,15 @@ enum UserPacks {
     }
 
     /// Copies the audio files in `sources` (files, or folders of them) into
-    /// a new pack and returns its id.
+    /// a new pack and returns its id. A Mechvibes pack folder (one with a
+    /// config.json) is converted instead; see MechvibesPack.
     static func importPack(from sources: [URL], into directory: URL = directory) throws -> String {
         let fm = FileManager.default
+        if sources.count == 1 {
+            // A dropped config.json stands for its folder.
+            let source = sources[0].lastPathComponent == "config.json" ? sources[0].deletingLastPathComponent() : sources[0]
+            if MechvibesPack.isPack(source) { return try MechvibesPack.importPack(from: source, into: directory) }
+        }
         let files = sources.flatMap { source -> [URL] in
             var isFolder: ObjCBool = false
             fm.fileExists(atPath: source.path, isDirectory: &isFolder)
@@ -34,39 +40,54 @@ enum UserPacks {
         .filter { audioExtensions.contains($0.pathExtension.lowercased()) }
         .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
         guard !files.isEmpty else {
-            throw ImportError(errorDescription: "No audio files found. Use WAV, MP3, CAF, AIFF or M4A.")
+            throw ImportError(errorDescription: "No audio files found. Use WAV, MP3, CAF, AIFF or M4A, or a Mechvibes pack folder.")
         }
 
         // Named after the chosen folder, or the folder the files are in.
         let single = sources.count == 1 ? sources[0] : nil
         let isFolder = single.map { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true } ?? false
         let name = (isFolder ? single! : files[0].deletingLastPathComponent()).lastPathComponent
+        let (id, folder) = try makeFolder(named: name, in: directory)
+        do {
+            var copied: [String] = []
+            for file in files {
+                // Two folders can hold files with the same name.
+                var target = file.lastPathComponent
+                if copied.contains(target) { target = "\(copied.count)-\(target)" }
+                try fm.copyItem(at: file, to: folder.appendingPathComponent(target))
+                copied.append(target)
+            }
+            try write(manifest(id: id, name: name, files: copied), to: folder)
+            return id
+        } catch {
+            try? fm.removeItem(at: folder)
+            throw error
+        }
+    }
 
+    /// A new, empty pack folder with an id made from `name` ("My Board" →
+    /// "user-my-board", then "user-my-board-2" if that's taken).
+    static func makeFolder(named name: String, in directory: URL) throws -> (id: String, url: URL) {
+        let fm = FileManager.default
         try fm.createDirectory(at: directory, withIntermediateDirectories: true)
         let slug = String(name.lowercased().map { $0.isLetter || $0.isNumber ? $0 : "-" })
             .split(separator: "-").joined(separator: "-")
-        var id = "user-" + (slug.isEmpty ? "switches" : slug)
+        let base = "user-" + (slug.isEmpty ? "switches" : slug)
+        var id = base
         var suffix = 2
         while fm.fileExists(atPath: directory.appendingPathComponent(id).path) {
-            id = "user-\(slug)-\(suffix)"
+            id = "\(base)-\(suffix)"
             suffix += 1
         }
         let folder = directory.appendingPathComponent(id)
         try fm.createDirectory(at: folder, withIntermediateDirectories: false)
+        return (id, folder)
+    }
 
-        var copied: [String] = []
-        for file in files {
-            // Two folders can hold files with the same name.
-            var target = file.lastPathComponent
-            if copied.contains(target) { target = "\(copied.count)-\(target)" }
-            try fm.copyItem(at: file, to: folder.appendingPathComponent(target))
-            copied.append(target)
-        }
-        let manifest = try self.manifest(id: id, name: name, files: copied)
+    static func write(_ manifest: SoundPackManifest, to folder: URL) throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         try encoder.encode(manifest).write(to: folder.appendingPathComponent("pack.json"))
-        return id
     }
 
     /// Sorts files by name: "space", "enter"/"return" and "backspace"/

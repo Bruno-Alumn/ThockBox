@@ -22,7 +22,9 @@ ROOT = Path(__file__).resolve().parent.parent
 SOUNDS = ROOT / "Resources" / "Sounds"
 
 KBSIM_RAW = "https://raw.githubusercontent.com/tplai/kbsim/master/src/assets/audio"
-MECHVIBES_RAW = "https://raw.githubusercontent.com/hainguyents13/mechvibes/main/src/audio"
+# Pinned to a tag: the repo was reorganized in 2025 (packs moved to
+# soundpacks/keyboard and config.json to the v2 format).
+MECHVIBES_RAW = "https://raw.githubusercontent.com/hainguyents13/mechvibes/v3.4.0/soundpacks/keyboard"
 
 KBSIM_LICENSE = """MIT License
 
@@ -118,14 +120,14 @@ def build_kbsim_packs() -> None:
         (pack_dir / "LICENSE").write_text(KBSIM_LICENSE)
 
 
-# Mechvibes/iohook scancodes -> our key classes, for slicing the Oreo sprite.
-OREO_SPECIALS = {57: "space", 28: "enter", 14: "backspace"}
+# Mechvibes v2 key names -> our key classes, for slicing the Oreo sprite.
+OREO_SPECIALS = {"Space": "space", "Enter": "enter", "Backspace": "backspace"}
 OREO_ROWS = {
-    "row0": [2, 3, 4, 5, 6, 7, 8, 9],       # number row
-    "row1": [16, 17, 18, 19, 20, 21, 22],   # qwertyu
-    "row2": [30, 31, 32, 33, 34, 35, 36],   # asdfghj
-    "row3": [44, 45, 46, 47, 48, 49],       # zxcvbn
-    "row4": [29, 42, 56, 54, 3675],         # modifiers
+    "row0": ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8"],
+    "row1": ["KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY", "KeyU"],
+    "row2": ["KeyA", "KeyS", "KeyD", "KeyF", "KeyG", "KeyH", "KeyJ"],
+    "row3": ["KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN"],
+    "row4": ["ControlLeft", "ShiftLeft", "AltLeft", "ShiftRight", "MetaLeft"],
 }
 VARIANTS_PER_ROW = 4
 
@@ -138,21 +140,22 @@ def slice_oreo() -> None:
     fetch(f"{MECHVIBES_RAW}/eg-oreo/config.json", work / "config.json")
 
     config = json.loads((work / "config.json").read_text())
-    if config.get("key_define_type", "single") != "single":
-        raise SystemExit("eg-oreo config is no longer a single-sprite pack; "
-                         "the offset slicing below only handles that layout")
-    defines: dict[str, list[int] | None] = config["defines"]
+    if config.get("definition_method", "single") != "single" or "definitions" not in config:
+        raise SystemExit("eg-oreo config is no longer a v2 single-sprite pack; "
+                         "the slicing below only handles that layout")
+    definitions: dict[str, dict] = config["definitions"]
     audio, sr = sf.read(work / "oreo.ogg", dtype="float32")
     if audio.ndim == 1:
         audio = audio[:, None]
 
-    def cut(code: int) -> np.ndarray | None:
-        span = defines.get(str(code))
-        if not span:
+    def cut(code: str) -> np.ndarray | None:
+        # v2 timing: [[press start, press end], [release start, release end]] in ms.
+        timing = (definitions.get(code) or {}).get("timing") or []
+        if not timing:
             return None
-        start = int(span[0] / 1000 * sr)
-        length = int(span[1] / 1000 * sr)
-        clip = audio[start:start + length].copy()
+        start = int(timing[0][0] / 1000 * sr)
+        end = int(timing[0][1] / 1000 * sr)
+        clip = audio[start:end].copy()
         if len(clip) < sr // 100:
             return None
         fade = min(int(0.005 * sr), len(clip))
