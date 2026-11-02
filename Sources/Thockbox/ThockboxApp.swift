@@ -72,7 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let pack = state.packs.first(where: {
                 $0.id == newValue || $0.name.caseInsensitiveCompare(newValue) == .orderedSame
             }) else { return }
-            state.selectedPackID = pack.id
+            state.selectPackFromElsewhere(pack.id)
         }
     }
 

@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Notify when the switch set changes** (Settings › General, off by
+  default): a notification says which set Shortcuts or AppleScript picked.
 - **Mute while sharing or recording the screen** (Settings › Muting), so a
   call's screen share doesn't carry your typing.
 - **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain

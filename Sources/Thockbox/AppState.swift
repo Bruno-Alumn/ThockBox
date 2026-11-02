@@ -75,6 +75,15 @@ final class AppState: ObservableObject {
             applyPack(notify: oldValue != selectedPackID)
         }
     }
+    /// Notify when Shortcuts or AppleScript changes the switch set.
+    @Published var notifySetChanges: Bool {
+        didSet {
+            defaults.set(notifySetChanges, forKey: "notifySetChanges")
+            if notifySetChanges && postsNotifications { SetChangeNotifier.requestPermission() }
+        }
+    }
+    /// Tests turn this off: notifications need a signed app bundle.
+    var postsNotifications = true
     @Published var toneX: Float {
         didSet {
             defaults.set(toneX, forKey: "toneX")
@@ -278,11 +287,12 @@ final class AppState: ObservableObject {
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false,
             "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
-            "idleTimeoutMinutes": 0,
+            "idleTimeoutMinutes": 0, "notifySetChanges": false,
         ])
         enabled = defaults.bool(forKey: "enabled")
         volume = min(max(defaults.float(forKey: "volume"), 0), 1)
         selectedPackID = defaults.string(forKey: "pack") ?? "cream"
+        notifySetChanges = defaults.bool(forKey: "notifySetChanges")
         toneX = min(max(defaults.float(forKey: "toneX"), -1), 1)
         toneY = min(max(defaults.float(forKey: "toneY"), -1), 1)
         pitchVariation = min(max(defaults.float(forKey: "pitchVariation"), 0), 150)
@@ -496,6 +506,19 @@ final class AppState: ObservableObject {
     /// comes back if it's restored.
     var currentPack: SoundPack? {
         packs.first { $0.id == selectedPackID } ?? packs.first { $0.id == "cream" } ?? packs.first
+    }
+
+    /// Changes the set from outside ThockBox's own controls (Shortcuts,
+    /// AppleScript), with a notification if the user asked for one.
+    /// Returns whether a notification was posted.
+    @discardableResult
+    func selectPackFromElsewhere(_ id: String) -> Bool {
+        guard id != selectedPackID else { return false }
+        selectedPackID = id
+        guard notifySetChanges else { return false }
+        let name = packs.first { $0.id == id }?.name ?? id
+        if postsNotifications { SetChangeNotifier.post(setName: name) }
+        return true
     }
 
     private func applyPack(notify: Bool) {

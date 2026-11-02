@@ -363,6 +363,10 @@ private struct GeneralPage: View {
                         Text("Open ThockBox from Applications or Spotlight to get back here.")
                     }
                 }
+                Toggle(isOn: $state.notifySetChanges) {
+                    Text("Notify when the switch set changes")
+                    Text("When Shortcuts or AppleScript picks a different set.")
+                }
             }
 
             Section {

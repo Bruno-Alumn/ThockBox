@@ -65,7 +65,7 @@ struct SetSwitchSetIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        AppState.shared.selectedPackID = switchSet.id
+        AppState.shared.selectPackFromElsewhere(switchSet.id)
         return .result()
     }
 }
