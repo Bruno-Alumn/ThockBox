@@ -14,6 +14,15 @@
             <property name="sound volume" code="Tbvo" type="real" access="rw" description="Sound volume from 0.0 to 1.0.">
                 <cocoa key="soundVolume"/>
             </property>
+            <property name="mouse clicks" code="Tbmk" type="boolean" access="rw" description="Whether mouse clicks play sounds too.">
+                <cocoa key="mouseClicks"/>
+            </property>
+            <property name="scroll sounds" code="Tbsc" type="boolean" access="rw" description="Whether scrolling plays a soft tick per notch.">
+                <cocoa key="scrollSounds"/>
+            </property>
+            <property name="return ding" code="Tbrd" type="boolean" access="rw" description="Whether Return plays a typewriter ding.">
+                <cocoa key="returnDing"/>
+            </property>
             <property name="mute during calls" code="Tbmc" type="boolean" access="rw" description="Whether sounds stop while another app uses the microphone (macOS 14.2 or later).">
                 <cocoa key="muteDuringCalls"/>
             </property>

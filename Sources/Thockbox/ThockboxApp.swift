@@ -83,7 +83,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ sender: NSApplication, delegateHandlesKey key: String) -> Bool {
-        ["soundsEnabled", "soundPack", "soundVolume", "muteDuringCalls", "muteDuringMeetings", "muteWhileMedia", "muteWhileGaming", "headphonesOnly",
+        ["soundsEnabled", "soundPack", "soundVolume", "mouseClicks", "scrollSounds", "returnDing", "muteDuringCalls", "muteDuringMeetings", "muteWhileMedia", "muteWhileGaming", "headphonesOnly",
          "muteWhenLocked", "muteWhileSharing", "automaticallyMuted", "muteReason", "offUntil", "keystrokesToday",
          "keystrokesTotal"].contains(key)
     }
@@ -107,6 +107,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc var soundVolume: Double {
         get { Double(AppState.shared.volume) }
         set { AppState.shared.volume = Float(min(max(newValue, 0), 1)) }
+    }
+
+    @objc var mouseClicks: Bool {
+        get { AppState.shared.mouseClicks }
+        set { AppState.shared.mouseClicks = newValue }
+    }
+
+    @objc var scrollSounds: Bool {
+        get { AppState.shared.scrollSounds }
+        set { AppState.shared.scrollSounds = newValue }
+    }
+
+    @objc var returnDing: Bool {
+        get { AppState.shared.returnDing }
+        set { AppState.shared.returnDing = newValue }
     }
 
     @objc var muteDuringCalls: Bool {
