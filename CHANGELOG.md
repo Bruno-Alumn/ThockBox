@@ -28,6 +28,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - **Check Now** says what went wrong when it fails: no internet, GitHub
   rate-limiting your network, or GitHub being down, instead of always
   "Couldn't reach GitHub".
+- **Muted apps** show their real names ("Safari", not "Safari.app"), and
+  the Delete key removes the selected ones.
 
 ## 1.1.1
 
