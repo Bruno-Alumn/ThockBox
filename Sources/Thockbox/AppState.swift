@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import CoreAudio
 import ServiceManagement
 
 /// Central app state: user settings (persisted to UserDefaults), the audio
@@ -636,6 +637,11 @@ final class AppState: ObservableObject {
     private func outputRouteChanged() {
         let devices = AudioDevices.outputDevices()
         let picked = devices.first { $0.uid == outputDeviceUID }
+        // A picked device that was unplugged and comes back gets the sound
+        // again; one that just left hands it to the default right away.
+        if Self.needsReapply(picked: outputDeviceUID, available: picked?.id, applied: appliedOutputDevice) {
+            applyOutputDevice()
+        }
         let current = picked ?? devices.first { $0.id == AudioDevices.defaultOutputDevice() }
         setActiveOutput(uid: current?.uid)
         if let current {
@@ -668,7 +674,18 @@ final class AppState: ObservableObject {
             return
         }
         outputChangedWhileDisabled = false
-        engine.setOutputDevice(AudioDevices.id(forUID: outputDeviceUID, in: AudioDevices.outputDevices()))
+        appliedOutputDevice = AudioDevices.id(forUID: outputDeviceUID, in: AudioDevices.outputDevices())
+        engine.setOutputDevice(appliedOutputDevice)
+    }
+
+    /// The device last handed to the engine; nil means the system default.
+    private var appliedOutputDevice: AudioDeviceID?
+
+    /// Whether the engine should be pointed again after the device list
+    /// changes: only with a device picked, and only if where it can play
+    /// now differs from where it was sent.
+    static func needsReapply(picked uid: String?, available: AudioDeviceID?, applied: AudioDeviceID?) -> Bool {
+        uid != nil && available != applied
     }
 
 

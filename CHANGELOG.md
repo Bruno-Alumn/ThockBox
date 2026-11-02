@@ -35,6 +35,11 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   blocking key presses. It used to look on in those cases.
 - **Settings** reopens on the tab you used last and where you left the
   window.
+- **An output device you picked** (USB or Bluetooth headphones, say) gets
+  the sound back when it's reconnected. It used to stay on the speakers
+  until you picked the device again.
+  While it's unplugged, Settings lists it as "Not Connected" instead of
+  showing a blank.
 
 ## 1.1.1
 
