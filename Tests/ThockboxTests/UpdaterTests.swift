@@ -28,6 +28,17 @@ final class UpdaterTests: XCTestCase {
         XCTAssertEqual(release.appArchive?.name, "ThockBox-1.2.0.zip")
     }
 
+    func testPrefersTheDiskImageAndFallsBackToAZip() throws {
+        func release(_ names: [String]) throws -> Release {
+            let assets = names.map { ["name": $0, "browser_download_url": "https://example.com/\($0)"] }
+            let object: [String: Any] = ["tag_name": "v1.2.0", "html_url": "https://example.com", "assets": assets]
+            return try JSONDecoder().decode(Release.self, from: JSONSerialization.data(withJSONObject: object))
+        }
+        XCTAssertEqual(try release(["ThockBox-1.2.0.zip", "ThockBox-1.2.0.dmg"]).appArchive?.name, "ThockBox-1.2.0.dmg")
+        XCTAssertEqual(try release(["ThockBox-1.1.0.zip"]).appArchive?.name, "ThockBox-1.1.0.zip", "older releases")
+        XCTAssertNil(try release(["Other.dmg"]).appArchive)
+    }
+
     func testReleaseWithoutZipHasNoArchive() throws {
         let json = """
         {"tag_name": "1.2.0", "html_url": "https://example.com", "body": null, "assets": []}

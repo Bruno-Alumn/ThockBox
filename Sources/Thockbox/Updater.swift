@@ -45,9 +45,11 @@ struct Release: Decodable, Equatable {
         return lines.isEmpty ? nil : lines.joined(separator: "\n")
     }
 
-    /// The app archive made by `make zip` (ThockBox-<version>.zip).
+    /// The app's download: the disk image `make release` publishes
+    /// (ThockBox-<version>.dmg), or a zip from an older release.
     var appArchive: Asset? {
-        assets.first { $0.name.hasPrefix("ThockBox") && $0.name.hasSuffix(".zip") }
+        let ours = assets.filter { $0.name.hasPrefix("ThockBox") }
+        return ours.first { $0.name.hasSuffix(".dmg") } ?? ours.first { $0.name.hasSuffix(".zip") }
     }
 }
 
@@ -204,10 +206,10 @@ final class Updater: ObservableObject {
             let work = try FileManager.default.url(for: .itemReplacementDirectory, in: .userDomainMask,
                                                    appropriateFor: target, create: true)
             defer { try? FileManager.default.removeItem(at: work) }
-            let zip = work.appendingPathComponent("update.zip")
-            try FileManager.default.moveItem(at: download, to: zip)
+            let file = work.appendingPathComponent("update." + (archive.name as NSString).pathExtension)
+            try FileManager.default.moveItem(at: download, to: file)
             status = .installing
-            let newApp = try unpack(zip, in: work, expecting: release.version)
+            let newApp = try Self.unpack(file, in: work, expecting: release.version)
 
             let keepsGrant = Self.satisfiesOwnRequirement(newApp)
             do {
@@ -231,11 +233,33 @@ final class Updater: ObservableObject {
         }
     }
 
-    /// Unzips the download and checks it's a signed ThockBox of the version
-    /// the release says, before anything touches the installed app.
-    private func unpack(_ zip: URL, in work: URL, expecting version: String) throws -> URL {
+    /// Takes the app out of the download (a disk image or a zip) and checks
+    /// it's a signed ThockBox of the version the release says, before
+    /// anything touches the installed app.
+    static func unpack(_ download: URL, in work: URL, expecting version: String) throws -> URL {
         let out = work.appendingPathComponent("unpacked")
-        try Self.run("/usr/bin/ditto", ["-x", "-k", zip.path, out.path])
+        if download.pathExtension == "dmg" {
+            // Mounted read-only and out of sight in Finder, just long enough
+            // to copy the app out. The system picks where (a volume mounted
+            // inside the temporary items folder can't be read).
+            let info = try output("/usr/bin/hdiutil", ["attach", download.path, "-nobrowse", "-readonly",
+                                                       "-noautoopen", "-plist"])
+            let entities = (try? PropertyListSerialization.propertyList(from: info, format: nil)
+                as? [String: Any])?["system-entities"] as? [[String: Any]] ?? []
+            guard let mountPath = entities.lazy.compactMap({ $0["mount-point"] as? String }).first else {
+                throw UpdateError("The download couldn't be opened.")
+            }
+            let mount = URL(fileURLWithPath: mountPath)
+            defer { try? run("/usr/bin/hdiutil", ["detach", mount.path, "-force"]) }
+            let apps = try FileManager.default.contentsOfDirectory(at: mount, includingPropertiesForKeys: nil)
+                .filter { $0.pathExtension == "app" }
+            try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
+            for app in apps {
+                try run("/usr/bin/ditto", [app.path, out.appendingPathComponent(app.lastPathComponent).path])
+            }
+        } else {
+            try run("/usr/bin/ditto", ["-x", "-k", download.path, out.path])
+        }
         let apps = try FileManager.default.contentsOfDirectory(at: out, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "app" }
         guard apps.count == 1, let app = apps.first, let bundle = Bundle(url: app) else {
@@ -246,7 +270,7 @@ final class Updater: ObservableObject {
             throw UpdateError("The download doesn't match the release.")
         }
         do {
-            try Self.run("/usr/bin/codesign", ["--verify", "--deep", "--strict", app.path])
+            try run("/usr/bin/codesign", ["--verify", "--deep", "--strict", app.path])
         } catch {
             throw UpdateError("The download's signature is invalid.")
         }
@@ -300,7 +324,24 @@ final class Updater: ObservableObject {
         return flags & SecCodeSignatureFlags.adhoc.rawValue != 0
     }
 
-    private static func run(_ tool: String, _ arguments: [String]) throws {
+    /// Runs a tool and returns what it printed.
+    static func output(_ tool: String, _ arguments: [String]) throws -> Data {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: tool)
+        process.arguments = arguments
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+        try process.run()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else {
+            throw UpdateError("\((tool as NSString).lastPathComponent) failed")
+        }
+        return data
+    }
+
+    static func run(_ tool: String, _ arguments: [String]) throws {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: tool)
         process.arguments = arguments

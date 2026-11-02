@@ -100,9 +100,9 @@ ThockBox needs macOS 13 or later.
 
 ### Download
 
-1. Download `ThockBox-<version>.zip` from the
+1. Download `ThockBox-<version>.dmg` from the
    [latest release](https://github.com/Bruno-Alumn/ThockBox/releases/latest).
-2. Unzip it and move **ThockBox** to Applications.
+2. Open it and drag **ThockBox** to Applications.
 3. Open it. ThockBox isn't notarized by Apple, so the first time macOS asks
    whether to open it. Choose **Open**, or go to System Settings → Privacy &
    Security and click **Open Anyway**.
@@ -126,8 +126,8 @@ make            # build dist/ThockBox.app
 make run        # open it
 ```
 
-Copy `dist/ThockBox.app` to Applications to keep it. `make zip` produces a
-signed archive, `dist/ThockBox-<version>.zip`, for sharing.
+Copy `dist/ThockBox.app` to Applications to keep it. `make dmg` produces a
+signed disk image, `dist/ThockBox-<version>.dmg`, for sharing.
 
 ### Accessibility permission
 
@@ -290,8 +290,9 @@ make bench         # CPU per key press and idle CPU (typing and paused), fails o
 make icon          # rebuild the app icon from art/logo-source.png
 make sounds        # rebuild the bundled sound sets (requires uv)
 make signing-cert  # one-time: create the certificate builds are signed with
-make cask          # point packaging/thockbox.rb (the Homebrew cask) at this version's zip
-make release       # publish dist/ThockBox-<version>.zip as a GitHub release (requires gh)
+make cask          # point packaging/thockbox.rb (the Homebrew cask) at this version's disk image
+make dmg           # dist/ThockBox-<version>.dmg, the disk image people download
+make release       # publish the disk image as a GitHub release (requires gh)
 ```
 
 CI runs the unit tests and builds the app on every push and pull request. The

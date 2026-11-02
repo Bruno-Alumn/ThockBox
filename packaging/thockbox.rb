@@ -1,11 +1,11 @@
 # Homebrew cask for ThockBox. It lives in the tap repository
 # Bruno-Alumn/homebrew-thockbox (Casks/thockbox.rb); this copy is the source.
-# `make cask` sets the version and sha256 from the release zip.
+# `make cask` sets the version and sha256 from the release disk image.
 cask "thockbox" do
   version "1.1.0"
-  sha256 "b06c1f6f466cb62378de4ff7c25293378d3f71c90fb057138becfc30c291967b"
+  sha256 "59bfe5362d7d89522a93cc2c3b446ec93d883157a9251115401ee326f934abd8"
 
-  url "https://github.com/Bruno-Alumn/ThockBox/releases/download/v#{version}/ThockBox-#{version}.zip"
+  url "https://github.com/Bruno-Alumn/ThockBox/releases/download/v#{version}/ThockBox-#{version}.dmg"
   name "ThockBox"
   desc "Mechanical keyboard sounds for every key you type"
   homepage "https://github.com/Bruno-Alumn/ThockBox"
