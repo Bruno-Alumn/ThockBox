@@ -16,6 +16,9 @@ struct MenuView: View {
         if status == .needsAccess {
             Button("Open Accessibility Settings…") { Permissions.openSystemSettings() }
         }
+        if case .blocked = status {
+            Button("Why Is Sound Paused?") { explain(status) }
+        }
         Divider()
 
         Toggle("Sounds On", isOn: $state.enabled)
@@ -52,5 +55,14 @@ struct MenuView: View {
         Divider()
         Button("Quit ThockBox") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
+    }
+
+    /// The full explanation in a standard alert; a menu item can't hold it.
+    private func explain(_ status: PlaybackStatus) {
+        let alert = NSAlert()
+        alert.messageText = status.title
+        alert.informativeText = status.detail ?? ""
+        NSApp.activate(ignoringOtherApps: true)
+        alert.runModal()
     }
 }
