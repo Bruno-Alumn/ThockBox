@@ -21,9 +21,30 @@ struct ThockboxApp: App {
         )) {
             MenuView(state: state)
         } label: {
-            Image(nsImage: state.status.isPlaying ? MenuBarIcon.on : MenuBarIcon.off)
+            MenuBarLabel(state: state, stats: state.stats)
         }
         .menuBarExtraStyle(.menu)
+    }
+}
+
+/// The menu bar icon, with today's keystrokes beside it if chosen. Only
+/// this label watches the counts, so typing doesn't re-lay out the menu.
+private struct MenuBarLabel: View {
+    @ObservedObject var state: AppState
+    @ObservedObject var stats: StatsStore
+
+    var body: some View {
+        let icon = Image(nsImage: state.status.isPlaying ? MenuBarIcon.on : MenuBarIcon.off)
+        if state.showKeystrokesInMenuBar {
+            Label {
+                Text(stats.shown.today, format: .number.notation(.compactName))
+            } icon: {
+                icon
+            }
+            .labelStyle(.titleAndIcon)
+        } else {
+            icon
+        }
     }
 }
 

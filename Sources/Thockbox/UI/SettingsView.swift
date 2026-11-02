@@ -369,6 +369,8 @@ private struct GeneralPage: View {
                         Text("Open ThockBox from Applications or Spotlight to get back here.")
                     }
                 }
+                Toggle("Show today's keystrokes in the menu bar", isOn: $state.showKeystrokesInMenuBar)
+                    .disabled(!state.showMenuBarIcon)
             }
 
             Section {

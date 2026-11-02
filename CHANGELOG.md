@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Today's keystrokes in the menu bar,** next to the icon, if you turn it
+  on in Settings › General.
 - **AppleScript can turn sounds off for a while:** `set off until to (current
   date) + 30 * minutes`. Setting it to `missing value` turns sounds back on.
 - **Mute during calendar events** (Settings › Muting). ThockBox asks for
