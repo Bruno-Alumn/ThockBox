@@ -134,8 +134,12 @@ loudness-matched like the built-in ones, and survive updates.
 
 The Shortcuts app gets **Turn ThockBox Sounds On or Off**, **Toggle ThockBox
 Sounds**, **Turn Off ThockBox Sounds for a While**, **Set ThockBox Switch
-Set** and **Set ThockBox Volume**. Use them in a Focus automation, or say
+Set** and **Set ThockBox Volume**. Use them in an automation, or say
 “Toggle ThockBox sounds” to Siri.
+
+For a Focus, add ThockBox under **System Settings › Focus › (a Focus) › Focus
+Filters**: sounds off, or a different switch set, while that Focus is on.
+When the Focus ends, ThockBox goes back to how it was.
 
 ```applescript
 tell application "ThockBox"
