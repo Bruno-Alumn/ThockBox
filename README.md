@@ -140,13 +140,15 @@ tell application "ThockBox"
     set sound volume to 0.55 -- 0.0 to 1.0
     set mute during calls to true
     set headphones only to true
+    set off until to (current date) + 30 * minutes -- back on by itself
     get mute reason -- e.g. "Muted in Safari.", or "" when not muted
     get keystrokes today
 end tell
 ```
 
-Read-only: `automatically muted`, `mute reason`, `off until`,
-`keystrokes today` and `keystrokes total`.
+Read-only: `automatically muted`, `mute reason`, `keystrokes today` and
+`keystrokes total`. Setting `off until` to `missing value` turns sounds back
+on.
 
 </details>
 
