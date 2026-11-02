@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **What's New** opens once after an update with the notes for that
+  version. Settings › General › Help reopens it, and the Welcome window.
 - **Mute while sharing or recording the screen** (Settings › Muting), so a
   call's screen share doesn't carry your typing.
 - **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain
