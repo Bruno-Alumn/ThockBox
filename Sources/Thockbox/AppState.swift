@@ -188,8 +188,8 @@ final class AppState: ObservableObject {
         hotKey = GlobalHotKey(toggleShortcut) { [weak self] in
             guard let self else { return }
             enabled.toggle()
-            // The key-up still reaches the monitors; don't let it play.
-            suppressNextKeyUp = toggleShortcut.keyCode
+            // The key-ups still reach the monitors; don't let them play.
+            suppressReleasesAfterShortcut()
         }
         if hotKey == nil { klog.error("couldn't register \(self.toggleShortcut.display, privacy: .public) as a hotkey") }
     }
@@ -509,7 +509,15 @@ final class AppState: ObservableObject {
 
     // MARK: - Event handling
 
-    private var suppressNextKeyUp: UInt16?
+    /// Releases not to play: the shortcut's key and the modifiers held with
+    /// it, which would otherwise click with no matching press when sounds
+    /// come on. Cleared by the next key press.
+    private(set) var suppressedKeyUps: Set<UInt16> = []
+
+    private func suppressReleasesAfterShortcut() {
+        suppressedKeyUps = KeyMap.modifierKeycodes.subtracting([57]) // not Caps Lock
+        suppressedKeyUps.insert(toggleShortcut.keyCode)
+    }
 
     private var loggedFirstEvent = false
 
@@ -524,14 +532,15 @@ final class AppState: ObservableObject {
             idleMode.recordActivity()
             if isAutomaticallyMuted { updateAutomaticMute() }
             // The shortcut (⌃⌘K by default) toggles, even while disabled.
-            // Swallow the matching key-up too, or enabling would emit an
-            // orphan release.
+            // Swallow the key-ups that follow too, or enabling would emit
+            // orphan releases.
             if hotKey == nil, !isRepeat, !isRecordingShortcut,
                toggleShortcut.matches(keyCode: keycode, flags: flags) {
                 enabled.toggle()
-                suppressNextKeyUp = keycode
+                suppressReleasesAfterShortcut()
                 return
             }
+            if !isRepeat { suppressedKeyUps.removeAll() }
             guard enabled, !isAutomaticallyMuted, !isRepeat, audible(keycode) else { return }
             // Sound first; stats and haptics can trail it.
             let info = KeyMap.info(for: keycode)
@@ -547,10 +556,7 @@ final class AppState: ObservableObject {
             }
             stats.record()
         case let .keyUp(keycode):
-            if keycode == suppressNextKeyUp {
-                suppressNextKeyUp = nil
-                return
-            }
+            if suppressedKeyUps.remove(keycode) != nil { return }
             guard enabled, !isAutomaticallyMuted, audible(keycode) else { return }
             let info = KeyMap.info(for: keycode)
             engine.playKey(keyClass: info.keyClass, up: true, x: info.x, velocity: dynamics.release(keycode))

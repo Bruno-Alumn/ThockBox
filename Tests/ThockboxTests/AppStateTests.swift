@@ -90,6 +90,20 @@ final class AppStateTests: XCTestCase {
         XCTAssertNil(AppState(defaults: defaults).offUntil)
     }
 
+    /// Turning sounds on with ⌃⌘K mustn't play releases for K, ⌃ and ⌘
+    /// that had no press; the next key press ends that.
+    func testShortcutReleasesDontClick() {
+        let state = AppState(defaults: defaults)
+        state.enabled = false
+        keyDown(state, Shortcut.standard.keyCode, [.command, .control])
+        XCTAssertTrue(state.enabled)
+        XCTAssertTrue(state.suppressedKeyUps.isSuperset(of: [Shortcut.standard.keyCode, 55, 59]))
+        state.handle(.keyUp(keycode: 55))
+        XCTAssertFalse(state.suppressedKeyUps.contains(55), "used up")
+        keyDown(state, 0)
+        XCTAssertTrue(state.suppressedKeyUps.isEmpty, "a new press ends it")
+    }
+
     func testCustomShortcutReplacesTheDefaultAndMatchesExactly() {
         let state = AppState(defaults: defaults)
         state.toggleShortcut = Shortcut(keyCode: 49, flags: [.option, .command], key: "Space")
