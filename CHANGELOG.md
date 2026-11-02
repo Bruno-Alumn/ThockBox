@@ -33,6 +33,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - **The menu bar icon** shows "off" whenever keys make no sound, including
   while Accessibility access is missing or another app's secure input is
   blocking key presses. It used to look on in those cases.
+- **Settings** reopens on the tab you used last and where you left the
+  window.
 
 ## 1.1.1
 
