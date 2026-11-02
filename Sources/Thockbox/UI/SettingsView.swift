@@ -369,6 +369,16 @@ private struct GeneralPage: View {
                         Text("Open ThockBox from Applications or Spotlight to get back here.")
                     }
                 }
+                if state.showMenuBarIcon {
+                    Picker(selection: $state.iconClickAction) {
+                        ForEach(IconClickAction.allCases) { Text($0.title).tag($0) }
+                    } label: {
+                        Text("Clicking the icon")
+                        if state.iconClickAction == .toggleSounds {
+                            Text("Control-click or Option-click opens the menu.")
+                        }
+                    }
+                }
             }
 
             Section {

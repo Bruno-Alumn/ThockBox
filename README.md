@@ -53,6 +53,7 @@ or endorsed by Klack or its developer.
 - Mutes itself during calls and meetings, while sharing your screen, when the screen
   locks, on speakers, or in apps you choose.
 - Turn it off for an hour with one click; it comes back by itself.
+- Or make a click on the menu bar icon turn sounds on or off.
 - Toggle anywhere with <kbd>⌃</kbd><kbd>⌘</kbd><kbd>K</kbd>, Shortcuts or AppleScript.
 
 **Yours to shape**

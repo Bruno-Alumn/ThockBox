@@ -123,6 +123,9 @@ final class AppState: ObservableObject {
     @Published var showMenuBarIcon: Bool {
         didSet { defaults.set(showMenuBarIcon, forKey: "showMenuBarIcon") }
     }
+    @Published var iconClickAction: IconClickAction {
+        didSet { defaults.set(iconClickAction.rawValue, forKey: "iconClickAction") }
+    }
     @Published var launchAtLogin: Bool {
         didSet {
             defaults.set(launchAtLogin, forKey: "launchAtLogin")
@@ -309,6 +312,7 @@ final class AppState: ObservableObject {
         hapticFeedback = defaults.bool(forKey: "hapticFeedback")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
+        iconClickAction = defaults.string(forKey: "iconClickAction").flatMap(IconClickAction.init) ?? .openMenu
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteWhileSharing = defaults.bool(forKey: "muteWhileSharing")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
