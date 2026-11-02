@@ -7,7 +7,7 @@ let klog = Logger(subsystem: "io.github.bruno-alumn.thockbox", category: "app")
 
 /// Low-latency sample player. A fixed pool of player nodes (each with its own
 /// varispeed unit for per-keystroke pitch randomization) feeds a master EQ
-/// (the Tone Pad's tilt filter) and the main mixer.
+/// (the brightness tilt filter) and the main mixer.
 final class SoundEngine {
     private let engine = AVAudioEngine()
     // Voices fan into a submixer (EQ has only one input bus) before the EQ.
@@ -59,7 +59,7 @@ final class SoundEngine {
         didSet { engine.mainMixerNode.outputVolume = volume }
     }
 
-    /// Pitch offset applied to every keystroke, in cents (Tone Pad X).
+    /// Pitch offset applied to every keystroke, in cents (the Pitch slider).
     var pitchOffsetCents: Float = 0
     /// Random pitch spread, in ± cents.
     var pitchVariationCents: Float = 60
@@ -235,7 +235,7 @@ final class SoundEngine {
         engine.stop()
     }
 
-    /// Tone Pad: x, y in -1...1. X darkens/brightens via shelf tilt, Y shifts pitch.
+    /// Tone: x, y in -1...1. X (Brightness) darkens/brightens via shelf tilt, Y (Pitch) shifts pitch.
     func setTone(x: Float, y: Float) {
         eq.bands[0].gain = -x * 6
         eq.bands[1].gain = x * 6

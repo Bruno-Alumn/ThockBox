@@ -23,7 +23,7 @@ struct ThockboxApp: App {
         } label: {
             Image(nsImage: state.enabled && !state.isAutomaticallyMuted ? MenuBarIcon.on : MenuBarIcon.off)
         }
-        .menuBarExtraStyle(.window)
+        .menuBarExtraStyle(.menu)
     }
 }
 

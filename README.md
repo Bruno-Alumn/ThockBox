@@ -17,13 +17,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/menu-dark.png">
-    <img src="docs/screenshots/menu-light.png" alt="Menu bar panel" width="300">
-  </picture>
-  &nbsp;
-  <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/settings-dark.png">
-    <img src="docs/screenshots/settings-light.png" alt="Settings window" width="560">
+    <img src="docs/screenshots/settings-light.png" alt="ThockBox settings window" width="520">
   </picture>
 </p>
 
@@ -48,7 +43,7 @@ check.
 | Seven switch sets, Mechvibes packs and your own recordings | ⌃⌘K (or your own shortcut) or option-click to toggle | Mute when the screen locks, during calls, or on speakers |
 | Press and release samples (most sets) | Volume presets, remembered per output device | Mute after 1 to 60 minutes idle |
 | Per-row samples, panned by key position | Choose any output device | Mute in apps you choose |
-| Tone Pad for darker or brighter sound | Mute modifier or function keys | AppleScript control |
+| Brightness and pitch controls | Mute modifier or function keys | AppleScript control |
 | Random pitch variation | Haptic feedback on Force Touch trackpads | Launch at login |
 | Optional Return ding and mouse clicks | Keystroke counts, with a chart of the last week | Updates from GitHub releases |
 
@@ -57,16 +52,18 @@ Oreo and Super Red.
 
 ## Menu bar and settings window
 
-The menu bar panel shows what ThockBox is doing (playing, off, muted and
-why, or what needs fixing) and holds what you change day to day: the on/off
-switch, the switch set, the volume, and a switch to mute the app you were
-just using.
+The menu bar icon opens a standard menu. Its first line says what
+ThockBox is doing (playing, off, muted and why, or what needs fixing), then:
 
-**Settings…** (⌘,) opens the settings window. Its sidebar has the same
-on/off switch and status, and five pages:
+- **Sounds On**, checked while sounds play.
+- **Switch** and **Volume** submenus.
+- **Mute in** the app you were just using.
+- **Settings…** (⌘,) and **Quit ThockBox** (⌘Q).
 
-- **Sound:** switch sets (including your own), volume, the Tone Pad and the
-  output device.
+The settings window is a standard Mac preferences window with five tabs:
+
+- **Sound:** on and off, the switch set (including your own), volume and
+  output device, and tone (brightness, pitch and variation).
 - **Keys:** the on/off shortcut, which keys play, and extras like the Return
   ding.
 - **Muting:** when ThockBox goes quiet by itself, and the apps it stays quiet
@@ -93,7 +90,7 @@ ThockBox can go quiet on its own and come back when the reason goes away:
 - **After inactivity:** after 1 to 60 minutes without typing. The next key
   press wakes it.
 
-The menu bar panel shows which one is active.
+The first line of the menu bar menu says which one is active.
 
 ## Installation
 
@@ -134,7 +131,7 @@ You can also sign with a developer certificate:
 
 ## Troubleshooting
 
-**No sound at all.** Open the menu bar panel. It shows a notice if
+**No sound at all.** Open the menu bar menu. Its first line says if
 Accessibility access is missing, if sounds are muted automatically and why,
 or if another app's secure input is blocking key presses. Also check that
 the toggle is on (⌃⌘K by default) and the volume isn't at zero.
@@ -142,7 +139,7 @@ the toggle is on (⌃⌘K by default) and the volume isn't at zero.
 **Sound stops in some apps.** While a password field is focused, or while
 Terminal's Secure Keyboard Entry is on, macOS doesn't pass key presses to
 other apps. That's expected. If it stays that way after you leave the field,
-quit and reopen the app the panel names. Also check Settings → Muting.
+quit and reopen the app the menu names. Also check Settings → Muting.
 
 **Sound is late.** Bluetooth headphones add around 100 to 250 ms that no app
 can remove. Settings → Sound → Output shows the delay for the current device. Built-in
@@ -165,7 +162,7 @@ contains nothing but the app version. Turn it off in Settings → General.
 
 ## Updates
 
-When a newer release is out, the menu bar panel says so, and Settings →
+When a newer release is out, the menu bar menu offers it, and Settings →
 General offers **Install and Relaunch**. ThockBox downloads the release zip,
 checks that it is a correctly signed ThockBox of that version, replaces the
 installed copy and reopens. Accessibility access carries over, since every
@@ -275,7 +272,7 @@ opening a pull request.
 - `AppState` holds the settings and decides what to play. Keystroke counts
   live in `StatsStore`.
 - `SoundEngine` plays samples through AVAudioEngine: eight voices, each with
-  its own pitch shifter, into an EQ for the Tone Pad. Samples are decoded
+  its own pitch shifter, into an EQ for the tone controls. Samples are decoded
   into memory when a pack loads, so a key press is a single buffer schedule.
 - The interface is SwiftUI: `MenuView` for the menu bar, `SettingsView` for
   the settings window. Both show `AppState.status`, so they always agree on

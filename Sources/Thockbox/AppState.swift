@@ -272,6 +272,13 @@ final class AppState: ObservableObject {
         // gets the same fresh process as a grant made on first launch.
         wasTrusted = accessibilityTrusted
         scheduleAccessibilityCheck()
+        // A menu-style menu bar item has no onAppear; refresh the status
+        // (Accessibility, secure input) whenever one of our menus opens.
+        NotificationCenter.default.addObserver(
+            forName: NSMenu.didBeginTrackingNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.refreshAccessibilityStatus()
+        }
         // Posted when any app's Accessibility access changes, so a revoke is
         // usually seen right away instead of at the next slow poll. The
         // trust state can lag the notification slightly, hence the delay.

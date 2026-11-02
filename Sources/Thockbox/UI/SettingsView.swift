@@ -1,101 +1,7 @@
 import SwiftUI
 
-/// The settings window: a sidebar with the master switch, the current status
-/// and five pages, each about one thing.
-struct SettingsView: View {
-    @ObservedObject var state: AppState
-    @ObservedObject var navigation = SettingsNavigation.shared
-
-    var body: some View {
-        HStack(spacing: 0) {
-            sidebar
-                .frame(width: 210)
-            Divider()
-            page
-                .frame(minWidth: 460, maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .frame(minWidth: 680, minHeight: 520)
-        .tint(.thockCoral)
-        .onAppear { state.refreshAccessibilityStatus() }
-    }
-
-    private var sidebar: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 10) {
-                Image(nsImage: NSApp.applicationIconImage)
-                    .resizable()
-                    .frame(width: 36, height: 36)
-                Text("ThockBox")
-                    .font(.headline)
-                Spacer()
-                Toggle("Sounds", isOn: $state.enabled)
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-                    .labelsHidden()
-                    .help("Turn sounds on or off (\(state.toggleShortcut.display))")
-            }
-            .padding(.horizontal, 14)
-            .padding(.top, 14)
-            .padding(.bottom, 8)
-            StatusView(state: state, showsDetailOnlyForProblems: true)
-                .padding(.horizontal, 14)
-                .padding(.bottom, 10)
-            Divider()
-                .padding(.horizontal, 14)
-            VStack(spacing: 2) {
-                ForEach(SettingsPage.allCases) { page in
-                    sidebarRow(page)
-                }
-            }
-            .padding(8)
-            Spacer()
-        }
-        .background(Color(nsColor: .underPageBackgroundColor).opacity(0.5))
-    }
-
-    private func sidebarRow(_ page: SettingsPage) -> some View {
-        let selected = navigation.page == page
-        return Button {
-            navigation.page = page
-        } label: {
-            Label(page.title, systemImage: page.symbol)
-                .labelStyle(SidebarLabelStyle(selected: selected))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .background(RoundedRectangle(cornerRadius: 6)
-                    .fill(selected ? Color.thockCoral.opacity(0.18) : Color.clear))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-
-    @ViewBuilder private var page: some View {
-        switch navigation.page {
-        case .sound: SoundPage(state: state)
-        case .keys: KeysPage(state: state)
-        case .muting: MutingPage(state: state)
-        case .activity: ActivityPage(store: state.stats)
-        case .general: GeneralPage(state: state)
-        }
-    }
-}
-
-private struct SidebarLabelStyle: LabelStyle {
-    let selected: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 8) {
-            configuration.icon
-                .foregroundStyle(selected ? Color.thockCoral : Color.secondary)
-                .frame(width: 20)
-            configuration.title
-                .fontWeight(selected ? .medium : .regular)
-        }
-    }
-}
-
+/// The settings window's pages, one per toolbar tab (see MainWindow). Each is
+/// a grouped Form of standard controls.
 enum SettingsPage: String, CaseIterable, Identifiable {
     case sound, keys, muting, activity, general
 
@@ -122,87 +28,152 @@ enum SettingsPage: String, CaseIterable, Identifiable {
     }
 }
 
-/// Which page the settings window shows; the menu bar panel can open it on
-/// a specific one (e.g. General, for an update).
-final class SettingsNavigation: ObservableObject {
-    static let shared = SettingsNavigation()
-    @Published var page: SettingsPage = .sound
-}
-
-/// A page title over a grouped form.
-private struct SettingsPageLayout<Content: View>: View {
+struct SettingsPageView: View {
     let page: SettingsPage
-    @ViewBuilder let content: Content
+    @ObservedObject var state: AppState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(page.title)
-                .font(.title2.bold())
-                .padding(.horizontal, 20)
-                .padding(.top, 18)
-            Form { content }
-                .formStyle(.grouped)
+        Group {
+            switch page {
+            case .sound: SoundPage(state: state)
+            case .keys: KeysPage(state: state)
+            case .muting: MutingPage(state: state)
+            case .activity: ActivityPage(store: state.stats)
+            case .general: GeneralPage(state: state)
+            }
+        }
+        .formStyle(.grouped)
+        .frame(width: 500)
+        .fixedSize(horizontal: false, vertical: true)
+        .onAppear { state.refreshAccessibilityStatus() }
+    }
+}
+
+/// Section footer text in the standard footnote style, leading-aligned as
+/// in System Settings. A Form sized to its content (as each tab is) drops
+/// the default footer styling and alignment, so it's set explicitly.
+private func footer(_ text: String) -> some View {
+    Text(text)
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
+}
+
+/// Shown at the top of a page only when something needs fixing.
+private struct AttentionSection: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        let status = state.status
+        if status.needsAttention {
+            Section {
+                Label {
+                    Text(status.title)
+                    if let detail = status.detail { Text(detail) }
+                } icon: {
+                    Image(systemName: status.symbol)
+                        .foregroundStyle(.orange)
+                }
+                if status == .needsAccess {
+                    Button("Open Accessibility Settings…") { Permissions.openSystemSettings() }
+                }
+            }
         }
     }
 }
 
 // MARK: - Sound
 
-/// How it sounds: which switches, how loud, what tone, through what.
 private struct SoundPage: View {
     @ObservedObject var state: AppState
-    @State private var isDropTarget = false
 
     var body: some View {
-        SettingsPageLayout(page: .sound) {
+        Form {
+            AttentionSection(state: state)
+
             Section {
-                SwitchList(state: state)
-                    // Dropping a folder of recordings here adds it, like the button.
-                    .dropDestination(for: URL.self) { urls, _ in
-                        importSwitchSet(from: urls)
-                        return true
-                    } isTargeted: { isDropTarget = $0 }
-                    .overlay {
-                        if isDropTarget {
-                            RoundedRectangle(cornerRadius: 6)
-                                .strokeBorder(Color.thockCoral, style: StrokeStyle(lineWidth: 2, dash: [5, 3]))
-                                .padding(-4)
-                        }
-                    }
-                Button("Add Your Own…", action: addSwitchSet)
-            } header: {
-                Text("Switch")
+                Toggle("Play keyboard sounds", isOn: $state.enabled)
             } footer: {
-                Text("Choose a set to hear it. To add more, choose or drop a Mechvibes sound pack folder, or a folder of your own recordings. Name recordings with space, enter or backspace to give those keys their own sound, and with up or release for the sound of a key being let go.")
+                footer("Turn sounds on or off anytime with \(state.toggleShortcut.display).")
             }
 
             Section {
-                VolumeSlider(state: state)
-            } header: {
-                Text("Volume")
-            } footer: {
-                Text("Each output device keeps its own volume, so headphones and speakers can differ.")
-            }
-
-            Section {
-                ToneControl(state: state)
-            } header: {
-                HStack {
-                    Text("Tone")
-                    Spacer()
-                    Button("Reset") {
-                        state.toneX = 0
-                        state.toneY = 0
-                        state.pitchVariation = 60
+                Picker("Switch set", selection: Binding(
+                    get: { state.currentPack?.id ?? "" },
+                    set: { state.selectedPackID = $0 }
+                )) {
+                    ForEach(state.packs) { pack in
+                        Text(pack.name).tag(pack.id)
                     }
-                    .controlSize(.small)
-                    .disabled(state.toneX == 0 && state.toneY == 0 && state.pitchVariation == 60)
                 }
+                HStack {
+                    Button("Add Your Own…", action: addSwitchSet)
+                    let added = state.packs.filter { UserPacks.isUserPack($0) }
+                    if !added.isEmpty {
+                        Menu("Remove") {
+                            ForEach(added) { pack in
+                                Button(pack.name) { remove(pack) }
+                            }
+                        }
+                        .fixedSize()
+                    }
+                }
+            } footer: {
+                footer("Choosing a set plays a sample of it. Add a Mechvibes sound pack or a folder of your own recordings, or drop one on this window.")
             }
 
-            Section("Output") {
+            Section {
+                Slider(value: $state.volume, in: 0...1) {
+                    Text("Volume")
+                } minimumValueLabel: {
+                    Image(systemName: "speaker.fill")
+                } maximumValueLabel: {
+                    Image(systemName: "speaker.wave.3.fill")
+                }
                 OutputDevicePicker(state: state)
+            } footer: {
+                footer("Each output device keeps its own volume.")
             }
+
+            Section {
+                Slider(value: $state.toneX, in: -1...1) {
+                    Text("Brightness")
+                } minimumValueLabel: {
+                    Text("Darker")
+                } maximumValueLabel: {
+                    Text("Brighter")
+                }
+                Slider(value: $state.toneY, in: -1...1) {
+                    Text("Pitch")
+                } minimumValueLabel: {
+                    Text("Lower")
+                } maximumValueLabel: {
+                    Text("Higher")
+                }
+                Slider(value: $state.pitchVariation, in: 0...150) {
+                    Text("Variation")
+                } minimumValueLabel: {
+                    Text("None")
+                } maximumValueLabel: {
+                    Text("More")
+                }
+                Button("Reset Tone") {
+                    state.toneX = 0
+                    state.toneY = 0
+                    state.pitchVariation = 60
+                }
+                .disabled(state.toneX == 0 && state.toneY == 0 && state.pitchVariation == 60)
+            } header: {
+                Text("Tone")
+            } footer: {
+                footer("Variation changes the pitch of each key a little, like a real keyboard.")
+            }
+        }
+        // Dropping a pack or a folder of recordings adds it, like the button.
+        .dropDestination(for: URL.self) { urls, _ in
+            importSwitchSet(from: urls)
+            return true
         }
     }
 
@@ -224,16 +195,29 @@ private struct SoundPage: View {
             NSAlert(error: error).runModal()
         }
     }
+
+    private func remove(_ pack: SoundPack) {
+        let alert = NSAlert()
+        alert.messageText = "Remove \(pack.name)?"
+        alert.informativeText = "Its sounds are moved to the Trash."
+        alert.addButton(withTitle: "Remove")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        do {
+            try state.removeSwitchSet(pack)
+        } catch {
+            NSAlert(error: error).runModal()
+        }
+    }
 }
 
 // MARK: - Keys
 
-/// What makes a sound, and the shortcut that turns it all off.
 private struct KeysPage: View {
     @ObservedObject var state: AppState
 
     var body: some View {
-        SettingsPageLayout(page: .keys) {
+        Form {
             Section("Shortcut") {
                 LabeledContent("Turn sounds on or off") {
                     ShortcutRecorder(state: state)
@@ -247,9 +231,9 @@ private struct KeysPage: View {
                 Toggle("Function keys", isOn: $state.functionKeysAudible)
                 Toggle("Mouse clicks", isOn: $state.mouseClicks)
             } header: {
-                Text("Also play sounds for")
+                Text("Also Play Sounds For")
             } footer: {
-                Text("Letters, numbers, Space, Return and the other typing keys always play.")
+                footer("Letters, numbers, Space, Return and the other typing keys always play.")
             }
 
             Section {
@@ -258,7 +242,7 @@ private struct KeysPage: View {
             } header: {
                 Text("Extras")
             } footer: {
-                Text("The trackpad tap needs a Force Touch trackpad.")
+                footer("The trackpad tap needs a Force Touch trackpad.")
             }
         }
     }
@@ -266,12 +250,11 @@ private struct KeysPage: View {
 
 // MARK: - Muting
 
-/// When ThockBox goes quiet by itself.
 private struct MutingPage: View {
     @ObservedObject var state: AppState
 
     var body: some View {
-        SettingsPageLayout(page: .muting) {
+        Form {
             Section {
                 if MicrophoneMonitor.isSupported {
                     Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
@@ -287,9 +270,9 @@ private struct MutingPage: View {
                     Text("1 hour").tag(60)
                 }
             } header: {
-                Text("Mute automatically")
+                Text("Mute Automatically")
             } footer: {
-                Text((MicrophoneMonitor.isSupported
+                footer((MicrophoneMonitor.isSupported
                       ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. "
                       : "")
                      + "Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
@@ -298,9 +281,9 @@ private struct MutingPage: View {
             Section {
                 MutedAppsList(state: state)
             } header: {
-                Text("Mute in these apps")
+                Text("Mute in These Apps")
             } footer: {
-                Text("ThockBox stays quiet while one of these apps is in front. The menu bar panel can also mute the app you're in.")
+                footer("ThockBox stays quiet while one of these apps is in front. The menu bar menu can also mute the app you're in.")
             }
         }
     }
@@ -312,38 +295,21 @@ private struct ActivityPage: View {
     @ObservedObject var store: StatsStore
 
     var body: some View {
-        SettingsPageLayout(page: .activity) {
-            Section {
-                HStack(spacing: 0) {
-                    tile("Today", store.shown.today)
-                    Divider()
-                    tile("All time", store.shown.total)
-                }
-                .frame(height: 64)
+        Form {
+            Section("Keystrokes") {
+                LabeledContent("Today", value: store.shown.today.formatted())
+                LabeledContent("All time", value: store.shown.total.formatted())
             }
 
-            Section("Last 7 days") {
+            Section("Last 7 Days") {
                 if store.shown.lastWeek().allSatisfy({ $0.count == 0 }) {
                     Text("Nothing yet. Start typing and this fills in day by day.")
                         .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, minHeight: 80)
                 } else {
                     KeystrokeChart(store: store)
                 }
             }
         }
-    }
-
-    private func tile(_ title: String, _ count: Int) -> some View {
-        VStack(spacing: 2) {
-            Text(count.formatted())
-                .font(.title.weight(.semibold).monospacedDigit())
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .combine)
     }
 }
 
@@ -354,7 +320,9 @@ private struct GeneralPage: View {
     @ObservedObject var updater = Updater.shared
 
     var body: some View {
-        SettingsPageLayout(page: .general) {
+        Form {
+            AttentionSection(state: state)
+
             Section {
                 Toggle("Open at login", isOn: $state.launchAtLogin)
                 Toggle(isOn: $state.showMenuBarIcon) {
@@ -373,20 +341,19 @@ private struct GeneralPage: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } header: {
                 Text("Updates")
             } footer: {
                 if updater.availableRelease != nil && Updater.isAdHocSigned {
-                    Text("After updating, macOS may ask you to allow Accessibility access again.")
+                    footer("After updating, macOS may ask you to allow Accessibility access again.")
                 }
             }
 
             Section("Help") {
                 LabeledContent("Accessibility access") {
                     if state.accessibilityTrusted {
-                        Text("Allowed").foregroundStyle(.secondary)
+                        Text("Allowed")
                     } else {
                         Button("Open System Settings") { Permissions.openSystemSettings() }
                     }
