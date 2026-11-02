@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **A volume slider in the menu bar menu,** like the system Sound menu,
+  instead of 10% steps.
 - Fixed: **Mute during calendar events** didn't work after ThockBox
   restarted until the switch was turned off and on.
 - Fixed: a Focus that turned sounds off could leave them off for good if
