@@ -118,13 +118,16 @@ loudness-matched like the built-in ones, and survive updates.
 - **Keys:** the on/off shortcut, which keys play (and mouse clicks and scrolling), the
   Return ding, and a trackpad tap with each key.
 - **Muting:** during calls and while other apps play sound (both macOS 14.2
-  or later), during calendar events, in games, when the screen locks, while
-  the screen is shared or recorded, on
-  speakers only (“headphones only”), in chosen apps, and after 1 to 60
-  minutes without typing.
-- **Activity:** keystrokes today, in total, and over the last week.
+  or later), during calendar events (from the calendars you pick), in games,
+  while the screen is shared or recorded; when the screen is locked, on
+  speakers only (“headphones only”), and after 1 to 60 minutes without typing;
+  and in apps you choose.
+- **Activity:** keystrokes today, in total, and over the last week, and a
+  CSV export of the last 30 days.
 - **General:** login, the menu bar icon (dimmed while sounds are off, if you
-  like, and today's keystrokes beside it), updates and help.
+  like, and today's keystrokes beside it), the app icon (Color or Graphite),
+  a notification when an automation changes the switch set, updates, and
+  help, including the Welcome and What's New windows.
 
 </details>
 
@@ -149,6 +152,7 @@ tell application "ThockBox"
     set sound volume to 0.55 -- 0.0 to 1.0
     set mute during calls to true
     set headphones only to true
+    set scroll sounds to true -- also mouse clicks, return ding
     set off until to (current date) + 30 * minutes -- back on by itself
     get mute reason -- e.g. "Muted in Safari.", or "" when not muted
     get keystrokes today
@@ -179,6 +183,16 @@ While a password field is focused, or Terminal’s Secure Keyboard Entry is on,
 macOS doesn’t pass key presses to other apps. If it stays quiet after you
 leave the field, quit and reopen the app the menu names. Also check
 Settings › Muting.
+</details>
+
+<details>
+<summary><strong>It goes quiet when I don't expect it</strong></summary>
+
+The menu bar menu's first line names the reason, for example "Muted during a
+meeting" or "Muted while media plays". Each one is a switch in
+Settings › Muting: calls, calendar events, other apps playing sound, games,
+screen sharing, a locked screen, speakers, chosen apps and idle time. A Focus
+filter can also turn sounds off while that Focus is on.
 </details>
 
 <details>

@@ -71,6 +71,15 @@ struct KeystrokeStats {
         }
     }
 
+    /// Every day kept (the last 30 plus today) as CSV, oldest first:
+    /// "date,keystrokes" with ISO dates, for a spreadsheet.
+    func csv() -> String {
+        var days = history
+        if !stamp.isEmpty { days[stamp] = today }
+        let rows = days.sorted { $0.key < $1.key }.map { "\($0.key),\($0.value)" }
+        return (["date,keystrokes"] + rows).joined(separator: "\n") + "\n"
+    }
+
     private static let dayFormatter: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")

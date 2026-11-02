@@ -28,22 +28,47 @@ final class AppState: ObservableObject {
     private var resumeTimer: Timer?
 
     /// What the Focus filter changed from, to put back when the Focus ends.
-    private var beforeFocus: (enabled: Bool, packID: String)?
+    /// Saved, so a relaunch during a Focus still restores it afterwards.
+    struct FocusBefore: Codable, Equatable {
+        var enabled: Bool
+        var packID: String
+        /// Whether a Focus turned sounds off; only then are they turned back.
+        var turnedOff = false
+    }
+
+    private var beforeFocus: FocusBefore? {
+        get {
+            defaults.data(forKey: "focusBefore").flatMap { try? JSONDecoder().decode(FocusBefore.self, from: $0) }
+        }
+        set {
+            defaults.set(newValue.flatMap { try? JSONEncoder().encode($0) }, forKey: "focusBefore")
+        }
+    }
 
     /// Applies a Focus filter. Default values (sounds on, no set) mean the
-    /// Focus ended: put back what was there before it started.
+    /// Focus ended: put back what was there before it started. A Focus that
+    /// only picks a set leaves on/off alone, so it doesn't cancel a timed
+    /// off or undo turning sounds off by hand.
     func applyFocusFilter(soundsOn: Bool, packID: String?) {
         guard !soundsOn || packID != nil else {
             if let before = beforeFocus {
                 beforeFocus = nil
                 selectPackFromElsewhere(before.packID)
-                enabled = before.enabled
+                if before.turnedOff { enabled = before.enabled }
             }
             return
         }
-        if beforeFocus == nil { beforeFocus = (enabled, selectedPackID) }
+        var before = beforeFocus ?? FocusBefore(enabled: enabled, packID: selectedPackID)
         if let packID { selectPackFromElsewhere(packID) }
-        enabled = soundsOn
+        if !soundsOn {
+            before.turnedOff = true
+            enabled = false
+        } else if before.turnedOff {
+            // Switched from a Focus that turned sounds off to one that doesn't.
+            before.turnedOff = false
+            enabled = before.enabled
+        }
+        beforeFocus = before
     }
 
     /// Turns sounds off and back on by themselves after `duration`, even
@@ -166,6 +191,9 @@ final class AppState: ObservableObject {
     /// Today's keystrokes next to the menu bar icon.
     @Published var showKeystrokesInMenuBar: Bool {
         didSet { defaults.set(showKeystrokesInMenuBar, forKey: "showKeystrokesInMenuBar") }
+    }
+    @Published var dockIconStyle: DockIconStyle {
+        didSet { defaults.set(dockIconStyle.rawValue, forKey: "dockIconStyle") }
     }
     @Published var launchAtLogin: Bool {
         didSet {
@@ -319,6 +347,15 @@ final class AppState: ObservableObject {
     @Published private(set) var inCalendarEvent = false
     /// Whether ThockBox may read calendars, once it has asked.
     @Published private(set) var calendarAccess = CalendarMonitor.Access.unknown
+    /// The Mac's calendars, once access is allowed, for choosing which count.
+    @Published private(set) var calendars: [CalendarMonitor.CalendarInfo] = []
+    /// Calendars whose events don't mute.
+    @Published var ignoredCalendarIDs: Set<String> {
+        didSet {
+            defaults.set(Array(ignoredCalendarIDs), forKey: "ignoredCalendars")
+            calendarMonitor?.ignoredCalendarIDs = ignoredCalendarIDs
+        }
+    }
 
     private let defaults: UserDefaults
     private var idleMode = IdleMode()
@@ -377,6 +414,7 @@ final class AppState: ObservableObject {
         scrollSounds = defaults.bool(forKey: "scrollSounds")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
+        dockIconStyle = defaults.string(forKey: "dockIconStyle").flatMap(DockIconStyle.init) ?? .color
         dimIconWhenOff = defaults.bool(forKey: "dimIconWhenOff")
         showKeystrokesInMenuBar = defaults.bool(forKey: "showKeystrokesInMenuBar")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
@@ -385,6 +423,7 @@ final class AppState: ObservableObject {
         muteWhileGaming = defaults.bool(forKey: "muteWhileGaming")
         muteWhileMedia = defaults.bool(forKey: "muteWhileMedia")
         muteDuringMeetings = defaults.bool(forKey: "muteDuringMeetings")
+        ignoredCalendarIDs = Set(defaults.stringArray(forKey: "ignoredCalendars") ?? [])
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
         toggleShortcut = defaults.data(forKey: "toggleShortcut")
@@ -416,6 +455,7 @@ final class AppState: ObservableObject {
         }
         updateMicrophoneMonitor()
         updateMediaMonitor()
+        updateCalendarMonitor()
         updateScreenShareWatch()
         outputRouteChanged()
         outputListeners = SystemAudioListener.outputRoute { [weak self] in self?.outputRouteChanged() }
@@ -889,8 +929,12 @@ final class AppState: ObservableObject {
         }
         guard calendarMonitor == nil, readsCalendars else { return }
         calendarMonitor = CalendarMonitor(
+            ignoring: ignoredCalendarIDs,
             onChange: { [weak self] inEvent in self?.setInCalendarEvent(inEvent) },
-            onAccess: { [weak self] access in self?.calendarAccess = access })
+            onAccess: { [weak self] access in self?.calendarAccess = access },
+            onCalendars: { [weak self] calendars in
+                if self?.calendars != calendars { self?.calendars = calendars }
+            })
     }
 
     /// Called by the calendar monitor (and by tests).

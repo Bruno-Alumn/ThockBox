@@ -374,7 +374,9 @@ final class Updater: ObservableObject {
     }
 
     /// Whether this build is ad-hoc signed, so an update will need the
-    /// Accessibility grant again.
+    /// Accessibility grant again. If the signature can't be read it answers
+    /// no, so the updater insists on the release certificate (fails closed)
+    /// rather than accepting any signature.
     static var isAdHocSigned: Bool {
         var me: SecCode?
         var staticMe: SecStaticCode?
@@ -384,7 +386,7 @@ final class Updater: ObservableObject {
               SecCodeCopySigningInformation(staticMe, SecCSFlags(rawValue: kSecCSSigningInformation),
                                             &info) == errSecSuccess,
               let flags = (info as? [String: Any])?[kSecCodeInfoFlags as String] as? UInt32 else {
-            return true
+            return false
         }
         return flags & SecCodeSignatureFlags.adhoc.rawValue != 0
     }
