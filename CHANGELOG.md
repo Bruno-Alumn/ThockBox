@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **App icon style** (Settings › General): Color, Graphite, or Graphite
+  while sounds are off, for the Dock and ThockBox's windows.
 - **Safer updates:** ThockBox only installs an update signed with its own
   release certificate, not just any valid signature, and release builds
   always check GitHub for updates.
