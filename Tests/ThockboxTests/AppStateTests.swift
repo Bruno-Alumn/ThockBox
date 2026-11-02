@@ -34,6 +34,19 @@ final class AppStateTests: XCTestCase {
         XCTAssertFalse(state.mouseClicks)
     }
 
+    func testSetChangesFromElsewhereNotifyOnlyWhenAsked() {
+        let state = AppState(defaults: defaults)
+        state.postsNotifications = false
+        let other = "holy-panda"
+        XCTAssertFalse(state.notifySetChanges, "off by default")
+        XCTAssertFalse(state.selectPackFromElsewhere(other))
+        XCTAssertEqual(state.selectedPackID, other)
+
+        state.notifySetChanges = true
+        XCTAssertFalse(state.selectPackFromElsewhere(other), "no change, no notification")
+        XCTAssertTrue(state.selectPackFromElsewhere("cream"))
+    }
+
     func testStoredValuesAreClampedOnLoad() {
         defaults.set(5.0, forKey: "volume")
         defaults.set(-9.0, forKey: "toneX")
@@ -289,6 +302,25 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertEqual(state.mutedApps, ["com.example.game", "com.example.editor"])
         state.setMuted(false, appID: "com.example.game")
         XCTAssertEqual(state.mutedApps, ["com.example.editor"])
+    }
+
+    func testGameMutesOnlyWhenEnabledAndInFront() {
+        let state = AppState(defaults: defaults)
+        state.setFrontApp(id: "com.example.game", name: "Game", isGame: true)
+        XCTAssertNil(state.automaticMute, "mute-while-gaming is off")
+        state.muteWhileGaming = true
+        XCTAssertEqual(state.automaticMute, .game("Game"))
+        state.setFrontApp(id: "com.apple.TextEdit", name: "TextEdit")
+        XCTAssertNil(state.automaticMute)
+    }
+
+    func testGamesAreRecognized() {
+        XCTAssertTrue(FrontApp.isGame(category: "public.app-category.games", path: nil))
+        XCTAssertTrue(FrontApp.isGame(category: "public.app-category.puzzle-games", path: nil))
+        XCTAssertFalse(FrontApp.isGame(category: "public.app-category.productivity", path: nil))
+        XCTAssertFalse(FrontApp.isGame(category: nil, path: "/Applications/TextEdit.app"))
+        XCTAssertTrue(FrontApp.isGame(category: nil,
+            path: "/Users/me/Library/Application Support/Steam/steamapps/common/Portal 2/portal2.app"))
     }
 
     func testOwnWindowsDontChangeTheFrontApp() {

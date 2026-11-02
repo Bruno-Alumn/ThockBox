@@ -36,13 +36,13 @@ final class AppState: ObservableObject {
         guard !soundsOn || packID != nil else {
             if let before = beforeFocus {
                 beforeFocus = nil
-                selectedPackID = before.packID
+                selectPackFromElsewhere(before.packID)
                 enabled = before.enabled
             }
             return
         }
         if beforeFocus == nil { beforeFocus = (enabled, selectedPackID) }
-        if let packID { selectedPackID = packID }
+        if let packID { selectPackFromElsewhere(packID) }
         enabled = soundsOn
     }
 
@@ -94,6 +94,15 @@ final class AppState: ObservableObject {
             applyPack(notify: oldValue != selectedPackID)
         }
     }
+    /// Notify when Shortcuts or AppleScript changes the switch set.
+    @Published var notifySetChanges: Bool {
+        didSet {
+            defaults.set(notifySetChanges, forKey: "notifySetChanges")
+            if notifySetChanges && postsNotifications { SetChangeNotifier.requestPermission() }
+        }
+    }
+    /// Tests turn this off: notifications need a signed app bundle.
+    var postsNotifications = true
     @Published var toneX: Float {
         didSet {
             defaults.set(toneX, forKey: "toneX")
@@ -169,6 +178,13 @@ final class AppState: ObservableObject {
         didSet {
             defaults.set(muteWhileSharing, forKey: "muteWhileSharing")
             updateScreenShareWatch()
+        }
+    }
+    /// Quiet while a game is in front.
+    @Published var muteWhileGaming: Bool {
+        didSet {
+            defaults.set(muteWhileGaming, forKey: "muteWhileGaming")
+            updateAutomaticMute()
         }
     }
     /// Quiet during calendar events (meetings), once Calendars access is
@@ -334,11 +350,13 @@ final class AppState: ObservableObject {
             "launchAtLogin": false, "showMenuBarIcon": true, "dimIconWhenOff": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
             "muteDuringMeetings": false,
             "muteWhileMedia": false,
-            "idleTimeoutMinutes": 0,
+            "muteWhileGaming": false,
+            "idleTimeoutMinutes": 0, "notifySetChanges": false,
         ])
         enabled = defaults.bool(forKey: "enabled")
         volume = min(max(defaults.float(forKey: "volume"), 0), 1)
         selectedPackID = defaults.string(forKey: "pack") ?? "cream"
+        notifySetChanges = defaults.bool(forKey: "notifySetChanges")
         toneX = min(max(defaults.float(forKey: "toneX"), -1), 1)
         toneY = min(max(defaults.float(forKey: "toneY"), -1), 1)
         pitchVariation = min(max(defaults.float(forKey: "pitchVariation"), 0), 150)
@@ -354,6 +372,7 @@ final class AppState: ObservableObject {
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteWhileSharing = defaults.bool(forKey: "muteWhileSharing")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
+        muteWhileGaming = defaults.bool(forKey: "muteWhileGaming")
         muteWhileMedia = defaults.bool(forKey: "muteWhileMedia")
         muteDuringMeetings = defaults.bool(forKey: "muteDuringMeetings")
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
@@ -557,6 +576,19 @@ final class AppState: ObservableObject {
     /// comes back if it's restored.
     var currentPack: SoundPack? {
         packs.first { $0.id == selectedPackID } ?? packs.first { $0.id == "cream" } ?? packs.first
+    }
+
+    /// Changes the set from outside ThockBox's own controls (a Focus,
+    /// Shortcuts, AppleScript), with a notification if the user asked for one.
+    /// Returns whether a notification was posted.
+    @discardableResult
+    func selectPackFromElsewhere(_ id: String) -> Bool {
+        guard id != selectedPackID else { return false }
+        selectedPackID = id
+        guard notifySetChanges else { return false }
+        let name = packs.first { $0.id == id }?.name ?? id
+        if postsNotifications { SetChangeNotifier.post(setName: name) }
+        return true
     }
 
     private func applyPack(notify: Bool) {
@@ -786,13 +818,16 @@ final class AppState: ObservableObject {
     }
 
     private func setFrontApp(_ app: NSRunningApplication?) {
-        setFrontApp(id: app?.bundleIdentifier, name: app?.localizedName)
+        let category = app?.bundleURL.flatMap { Bundle(url: $0) }?
+            .object(forInfoDictionaryKey: "LSApplicationCategoryType") as? String
+        setFrontApp(id: app?.bundleIdentifier, name: app?.localizedName,
+                    isGame: FrontApp.isGame(category: category, path: app?.bundleURL?.path))
     }
 
     /// Called when another app comes to the front (and by tests).
-    func setFrontApp(id: String?, name: String?) {
+    func setFrontApp(id: String?, name: String?, isGame: Bool = false) {
         guard id != Bundle.main.bundleIdentifier else { return }
-        frontApp = id.map { FrontApp(id: $0, name: name ?? $0) }
+        frontApp = id.map { FrontApp(id: $0, name: name ?? $0, isGame: isGame) }
         updateAutomaticMute()
     }
 
@@ -861,6 +896,8 @@ final class AppState: ObservableObject {
             reason = .speakers
         } else if let frontApp, mutedApps.contains(frontApp.id) {
             reason = .app(frontApp.name)
+        } else if muteWhileGaming, let frontApp, frontApp.isGame {
+            reason = .game(frontApp.name)
         } else if idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes) {
             reason = .idle
         } else {
