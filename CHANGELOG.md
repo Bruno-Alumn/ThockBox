@@ -5,6 +5,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Choose what clicking the menu bar icon does** (Settings › General):
+  open the menu, or turn sounds on or off. Control-click always opens the
+  menu.
 - **Spatial audio on headphones** (Settings › Sound): each key comes from its
   place around you in 3D. Speakers stay as they are.
 - **A volume slider in the menu bar menu,** like the system Sound menu,

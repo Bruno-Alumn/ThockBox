@@ -63,6 +63,7 @@ private struct KeystrokeLabel: View {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppState.shared.startUp()
+        IconClick.install(state: AppState.shared)
         DockIcon.install(state: AppState.shared)
         Updater.shared.startUp()
         // New installs get the welcome window (Accessibility access, pick a

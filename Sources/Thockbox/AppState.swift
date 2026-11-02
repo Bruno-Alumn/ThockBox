@@ -191,6 +191,9 @@ final class AppState: ObservableObject {
     @Published var showMenuBarIcon: Bool {
         didSet { defaults.set(showMenuBarIcon, forKey: "showMenuBarIcon") }
     }
+    @Published var iconClickAction: IconClickAction {
+        didSet { defaults.set(iconClickAction.rawValue, forKey: "iconClickAction") }
+    }
     /// The menu bar icon is drawn fainter while keys make no sound.
     @Published var dimIconWhenOff: Bool {
         didSet { defaults.set(dimIconWhenOff, forKey: "dimIconWhenOff") }
@@ -429,6 +432,7 @@ final class AppState: ObservableObject {
         scrollSounds = defaults.bool(forKey: "scrollSounds")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
+        iconClickAction = defaults.string(forKey: "iconClickAction").flatMap(IconClickAction.init) ?? .openMenu
         spatialAudio = defaults.bool(forKey: "spatialAudio")
         dockIconStyle = defaults.string(forKey: "dockIconStyle").flatMap(DockIconStyle.init) ?? .color
         dimIconWhenOff = defaults.bool(forKey: "dimIconWhenOff")
