@@ -102,6 +102,6 @@ struct WelcomeView: View {
             .padding([.horizontal, .bottom], 20)
         }
         .frame(width: 460)
-        .onAppear { state.refreshAccessibilityStatus() }
+        .onAppear { state.refreshOnOpen() }
     }
 }
