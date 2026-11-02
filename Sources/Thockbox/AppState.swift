@@ -137,6 +137,14 @@ final class AppState: ObservableObject {
             updateScreenShareWatch()
         }
     }
+    /// Quiet during calendar events (meetings), once Calendars access is
+    /// allowed.
+    @Published var muteDuringMeetings: Bool {
+        didSet {
+            defaults.set(muteDuringMeetings, forKey: "muteDuringMeetings")
+            updateCalendarMonitor()
+        }
+    }
     @Published var muteWhenLocked: Bool {
         didSet {
             defaults.set(muteWhenLocked, forKey: "muteWhenLocked")
@@ -247,6 +255,10 @@ final class AppState: ObservableObject {
     var isAutomaticallyMuted: Bool { automaticMute != nil }
     /// Another app is recording (only tracked while muteDuringCalls is on).
     @Published private(set) var microphoneInUse = false
+    /// A calendar event is on (only tracked while muteDuringMeetings is on).
+    @Published private(set) var inCalendarEvent = false
+    /// Whether ThockBox may read calendars, once it has asked.
+    @Published private(set) var calendarAccess = CalendarMonitor.Access.unknown
 
     private let defaults: UserDefaults
     private var idleMode = IdleMode()
@@ -255,6 +267,9 @@ final class AppState: ObservableObject {
     private var screenShared = false
     private var screenShareTimer: Timer?
     private var microphoneMonitor: MicrophoneMonitor?
+    private var calendarMonitor: CalendarMonitor?
+    /// Tests turn this off: reading calendars asks the user for access.
+    var readsCalendars = true
     /// Each output device keeps its own volume, as macOS does for system
     /// volume: headphones usually want less than speakers.
     private var volumeByDevice: [String: Float]
@@ -278,6 +293,7 @@ final class AppState: ObservableObject {
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false,
             "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
+            "muteDuringMeetings": false,
             "idleTimeoutMinutes": 0,
         ])
         enabled = defaults.bool(forKey: "enabled")
@@ -296,6 +312,7 @@ final class AppState: ObservableObject {
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteWhileSharing = defaults.bool(forKey: "muteWhileSharing")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
+        muteDuringMeetings = defaults.bool(forKey: "muteDuringMeetings")
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
         toggleShortcut = defaults.data(forKey: "toggleShortcut")
@@ -739,11 +756,31 @@ final class AppState: ObservableObject {
         microphoneInUse = monitor.inUse
     }
 
+    private func updateCalendarMonitor() {
+        guard muteDuringMeetings else {
+            calendarMonitor = nil
+            setInCalendarEvent(false)
+            return
+        }
+        guard calendarMonitor == nil, readsCalendars else { return }
+        calendarMonitor = CalendarMonitor(
+            onChange: { [weak self] inEvent in self?.setInCalendarEvent(inEvent) },
+            onAccess: { [weak self] access in self?.calendarAccess = access })
+    }
+
+    /// Called by the calendar monitor (and by tests).
+    func setInCalendarEvent(_ inEvent: Bool) {
+        inCalendarEvent = inEvent
+        updateAutomaticMute()
+    }
+
     /// `now` is a parameter so tests can check the idle timeout without waiting.
     func updateAutomaticMute(now: Date = Date()) {
         let reason: AutomaticMute?
         if muteDuringCalls && microphoneInUse {
             reason = .call
+        } else if muteDuringMeetings && inCalendarEvent {
+            reason = .meeting
         } else if muteWhenLocked && screenLocked {
             reason = .screenLocked
         } else if muteWhileSharing && screenShared {
