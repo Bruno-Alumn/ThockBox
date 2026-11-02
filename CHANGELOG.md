@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **The menu bar icon dims while sounds are off,** so it's easy to tell at a
+  glance. Turn it off in Settings › General.
 - **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain
   click often showed nothing and only a Control-click opened it.
 

@@ -104,6 +104,13 @@ final class AppStateTests: XCTestCase {
         XCTAssertTrue(state.suppressedKeyUps.isEmpty, "a new press ends it")
     }
 
+    /// Like Klack, the icon dims while sounds are off unless that's turned off.
+    func testIconDimsWhenOffByDefault() {
+        XCTAssertTrue(AppState(defaults: defaults).dimIconWhenOff)
+        AppState(defaults: defaults).dimIconWhenOff = false
+        XCTAssertFalse(AppState(defaults: defaults).dimIconWhenOff, "saved")
+    }
+
     func testCustomShortcutReplacesTheDefaultAndMatchesExactly() {
         let state = AppState(defaults: defaults)
         state.toggleShortcut = Shortcut(keyCode: 49, flags: [.option, .command], key: "Space")

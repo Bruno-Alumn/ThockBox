@@ -360,6 +360,8 @@ private struct GeneralPage: View {
                         Text("Open ThockBox from Applications or Spotlight to get back here.")
                     }
                 }
+                Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)
+                    .disabled(!state.showMenuBarIcon)
             }
 
             Section {

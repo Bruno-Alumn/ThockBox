@@ -123,6 +123,10 @@ final class AppState: ObservableObject {
     @Published var showMenuBarIcon: Bool {
         didSet { defaults.set(showMenuBarIcon, forKey: "showMenuBarIcon") }
     }
+    /// The menu bar icon is drawn fainter while keys make no sound.
+    @Published var dimIconWhenOff: Bool {
+        didSet { defaults.set(dimIconWhenOff, forKey: "dimIconWhenOff") }
+    }
     @Published var launchAtLogin: Bool {
         didSet {
             defaults.set(launchAtLogin, forKey: "launchAtLogin")
@@ -268,7 +272,7 @@ final class AppState: ObservableObject {
             "muteModifiers": false, "functionKeysAudible": true,
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false,
-            "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "headphonesOnly": false, "muteDuringCalls": false,
+            "launchAtLogin": false, "showMenuBarIcon": true, "dimIconWhenOff": true, "muteWhenLocked": false, "headphonesOnly": false, "muteDuringCalls": false,
             "idleTimeoutMinutes": 0,
         ])
         enabled = defaults.bool(forKey: "enabled")
@@ -284,6 +288,7 @@ final class AppState: ObservableObject {
         hapticFeedback = defaults.bool(forKey: "hapticFeedback")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
+        dimIconWhenOff = defaults.bool(forKey: "dimIconWhenOff")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
