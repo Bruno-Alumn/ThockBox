@@ -50,7 +50,7 @@ or endorsed by Klack or its developer.
 
 **Quiet when it should be**
 
-- Mutes itself during calls, while sharing your screen, when the screen
+- Mutes itself during calls and meetings, while sharing your screen, when the screen
   locks, on speakers, or in apps you choose.
 - Turn it off for an hour with one click; it comes back by itself.
 - Toggle anywhere with <kbd>⌃</kbd><kbd>⌘</kbd><kbd>K</kbd>, Shortcuts or AppleScript.
@@ -116,7 +116,8 @@ loudness-matched like the built-in ones, and survive updates.
   output device, and tone (brightness, pitch and variation).
 - **Keys:** the on/off shortcut, which keys play (and mouse clicks), the
   Return ding, and a trackpad tap with each key.
-- **Muting:** during calls (macOS 14.2 or later), when the screen locks, while
+- **Muting:** during calls (macOS 14.2 or later), during calendar events,
+  when the screen locks, while
   the screen is shared or recorded, on
   speakers only (“headphones only”), in chosen apps, and after 1 to 60
   minutes without typing.

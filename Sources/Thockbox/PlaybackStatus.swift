@@ -8,6 +8,7 @@ struct FrontApp: Equatable {
 /// The reasons sounds can be muted without the user turning them off.
 enum AutomaticMute: Equatable {
     case call
+    case meeting
     case screenLocked
     case screenShared
     case speakers
@@ -17,6 +18,7 @@ enum AutomaticMute: Equatable {
     var message: String {
         switch self {
         case .call: "Muted while another app uses the microphone."
+        case .meeting: "Muted during a calendar event."
         case .screenLocked: "Muted while the screen is locked."
         case .screenShared: "Muted while your screen is shared or recorded."
         case .speakers: "Muted on speakers. Plays through headphones only."
@@ -28,6 +30,7 @@ enum AutomaticMute: Equatable {
     var symbol: String {
         switch self {
         case .call: "mic.fill"
+        case .meeting: "calendar"
         case .screenLocked: "lock.fill"
         case .screenShared: "rectangle.inset.filled.and.person.filled"
         case .speakers: "headphones"
@@ -63,6 +66,7 @@ enum PlaybackStatus: Equatable {
         case .off: "Off"
         case .blocked(let app): "Paused by \(app)"
         case .muted(.call): "Muted during a call"
+        case .muted(.meeting): "Muted during a meeting"
         case .muted(.screenLocked): "Muted while locked"
         case .muted(.screenShared): "Muted while sharing"
         case .muted(.speakers): "Muted on speakers"

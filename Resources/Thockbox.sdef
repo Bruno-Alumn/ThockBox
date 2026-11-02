@@ -17,6 +17,9 @@
             <property name="mute during calls" code="Tbmc" type="boolean" access="rw" description="Whether sounds stop while another app uses the microphone (macOS 14.2 or later).">
                 <cocoa key="muteDuringCalls"/>
             </property>
+            <property name="mute during meetings" code="Tbmt" type="boolean" access="rw" description="Whether sounds stop during calendar events (once Calendars access is allowed).">
+                <cocoa key="muteDuringMeetings"/>
+            </property>
             <property name="headphones only" code="Tbho" type="boolean" access="rw" description="Whether sounds stay quiet on speakers and play only through headphones.">
                 <cocoa key="headphonesOnly"/>
             </property>

@@ -207,6 +207,18 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertFalse(state.isAutomaticallyMuted)
     }
 
+    func testCalendarEventMutesOnlyWhenEnabled() {
+        let state = AppState(defaults: defaults)
+        state.readsCalendars = false
+        state.setInCalendarEvent(true)
+        XCTAssertNil(state.automaticMute, "mute-during-meetings is off")
+        state.muteDuringMeetings = true
+        state.setInCalendarEvent(true)
+        XCTAssertEqual(state.automaticMute, .meeting)
+        state.setInCalendarEvent(false)
+        XCTAssertNil(state.automaticMute)
+    }
+
     func testMutedAppMutesOnlyWhileInFront() {
         let state = AppState(defaults: defaults)
         state.setFrontApp(id: "com.example.game", name: "Game")
