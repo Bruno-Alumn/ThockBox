@@ -56,12 +56,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // New installs get the welcome window (Accessibility access, pick a
         // sound) until they finish it; updates that need the grant again
         // open Settings. Otherwise start in the menu bar.
+        // After any other update, What's New lists what changed.
         let defaults = UserDefaults.standard
-        if WelcomeWindow.isNeeded() {
+        let isNew = WelcomeWindow.isNeeded()
+        let notes = WhatsNew.afterLaunch(usedBefore: !isNew)
+        if isNew {
             WelcomeWindow.shared.show()
         } else if defaults.bool(forKey: "showSettingsAfterUpdate") {
             defaults.set(false, forKey: "showSettingsAfterUpdate")
             MainWindow.shared.show()
+        } else if let notes {
+            WhatsNewWindow.shared.show(notes)
         }
     }
 

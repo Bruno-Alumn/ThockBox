@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **What's New** opens once after an update with the notes for that
+  version. Settings › General › Help reopens it, and the Welcome window.
 - **Notify when the switch set changes** (Settings › General, off by
   default): a notification says which set a Focus, Shortcuts or AppleScript
   picked.

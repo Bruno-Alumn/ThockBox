@@ -405,6 +405,12 @@ private struct GeneralPage: View {
                         Button("Open System Settings") { Permissions.openSystemSettings() }
                     }
                 }
+                LabeledContent("Getting started") {
+                    HStack {
+                        Button("Welcome…") { WelcomeWindow.shared.show() }
+                        Button("What's New…") { WhatsNewWindow.shared.show() }
+                    }
+                }
                 Link("Troubleshooting", destination: URL(string: "https://github.com/Bruno-Alumn/ThockBox#troubleshooting")!)
                 Link("Report a Problem…", destination: ProblemReport.url())
             }
