@@ -5,6 +5,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var state: AppState
     @ObservedObject var updater = Updater.shared
+    @State private var isDropTarget = false
 
     var body: some View {
         Form {
@@ -20,6 +21,18 @@ struct SettingsView: View {
 
             Section {
                 SwitchList(state: state, allowsRemoving: true)
+                    // Dropping a folder of recordings here adds it, like the button.
+                    .dropDestination(for: URL.self) { urls, _ in
+                        importSwitchSet(from: urls)
+                        return true
+                    } isTargeted: { isDropTarget = $0 }
+                    .overlay {
+                        if isDropTarget {
+                            RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(Color.thockCoral, style: StrokeStyle(lineWidth: 2, dash: [5, 3]))
+                                .padding(-4)
+                        }
+                    }
                 Button("Add Your Own…") { addSwitchSet() }
             } header: {
                 HStack {
@@ -29,7 +42,7 @@ struct SettingsView: View {
                         .controlSize(.small)
                 }
             } footer: {
-                Text("Pick a folder of recordings (WAV, MP3, CAF, AIFF or M4A). Files with space, enter or backspace in the name play for those keys, and files with up or release in the name play when a key is let go.")
+                Text("Pick or drop a folder of recordings (WAV, MP3, CAF, AIFF or M4A). Files with space, enter or backspace in the name play for those keys, and files with up or release in the name play when a key is let go.")
             }
 
             Section("Volume") {
@@ -165,8 +178,12 @@ struct SettingsView: View {
         panel.prompt = "Add"
         panel.message = "Choose a folder of key recordings, or the files themselves."
         guard panel.runModal() == .OK else { return }
+        importSwitchSet(from: panel.urls)
+    }
+
+    private func importSwitchSet(from urls: [URL]) {
         do {
-            try state.importSwitchSet(from: panel.urls)
+            try state.importSwitchSet(from: urls)
         } catch {
             NSAlert(error: error).runModal()
         }
