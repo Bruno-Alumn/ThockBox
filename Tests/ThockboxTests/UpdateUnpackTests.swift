@@ -110,4 +110,24 @@ final class UpdateUnpackTests: XCTestCase {
         try Updater.run("/usr/bin/ditto", ["-c", "-k", folder.path, archive.path])
         assertRefused(archive, "The download doesn't contain the app.")
     }
+
+    /// A release build only installs an update signed with its own
+    /// certificate; an ad-hoc local build accepts any valid signature.
+    func testOnlyOurSignatureIsAccepted() {
+        XCTAssertTrue(Updater.accepts(signedByUs: true, runningAdHoc: false))
+        XCTAssertFalse(Updater.accepts(signedByUs: false, runningAdHoc: false))
+        XCTAssertTrue(Updater.accepts(signedByUs: false, runningAdHoc: true))
+    }
+
+    /// The forged-update case: an ad-hoc signed app with the right bundle
+    /// ID and version gets through unpacking (its signature is valid) but
+    /// doesn't meet a certificate-signed app's requirement, so it's refused.
+    /// Under XCTest the "running app" is the Apple-signed test runner.
+    func testAnAdHocDownloadDoesntMeetACertificateSignedRequirement() throws {
+        let folder = work.appendingPathComponent("src")
+        let app = try makeApp(id: ownID, version: "1.2.0", in: folder)
+        let unpacked = try unpack(zip(app))
+        XCTAssertFalse(Updater.satisfiesOwnRequirement(unpacked))
+        XCTAssertFalse(Updater.accepts(signedByUs: Updater.satisfiesOwnRequirement(unpacked), runningAdHoc: false))
+    }
 }
