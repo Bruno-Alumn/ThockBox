@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The settings window's pages, one per toolbar tab (see MainWindow). Each is
 /// a grouped Form of standard controls.
@@ -387,7 +388,23 @@ private struct ActivityPage: View {
                     KeystrokeChart(store: store)
                 }
             }
+
+            Section {
+                LabeledContent("Daily counts") {
+                    Button("Export…") { exportCSV() }
+                }
+            } footer: {
+                formFooter("A CSV of the last 30 days, for a spreadsheet. Only counts are kept, never what you typed.")
+            }
         }
+    }
+
+    private func exportCSV() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "ThockBox Keystrokes.csv"
+        panel.allowedContentTypes = [.commaSeparatedText]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        try? store.shown.csv().write(to: url, atomically: true, encoding: .utf8)
     }
 }
 
