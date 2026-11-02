@@ -71,6 +71,21 @@ final class UpdateUnpackTests: XCTestCase {
         XCTAssertEqual(try unpack(dmg).lastPathComponent, "ThockBox.app")
     }
 
+    /// If hdiutil can't mount it (macOS 27 deprecates `hdiutil attach`),
+    /// `diskutil image attach` does, and its output reads the same.
+    func testMountsWithDiskutilWhenHdiutilFails() throws {
+        try XCTSkipUnless((try? Updater.output("/usr/sbin/diskutil", ["image", "attach", "--help"])) != nil,
+                          "diskutil image needs a newer macOS")
+        let app = try makeApp(id: ownID, version: "1.2.0", in: try stage())
+        let dmg = work.appendingPathComponent("update.dmg")
+        try Updater.run("/usr/bin/hdiutil", ["create", "-volname", "ThockBox", "-srcfolder", app.deletingLastPathComponent().path,
+                                            "-fs", "HFS+", "-format", "UDZO", "-ov", "-quiet", dmg.path])
+        let failing = (tool: "/usr/bin/false", arguments: [String]())
+        let mount = try Updater.attach(dmg, using: [failing, Updater.attachCommands[1]])
+        defer { try? Updater.run("/usr/bin/hdiutil", ["detach", mount.path, "-force"]) }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: mount.appendingPathComponent("ThockBox.app").path))
+    }
+
     func testRefusesAnotherVersion() throws {
         let app = try makeApp(id: ownID, version: "1.1.9", in: try stage())
         assertRefused(try zip(app), "The download doesn't match the release.")

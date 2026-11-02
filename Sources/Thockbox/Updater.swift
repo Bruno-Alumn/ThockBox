@@ -266,20 +266,36 @@ final class Updater: ObservableObject {
     /// Takes the app out of the download (a disk image or a zip) and checks
     /// it's a signed ThockBox of the version the release says, before
     /// anything touches the installed app.
+    /// Ways to mount a disk image, tried in order. hdiutil works on every
+    /// supported macOS; macOS 27 marks `hdiutil attach` deprecated in favor
+    /// of `diskutil image attach` (which older versions lack), so that's the
+    /// fallback. Both print the same plist.
+    nonisolated static let attachCommands: [(tool: String, arguments: [String])] = [
+        ("/usr/bin/hdiutil", ["attach", "-nobrowse", "-readonly", "-noautoopen", "-plist"]),
+        ("/usr/sbin/diskutil", ["image", "attach", "--plist", "--readOnly", "--nobrowse"]),
+    ]
+
+    /// Mounts `image` read-only and out of sight in Finder, and returns
+    /// where. The system picks the mount point (a volume mounted inside the
+    /// temporary items folder can't be read).
+    nonisolated static func attach(_ image: URL, using commands: [(tool: String, arguments: [String])] = attachCommands)
+        throws -> URL {
+        for (tool, arguments) in commands where FileManager.default.isExecutableFile(atPath: tool) {
+            guard let info = try? output(tool, arguments + [image.path]) else { continue }
+            let entities = (try? PropertyListSerialization.propertyList(from: info, format: nil)
+                as? [String: Any])?["system-entities"] as? [[String: Any]] ?? []
+            if let mountPath = entities.lazy.compactMap({ $0["mount-point"] as? String }).first {
+                return URL(fileURLWithPath: mountPath)
+            }
+        }
+        throw UpdateError("The download couldn't be opened.")
+    }
+
     nonisolated static func unpack(_ download: URL, in work: URL, expecting version: String) throws -> URL {
         let out = work.appendingPathComponent("unpacked")
         if download.pathExtension == "dmg" {
-            // Mounted read-only and out of sight in Finder, just long enough
-            // to copy the app out. The system picks where (a volume mounted
-            // inside the temporary items folder can't be read).
-            let info = try output("/usr/bin/hdiutil", ["attach", download.path, "-nobrowse", "-readonly",
-                                                       "-noautoopen", "-plist"])
-            let entities = (try? PropertyListSerialization.propertyList(from: info, format: nil)
-                as? [String: Any])?["system-entities"] as? [[String: Any]] ?? []
-            guard let mountPath = entities.lazy.compactMap({ $0["mount-point"] as? String }).first else {
-                throw UpdateError("The download couldn't be opened.")
-            }
-            let mount = URL(fileURLWithPath: mountPath)
+            // Mounted just long enough to copy the app out.
+            let mount = try attach(download)
             defer { try? run("/usr/bin/hdiutil", ["detach", mount.path, "-force"]) }
             let apps = try FileManager.default.contentsOfDirectory(at: mount, includingPropertiesForKeys: nil)
                 .filter { $0.pathExtension == "app" }
