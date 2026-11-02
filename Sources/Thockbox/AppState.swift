@@ -137,6 +137,13 @@ final class AppState: ObservableObject {
             updateScreenShareWatch()
         }
     }
+    /// Quiet while a game is in front.
+    @Published var muteWhileGaming: Bool {
+        didSet {
+            defaults.set(muteWhileGaming, forKey: "muteWhileGaming")
+            updateAutomaticMute()
+        }
+    }
     @Published var muteWhenLocked: Bool {
         didSet {
             defaults.set(muteWhenLocked, forKey: "muteWhenLocked")
@@ -278,6 +285,7 @@ final class AppState: ObservableObject {
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false,
             "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
+            "muteWhileGaming": false,
             "idleTimeoutMinutes": 0,
         ])
         enabled = defaults.bool(forKey: "enabled")
@@ -296,6 +304,7 @@ final class AppState: ObservableObject {
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteWhileSharing = defaults.bool(forKey: "muteWhileSharing")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
+        muteWhileGaming = defaults.bool(forKey: "muteWhileGaming")
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
         toggleShortcut = defaults.data(forKey: "toggleShortcut")
@@ -717,13 +726,16 @@ final class AppState: ObservableObject {
     }
 
     private func setFrontApp(_ app: NSRunningApplication?) {
-        setFrontApp(id: app?.bundleIdentifier, name: app?.localizedName)
+        let category = app?.bundleURL.flatMap { Bundle(url: $0) }?
+            .object(forInfoDictionaryKey: "LSApplicationCategoryType") as? String
+        setFrontApp(id: app?.bundleIdentifier, name: app?.localizedName,
+                    isGame: FrontApp.isGame(category: category, path: app?.bundleURL?.path))
     }
 
     /// Called when another app comes to the front (and by tests).
-    func setFrontApp(id: String?, name: String?) {
+    func setFrontApp(id: String?, name: String?, isGame: Bool = false) {
         guard id != Bundle.main.bundleIdentifier else { return }
-        frontApp = id.map { FrontApp(id: $0, name: name ?? $0) }
+        frontApp = id.map { FrontApp(id: $0, name: name ?? $0, isGame: isGame) }
         updateAutomaticMute()
     }
 
@@ -752,6 +764,8 @@ final class AppState: ObservableObject {
             reason = .speakers
         } else if let frontApp, mutedApps.contains(frontApp.id) {
             reason = .app(frontApp.name)
+        } else if muteWhileGaming, let frontApp, frontApp.isGame {
+            reason = .game(frontApp.name)
         } else if idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes) {
             reason = .idle
         } else {

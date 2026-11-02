@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Mute while playing a game** (Settings › Muting): any app filed under
+  Games, or installed by Steam.
 - **Mute while sharing or recording the screen** (Settings › Muting), so a
   call's screen share doesn't carry your typing.
 - **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain

@@ -288,6 +288,7 @@ private struct MutingPage: View {
                 if MicrophoneMonitor.isSupported {
                     Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
                 }
+                Toggle("While playing a game", isOn: $state.muteWhileGaming)
                 Toggle("While the screen is locked", isOn: $state.muteWhenLocked)
                 if ScreenCapture.isAvailable {
                     Toggle("While sharing or recording the screen", isOn: $state.muteWhileSharing)
@@ -307,7 +308,7 @@ private struct MutingPage: View {
                 formFooter((MicrophoneMonitor.isSupported
                       ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. "
                       : "")
-                     + "Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
+                     + "A game is an app filed under Games, or one installed by Steam. Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
             }
 
             Section {

@@ -3,6 +3,18 @@ import Foundation
 struct FrontApp: Equatable {
     let id: String
     let name: String
+    var isGame = false
+
+    /// Games say so in their Info.plist (the App Store's Games category or
+    /// one of its subcategories). Steam games often leave it out, so a game
+    /// installed by Steam counts too.
+    static func isGame(category: String?, path: String?) -> Bool {
+        if let category, category.hasPrefix("public.app-category."),
+           category == "public.app-category.games" || category.hasSuffix("-games") {
+            return true
+        }
+        return path?.contains("/steamapps/common/") ?? false
+    }
 }
 
 /// The reasons sounds can be muted without the user turning them off.
@@ -12,6 +24,7 @@ enum AutomaticMute: Equatable {
     case screenShared
     case speakers
     case app(String)
+    case game(String)
     case idle
 
     var message: String {
@@ -21,6 +34,7 @@ enum AutomaticMute: Equatable {
         case .screenShared: "Muted while your screen is shared or recorded."
         case .speakers: "Muted on speakers. Plays through headphones only."
         case .app(let name): "Muted in \(name)."
+        case .game(let name): "Muted while playing \(name)."
         case .idle: "Muted after inactivity. Press any key to wake it."
         }
     }
@@ -32,6 +46,7 @@ enum AutomaticMute: Equatable {
         case .screenShared: "rectangle.inset.filled.and.person.filled"
         case .speakers: "headphones"
         case .app: "speaker.slash.fill"
+        case .game: "gamecontroller.fill"
         case .idle: "moon.zzz.fill"
         }
     }
@@ -67,6 +82,7 @@ enum PlaybackStatus: Equatable {
         case .muted(.screenShared): "Muted while sharing"
         case .muted(.speakers): "Muted on speakers"
         case .muted(.app(let name)): "Muted in \(name)"
+        case .muted(.game(let name)): "Muted while playing \(name)"
         case .muted(.idle): "Muted after inactivity"
         case .playing(let pack): "Playing \(pack)"
         }
