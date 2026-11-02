@@ -123,8 +123,9 @@ private struct SoundPage: View {
                 }
                 .accessibilityValue(SpokenValue.percent(state.volume))
                 OutputDevicePicker(state: state)
+                Toggle("Spatial audio on headphones", isOn: $state.spatialAudio)
             } footer: {
-                formFooter("Each output device keeps its own volume.")
+                formFooter("Each output device keeps its own volume. Spatial audio places each key around you in 3D; it works through headphones only.")
             }
 
             Section {

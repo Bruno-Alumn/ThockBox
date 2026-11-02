@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Spatial audio on headphones** (Settings › Sound): each key comes from its
+  place around you in 3D. Speakers stay as they are.
 - **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain
   click often showed nothing and only a Control-click opened it.
 

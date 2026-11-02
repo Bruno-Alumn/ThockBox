@@ -35,6 +35,8 @@ let state = AppState.shared
 state.volume = 0
 if let pack = SoundPack.discover(in: sounds).first { state.engine.load(pack: pack) }
 try state.engine.start()
+// BENCH_SPATIAL=1 measures spatial audio (3D on headphones) instead.
+if ProcessInfo.processInfo.environment["BENCH_SPATIAL"] != nil { state.engine.spatial = true }
 
 let windows = [AnyView(BarLabel(state: state)), AnyView(MenuView(state: state))].map { view in
     let w = NSWindow(contentRect: .init(x: 0, y: 0, width: 300, height: 700),
