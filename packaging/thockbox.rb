@@ -3,7 +3,7 @@
 # `make cask` sets the version and sha256 from the release zip.
 cask "thockbox" do
   version "1.1.0"
-  sha256 "008462855cce4df6fdc24f03274903c8305a94aa163a30987be6512aeb00c9f0"
+  sha256 "b06c1f6f466cb62378de4ff7c25293378d3f71c90fb057138becfc30c291967b"
 
   url "https://github.com/Bruno-Alumn/ThockBox/releases/download/v#{version}/ThockBox-#{version}.zip"
   name "ThockBox"
