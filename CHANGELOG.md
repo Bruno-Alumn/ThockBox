@@ -22,6 +22,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - **Adding a shared set** whose sound files are missing or broken now says
   which file is the problem, instead of adding a set that plays nothing.
   Recordings with the same name from several folders are all kept.
+- **Check Now** says what went wrong when it fails: no internet, GitHub
+  rate-limiting your network, or GitHub being down, instead of always
+  "Couldn't reach GitHub".
 
 ## 1.1.1
 

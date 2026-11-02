@@ -171,8 +171,33 @@ final class Updater: ObservableObject {
         } catch {
             klog.error("update check failed: \(error.localizedDescription, privacy: .public)")
             // A failed background check isn't worth showing; a manual one is.
-            status = userInitiated ? .failed("Couldn't reach GitHub. Try again later.") : .idle
+            status = userInitiated ? .failed(Self.checkFailure(error)) : .idle
         }
+    }
+
+    /// What a failed manual check says, by what actually went wrong.
+    static func checkFailure(_ error: Error) -> String {
+        if let error = error as? URLError {
+            switch error.code {
+            case .notConnectedToInternet, .dataNotAllowed:
+                return "Your Mac isn't connected to the internet."
+            case .timedOut:
+                return "GitHub took too long to answer. Try again later."
+            default:
+                return "Couldn't reach GitHub. Try again later."
+            }
+        }
+        if let error = error as? HTTPStatusError {
+            switch error.code {
+            case 403, 429:
+                return "GitHub is limiting update checks from your network. Try again in an hour."
+            case 500...:
+                return "GitHub isn't working right now. Try again later."
+            default:
+                return "GitHub returned an error (\(error.code)). Try again later."
+            }
+        }
+        return "GitHub's answer couldn't be read. Try again later."
     }
 
     /// The latest published release, or nil when the repo has none yet.
@@ -183,7 +208,7 @@ final class Updater: ObservableObject {
         let (data, response) = try await session.data(for: request)
         let code = (response as? HTTPURLResponse)?.statusCode ?? 0
         if code == 404 { return nil }
-        guard code == 200 else { throw UpdateError("GitHub returned HTTP \(code)") }
+        guard code == 200 else { throw HTTPStatusError(code: code) }
         return try JSONDecoder().decode(Release.self, from: data)
     }
 
@@ -358,4 +383,9 @@ final class Updater: ObservableObject {
 struct UpdateError: Error {
     let message: String
     init(_ message: String) { self.message = message }
+}
+
+struct HTTPStatusError: LocalizedError {
+    let code: Int
+    var errorDescription: String? { "GitHub returned HTTP \(code)" }
 }
