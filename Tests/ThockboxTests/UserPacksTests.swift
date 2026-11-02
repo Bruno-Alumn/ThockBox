@@ -183,4 +183,27 @@ final class UserPacksTests: XCTestCase {
         state.refreshPacks(bundled: bundled, added: library)
         XCTAssertEqual(state.currentPack?.id, id, "restored, and selected again")
     }
+
+    /// Opening the menu re-checks the sets. With nothing changed it must not
+    /// publish: a change while the menu opens rebuilds it and closes it.
+    @MainActor
+    func testRefreshWithNothingChangedPublishesNothing() throws {
+        let bundled = Self.cream.deletingLastPathComponent()
+        let suite = "ThockboxTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let state = AppState(defaults: defaults)
+        state.refreshPacks(bundled: bundled, added: library)
+
+        var changes = 0
+        let watch = state.objectWillChange.sink { changes += 1 }
+        state.refreshPacks(bundled: bundled, added: library)
+        state.refreshPacks(bundled: bundled, added: library)
+        XCTAssertEqual(changes, 0)
+
+        _ = try UserPacks.importPack(from: [try recordings("New One", ["a.mp3": "press/GENERIC_R1.mp3"])], into: library)
+        state.refreshPacks(bundled: bundled, added: library)
+        XCTAssertGreaterThan(changes, 0, "a real change still shows up")
+        watch.cancel()
+    }
 }

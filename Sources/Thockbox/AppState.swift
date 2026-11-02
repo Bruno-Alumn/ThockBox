@@ -434,7 +434,11 @@ final class AppState: ObservableObject {
     }
 
     func reloadPacks(bundled: URL = soundsDirectory(), added: URL = UserPacks.directory) {
-        packs = (SoundPack.discover(in: bundled) + SoundPack.discover(in: added))
+        packs = Self.discoverPacks(bundled: bundled, added: added)
+    }
+
+    private static func discoverPacks(bundled: URL, added: URL) -> [SoundPack] {
+        (SoundPack.discover(in: bundled) + SoundPack.discover(in: added))
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
@@ -443,10 +447,13 @@ final class AppState: ObservableObject {
     /// nothing. Discovery takes ~2 ms, so it runs whenever the menu or
     /// Settings opens. If the playing set is gone, the one now current loads.
     func refreshPacks(bundled: URL = soundsDirectory(), added: URL = UserPacks.directory) {
-        let before = packs.map(\.id)
+        let found = Self.discoverPacks(bundled: bundled, added: added)
+        // Only publish a real change: this runs as a menu opens, and any
+        // change then makes SwiftUI rebuild the menu bar menu, which closes
+        // it again (a plain click on the icon showed nothing).
+        guard found.map(\.id) != packs.map(\.id) else { return }
         let playing = currentPack?.id
-        reloadPacks(bundled: bundled, added: added)
-        guard packs.map(\.id) != before else { return }
+        packs = found
         if currentPack?.id != playing { applyPack(notify: false) }
     }
 
