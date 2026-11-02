@@ -3,6 +3,11 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain
+  click often showed nothing and only a Control-click opened it.
+
 ## 1.1.2
 
 - **Turn Off for an Hour** in the menu bar menu: sounds come back by
