@@ -96,9 +96,12 @@ final class UserPacksTests: XCTestCase {
 
         let shared = work.appendingPathComponent("Shared")
         try FileManager.default.createDirectory(at: shared, withIntermediateDirectories: true)
-        let exported = try UserPacks.export(original, to: shared)
-        XCTAssertEqual(exported.lastPathComponent, "Desk Board")
-        XCTAssertEqual(try UserPacks.export(original, to: shared).lastPathComponent, "Desk Board 2", "never overwrites")
+        let exported = shared.appendingPathComponent("Desk Board")
+        try UserPacks.export(original, as: exported)
+        try Data().write(to: exported.appendingPathComponent("stale.txt"))
+        try UserPacks.export(original, as: exported) // replacing, as confirmed in the save panel
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: shared.path), ["Desk Board"])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: exported.appendingPathComponent("stale.txt").path))
 
         let id = try UserPacks.importPack(from: [exported], into: library)
         XCTAssertNotEqual(id, original.id, "a copy, not a replacement")
