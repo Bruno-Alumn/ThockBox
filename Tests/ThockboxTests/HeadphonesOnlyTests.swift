@@ -40,4 +40,14 @@ final class HeadphonesOnlyTests: XCTestCase {
         XCTAssertNil(state.automaticMute, "headphones connected")
         XCTAssertTrue(AppState(defaults: defaults).headphonesOnly, "saved")
     }
+
+    /// A picked device that's unplugged and plugged back in gets the sound
+    /// back, instead of staying on the speakers until it's picked again.
+    func testPickedDeviceIsReappliedWhenItComesAndGoes() {
+        XCTAssertFalse(AppState.needsReapply(picked: nil, available: nil, applied: nil), "following the default")
+        XCTAssertFalse(AppState.needsReapply(picked: "usb", available: 42, applied: 42), "already there")
+        XCTAssertTrue(AppState.needsReapply(picked: "usb", available: nil, applied: 42), "unplugged: go to the default now")
+        XCTAssertTrue(AppState.needsReapply(picked: "usb", available: 57, applied: nil), "plugged back in")
+        XCTAssertTrue(AppState.needsReapply(picked: "usb", available: 57, applied: 42), "came back with a new id")
+    }
 }
