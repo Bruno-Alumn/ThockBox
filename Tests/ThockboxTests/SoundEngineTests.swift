@@ -91,6 +91,49 @@ final class SoundEngineTests: XCTestCase {
         XCTAssertEqual(engine.busyVoiceCount, 0, "voices free once the sounds have played")
     }
 
+    /// Spatial mode plays through its own 3D voices, which free up again,
+    /// and switching back leaves the normal path working.
+    func testSpatialModePlaysAndFreesItsVoices() throws {
+        let engine = try runningEngine()
+        defer { engine.stop() }
+        engine.spatial = true
+        for i in 0..<12 {
+            XCTAssertTrue(engine.playKey(keyClass: .row2, up: false, x: Float(i % 10) / 10), "key \(i)")
+        }
+        XCTAssertGreaterThan(engine.busyVoiceCount, 0)
+        try waitForVoicesToFree(engine)
+        XCTAssertEqual(engine.busyVoiceCount, 0)
+        engine.spatial = false
+        XCTAssertTrue(engine.playKey(keyClass: .row2, up: false, x: 0.5))
+        try waitForVoicesToFree(engine)
+    }
+
+    /// Keys sit on an arc in front of the listener, left to right, at the
+    /// same distance.
+    func testSpatialPositionsFollowTheKeyboard() {
+        let left = SoundEngine.spatialPosition(x: 0, spread: 1)
+        let middle = SoundEngine.spatialPosition(x: 0.5, spread: 1)
+        let right = SoundEngine.spatialPosition(x: 1, spread: 1)
+        XCTAssertLessThan(left.x, 0)
+        XCTAssertEqual(middle.x, 0, accuracy: 0.0001)
+        XCTAssertGreaterThan(right.x, 0)
+        XCTAssertLessThan(middle.z, 0, "in front")
+        for p in [left, middle, right] {
+            XCTAssertEqual(sqrt(p.x * p.x + p.z * p.z), 0.5, accuracy: 0.0001)
+        }
+    }
+
+    func testMonoCopyAveragesTheChannels() throws {
+        let stereo = try XCTUnwrap(AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2))
+        let mono = try XCTUnwrap(AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 1))
+        let buffer = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: stereo, frameCapacity: 4))
+        buffer.frameLength = 4
+        for i in 0..<4 { buffer.floatChannelData![0][i] = 0.2; buffer.floatChannelData![1][i] = 0.6 }
+        let out = try XCTUnwrap(SoundEngine.mono(buffer, format: mono))
+        XCTAssertEqual(out.frameLength, 4)
+        XCTAssertEqual(out.floatChannelData![0][3], 0.4, accuracy: 0.0001)
+    }
+
     func testReleaseRightAfterItsPressBothPlay() throws {
         let engine = try runningEngine()
         defer { engine.stop() }

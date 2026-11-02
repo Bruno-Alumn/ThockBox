@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Spatial audio on headphones** (Settings › Sound): each key comes from its
+  place around you in 3D. Speakers stay as they are.
 - **A volume slider in the menu bar menu,** like the system Sound menu,
   instead of 10% steps.
 - Fixed: **Mute during calendar events** didn't work after ThockBox

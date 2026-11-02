@@ -181,6 +181,13 @@ final class AppState: ObservableObject {
     /// Hidden, ThockBox keeps running; opening it again from Finder or
     /// Spotlight shows the settings window. macOS also turns this off when
     /// the icon is ⌘-dragged out of the menu bar.
+    /// Keys placed around you in 3D, on headphones only.
+    @Published var spatialAudio: Bool {
+        didSet {
+            defaults.set(spatialAudio, forKey: "spatialAudio")
+            updateSpatial()
+        }
+    }
     @Published var showMenuBarIcon: Bool {
         didSet { defaults.set(showMenuBarIcon, forKey: "showMenuBarIcon") }
     }
@@ -422,6 +429,7 @@ final class AppState: ObservableObject {
         scrollSounds = defaults.bool(forKey: "scrollSounds")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
+        spatialAudio = defaults.bool(forKey: "spatialAudio")
         dockIconStyle = defaults.string(forKey: "dockIconStyle").flatMap(DockIconStyle.init) ?? .color
         dimIconWhenOff = defaults.bool(forKey: "dimIconWhenOff")
         showKeystrokesInMenuBar = defaults.bool(forKey: "showKeystrokesInMenuBar")
@@ -1023,6 +1031,17 @@ final class AppState: ObservableObject {
     func setOutputIsSpeaker(_ isSpeaker: Bool) {
         outputIsSpeaker = isSpeaker
         updateAutomaticMute()
+        updateSpatial()
+    }
+
+    /// 3D needs headphones: on speakers the binaural rendering just sounds
+    /// odd, so spatial audio only applies while the output isn't a speaker.
+    private func updateSpatial() {
+        engine.spatial = Self.usesSpatial(setting: spatialAudio, outputIsSpeaker: outputIsSpeaker)
+    }
+
+    static func usesSpatial(setting: Bool, outputIsSpeaker: Bool) -> Bool {
+        setting && !outputIsSpeaker
     }
 
     /// Switches to `uid`'s saved volume, or saves the current volume for a
