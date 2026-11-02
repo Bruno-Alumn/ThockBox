@@ -45,7 +45,7 @@ check.
 
 | Sound | Control | Automation |
 |---|---|---|
-| Seven switch sets, plus your own recordings | ⌃⌘K (or your own shortcut) or option-click to toggle | Mute when the screen locks or during calls |
+| Seven switch sets, plus your own recordings | ⌃⌘K (or your own shortcut) or option-click to toggle | Mute when the screen locks, during calls, or on speakers |
 | Press and release samples (most sets) | Volume presets, remembered per output device | Mute after 1 to 60 minutes idle |
 | Per-row samples, panned by key position | Choose any output device | Mute in apps you choose |
 | Tone Pad for darker or brighter sound | Mute modifier or function keys | AppleScript control |
@@ -86,6 +86,9 @@ ThockBox can go quiet on its own and come back when the reason goes away:
   later). "Hey Siri" and Voice Control are ignored, since they listen all
   the time.
 - **When the screen locks.**
+- **On speakers:** with "headphones only" on, keys play through headphones
+  (wired, Bluetooth or USB) and stay quiet on the Mac's speakers, a display
+  or AirPlay. Handy in an office or a shared room.
 - **In muted apps:** while one of the apps you picked is in front.
 - **After inactivity:** after 1 to 60 minutes without typing. The next key
   press wakes it.

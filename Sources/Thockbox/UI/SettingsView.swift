@@ -277,6 +277,7 @@ private struct MutingPage: View {
                     Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
                 }
                 Toggle("While the screen is locked", isOn: $state.muteWhenLocked)
+                Toggle("On speakers (headphones only)", isOn: $state.headphonesOnly)
                 Picker("After no typing for", selection: $state.idleTimeoutMinutes) {
                     Text("Never").tag(0)
                     Text("1 minute").tag(1)
@@ -288,9 +289,10 @@ private struct MutingPage: View {
             } header: {
                 Text("Mute automatically")
             } footer: {
-                if MicrophoneMonitor.isSupported {
-                    Text("Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count.")
-                }
+                Text((MicrophoneMonitor.isSupported
+                      ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. "
+                      : "")
+                     + "Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
             }
 
             Section {

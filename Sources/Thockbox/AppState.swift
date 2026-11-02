@@ -119,6 +119,14 @@ final class AppState: ObservableObject {
     /// Set while Settings records a new shortcut, so pressing the current
     /// one there doesn't also toggle sounds.
     var isRecordingShortcut = false
+    /// Stay quiet unless the sound goes into headphones, for offices and
+    /// shared rooms.
+    @Published var headphonesOnly: Bool {
+        didSet {
+            defaults.set(headphonesOnly, forKey: "headphonesOnly")
+            updateAutomaticMute()
+        }
+    }
     @Published var idleTimeoutMinutes: Int {
         didSet {
             defaults.set(idleTimeoutMinutes, forKey: "idleTimeoutMinutes")
@@ -162,6 +170,9 @@ final class AppState: ObservableObject {
     private(set) var activeOutputUID: String?
     private var restoringVolume = false
     private var outputListeners: [SystemAudioListener] = []
+    private var dataSourceListener: SystemAudioListener?
+    /// The active output plays out loud (see AudioDevices.isSpeaker).
+    private(set) var outputIsSpeaker = false
     /// The app in front, not counting ThockBox itself: opening the menu bar
     /// panel or settings window leaves it pointing at the app you came from.
     @Published private(set) var frontApp: FrontApp?
@@ -175,7 +186,7 @@ final class AppState: ObservableObject {
             "muteModifiers": false, "functionKeysAudible": true,
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false,
-            "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "muteDuringCalls": false,
+            "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "headphonesOnly": false, "muteDuringCalls": false,
             "idleTimeoutMinutes": 0,
         ])
         enabled = defaults.bool(forKey: "enabled")
@@ -193,6 +204,7 @@ final class AppState: ObservableObject {
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
+        headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
         toggleShortcut = defaults.data(forKey: "toggleShortcut")
             .flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) } ?? .standard
@@ -570,6 +582,8 @@ final class AppState: ObservableObject {
             reason = .call
         } else if muteWhenLocked && screenLocked {
             reason = .screenLocked
+        } else if headphonesOnly && outputIsSpeaker {
+            reason = .speakers
         } else if let frontApp, mutedApps.contains(frontApp.id) {
             reason = .app(frontApp.name)
         } else if idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes) {
@@ -607,6 +621,18 @@ final class AppState: ObservableObject {
         let picked = devices.first { $0.uid == outputDeviceUID }
         let current = picked ?? devices.first { $0.id == AudioDevices.defaultOutputDevice() }
         setActiveOutput(uid: current?.uid)
+        if let current {
+            dataSourceListener = SystemAudioListener.dataSource(of: current.id) { [weak self] in
+                self?.outputRouteChanged()
+            }
+            setOutputIsSpeaker(AudioDevices.isSpeaker(current.id))
+        }
+    }
+
+    /// Called when the output changes (and by tests).
+    func setOutputIsSpeaker(_ isSpeaker: Bool) {
+        outputIsSpeaker = isSpeaker
+        updateAutomaticMute()
     }
 
     /// Switches to `uid`'s saved volume, or saves the current volume for a
@@ -650,6 +676,7 @@ struct FrontApp: Equatable {
 enum AutomaticMute: Equatable {
     case call
     case screenLocked
+    case speakers
     case app(String)
     case idle
 
@@ -657,6 +684,7 @@ enum AutomaticMute: Equatable {
         switch self {
         case .call: "Muted while another app uses the microphone."
         case .screenLocked: "Muted while the screen is locked."
+        case .speakers: "Muted on speakers. Plays through headphones only."
         case .app(let name): "Muted in \(name)."
         case .idle: "Muted after inactivity. Press any key to wake it."
         }
@@ -666,6 +694,7 @@ enum AutomaticMute: Equatable {
         switch self {
         case .call: "mic.fill"
         case .screenLocked: "lock.fill"
+        case .speakers: "headphones"
         case .app: "speaker.slash.fill"
         case .idle: "moon.zzz.fill"
         }
@@ -697,6 +726,7 @@ enum PlaybackStatus: Equatable {
         case .blocked(let app): "Paused by \(app)"
         case .muted(.call): "Muted during a call"
         case .muted(.screenLocked): "Muted while locked"
+        case .muted(.speakers): "Muted on speakers"
         case .muted(.app(let name)): "Muted in \(name)"
         case .muted(.idle): "Muted after inactivity"
         case .playing(let pack): "Playing \(pack)"
@@ -714,6 +744,8 @@ enum PlaybackStatus: Equatable {
             "\(app) has secure input on, which hides key presses from other apps. That's normal in a password field. If it lasts, quit and reopen \(app)."
         case .muted(.idle):
             "Press any key to wake it."
+        case .muted(.speakers):
+            "Headphones only is on. Connect headphones to hear keys."
         case .muted, .playing:
             nil
         }
