@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **AppleScript** can turn mouse clicks, scroll sounds and the Return ding
+  on and off.
 - **App icon style** (Settings › General): Color, Graphite, or Graphite
   while sounds are off, for the Dock and ThockBox's windows.
 - **Safer updates:** ThockBox only installs an update signed with its own

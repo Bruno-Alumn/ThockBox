@@ -37,4 +37,14 @@ final class ScriptingTests: XCTestCase {
         XCTAssertTrue(state.enabled)
         XCTAssertNil(state.offUntil)
     }
+
+    func testExtraSoundsCanBeScripted() {
+        let state = AppState.shared
+        let was = state.returnDing
+        defer { state.returnDing = was }
+        let delegate = AppDelegate()
+        delegate.setValue(!was, forKey: "returnDing")
+        XCTAssertEqual(state.returnDing, !was)
+        XCTAssertEqual(delegate.value(forKey: "returnDing") as? Bool, !was)
+    }
 }

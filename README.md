@@ -149,6 +149,7 @@ tell application "ThockBox"
     set sound volume to 0.55 -- 0.0 to 1.0
     set mute during calls to true
     set headphones only to true
+    set scroll sounds to true -- also mouse clicks, return ding
     set off until to (current date) + 30 * minutes -- back on by itself
     get mute reason -- e.g. "Muted in Safari.", or "" when not muted
     get keystrokes today
