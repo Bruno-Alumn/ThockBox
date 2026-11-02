@@ -84,4 +84,37 @@ final class UserPacksTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: library.appendingPathComponent("user-empty").path),
                        "nothing is left behind")
     }
+
+    /// A set you added can be exported, shared and added again, keeping its
+    /// key mapping (not rebuilt from file names) under an id of its own.
+    func testExportedSetImportsAgainUnchanged() throws {
+        let folder = try recordings("Desk Board", [
+            "a.mp3": "press/GENERIC_R1.mp3", "space.mp3": "press/SPACE.mp3", "up.mp3": "release/GENERIC.mp3",
+        ])
+        _ = try UserPacks.importPack(from: [folder], into: library)
+        let original = try XCTUnwrap(SoundPack.discover(in: library).first)
+
+        let shared = work.appendingPathComponent("Shared")
+        try FileManager.default.createDirectory(at: shared, withIntermediateDirectories: true)
+        let exported = try UserPacks.export(original, to: shared)
+        XCTAssertEqual(exported.lastPathComponent, "Desk Board")
+        XCTAssertEqual(try UserPacks.export(original, to: shared).lastPathComponent, "Desk Board 2", "never overwrites")
+
+        let id = try UserPacks.importPack(from: [exported], into: library)
+        XCTAssertNotEqual(id, original.id, "a copy, not a replacement")
+        let copy = try XCTUnwrap(SoundPack.discover(in: library).first { $0.id == id })
+        XCTAssertEqual(copy.name, "Desk Board")
+        XCTAssertEqual(copy.manifest.keys.mapValues(\.down), original.manifest.keys.mapValues(\.down))
+        XCTAssertEqual(copy.samples(for: .space, up: false), ["space.mp3"])
+    }
+
+    /// A hand-made or bundled set (a folder with pack.json and subfolders).
+    func testImportsABundledStyleSet() throws {
+        let id = try UserPacks.importPack(from: [Self.cream.appendingPathComponent("pack.json")], into: library)
+        let pack = try XCTUnwrap(SoundPack.discover(in: library).first { $0.id == id })
+        XCTAssertEqual(pack.name, "Cream")
+        let engine = SoundEngine()
+        engine.load(pack: pack)
+        XCTAssertFalse(engine.buffers.isEmpty, "files in press/ and release/ came along")
+    }
 }
