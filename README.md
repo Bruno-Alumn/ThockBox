@@ -114,8 +114,9 @@ loudness-matched like the built-in ones, and survive updates.
 <summary><strong>Settings, tab by tab</strong></summary>
 <br>
 
-- **Sound:** on and off, the switch set with a field to try it, volume and
-  output device, and tone (brightness, pitch and variation).
+- **Sound:** on and off, the switch set with a field to try it, volume,
+  output device and spatial audio on headphones, and tone (brightness, pitch
+  and variation).
 - **Keys:** the on/off shortcut, which keys play (and mouse clicks and scrolling), the
   Return ding, and a trackpad tap with each key.
 - **Muting:** during calls and while other apps play sound (both macOS 14.2
@@ -154,6 +155,7 @@ tell application "ThockBox"
     set mute during calls to true
     set headphones only to true
     set scroll sounds to true -- also mouse clicks, return ding
+    set mute after idle to 15 -- minutes: 0, 1, 5, 15, 30 or 60
     set off until to (current date) + 30 * minutes -- back on by itself
     get mute reason -- e.g. "Muted in Safari.", or "" when not muted
     get keystrokes today

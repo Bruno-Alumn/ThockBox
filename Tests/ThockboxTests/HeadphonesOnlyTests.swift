@@ -71,4 +71,10 @@ final class HeadphonesOnlyTests: XCTestCase {
         state.outputDeviceUID = "not-connected-uid"
         XCTAssertEqual(state.outputDeviceName, "AirPods Pro")
     }
+
+    func testSpatialAudioOnlyOnHeadphones() {
+        XCTAssertTrue(AppState.usesSpatial(setting: true, outputIsSpeaker: false))
+        XCTAssertFalse(AppState.usesSpatial(setting: true, outputIsSpeaker: true), "speakers stay 2D")
+        XCTAssertFalse(AppState.usesSpatial(setting: false, outputIsSpeaker: false))
+    }
 }

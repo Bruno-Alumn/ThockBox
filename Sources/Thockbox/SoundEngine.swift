@@ -32,6 +32,25 @@ final class SoundEngine {
 
     private var voices: [Voice] = []
     private var nextVoice = 0
+
+    /// Spatial mode (headphones): keys come from around the listener in 3D.
+    /// Its voices are players straight into an environment node, which
+    /// renders them binaurally (HRTF); the player's own rate does the pitch
+    /// variation a varispeed does in the normal path. Nothing spatial is
+    /// attached while the mode is off, so the normal path costs the same.
+    private let environment = AVAudioEnvironmentNode()
+    private let monoFormat = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 1)!
+    private var spatialVoices: [Voice] = []
+    private var nextSpatialVoice = 0
+    /// Mono copies of the pack's samples, made the first time each plays in
+    /// spatial mode (3D sources must be mono).
+    private var monoBuffers: [ObjectIdentifier: AVAudioPCMBuffer] = [:]
+    var spatial = false {
+        didSet {
+            guard spatial != oldValue else { return }
+            configureSpatial()
+        }
+    }
     /// Trimmed key samples last ≤ ~130 ms, so even fast typing keeps only a
     /// few voices busy; idle voices still cost CPU (8: ~0.8%, 20: ~1.2%).
     private let voiceCount = 8
@@ -240,7 +259,62 @@ final class SoundEngine {
     /// After any engine stop→start cycle, player nodes report a stale
     /// `isPlaying == true` and `play()` alone is a no-op — they render
     /// silence forever. A stop()+play() per node fully revives them.
+    private func configureSpatial() {
+        let running = engine.isRunning
+        engine.stop()
+        if spatial {
+            engine.attach(environment)
+            environment.renderingAlgorithm = .HRTFHQ
+            environment.listenerPosition = AVAudio3DPoint(x: 0, y: 0, z: 0)
+            environment.distanceAttenuationParameters.referenceDistance = 1
+            engine.connect(environment, to: submix, fromBus: 0, toBus: submix.nextAvailableInputBus, format: format)
+            for _ in 0..<voiceCount {
+                let v = Voice()
+                engine.attach(v.player)
+                engine.connect(v.player, to: environment, format: monoFormat)
+                v.player.renderingAlgorithm = .HRTFHQ
+                spatialVoices.append(v)
+            }
+        } else {
+            for v in spatialVoices {
+                v.player.stop()
+                engine.detach(v.player)
+            }
+            spatialVoices.removeAll()
+            engine.detach(environment)
+            monoBuffers.removeAll()
+        }
+        klog.notice("spatial audio \(self.spatial ? "on" : "off", privacy: .public)")
+        if running || shouldRun { restart() }
+    }
+
+    /// Where a key sits around the listener: on an arc in front, about half
+    /// a meter away, from 50° left (x = 0) to 50° right (x = 1).
+    static func spatialPosition(x: Float, spread: Float) -> AVAudio3DPoint {
+        let angle = (x - 0.5) * 2 * (50 * .pi / 180) * spread
+        return AVAudio3DPoint(x: sin(angle) * 0.5, y: 0, z: -cos(angle) * 0.5)
+    }
+
+    /// A mono copy (the channels averaged) for a 3D source.
+    static func mono(_ buffer: AVAudioPCMBuffer, format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        guard let out = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: buffer.frameLength),
+              let src = buffer.floatChannelData, let dst = out.floatChannelData else { return nil }
+        out.frameLength = buffer.frameLength
+        let channels = Int(buffer.format.channelCount)
+        let frames = Int(buffer.frameLength)
+        for i in 0..<frames {
+            var sum: Float = 0
+            for ch in 0..<channels { sum += src[ch][i] }
+            dst[0][i] = sum / Float(channels)
+        }
+        return out
+    }
+
     private func reviveVoices() {
+        for v in spatialVoices {
+            v.player.stop()
+            v.player.play()
+        }
         for v in voices {
             v.player.stop()
             v.player.play()
@@ -265,6 +339,7 @@ final class SoundEngine {
     // MARK: - Pack loading
 
     func load(pack: SoundPack) {
+        monoBuffers.removeAll()
         var newBuffers: [String: AVAudioPCMBuffer] = [:]
         var files = Set<String>()
         for entry in pack.manifest.keys.values {
@@ -489,16 +564,20 @@ final class SoundEngine {
         }
 
         let cents = pitchOffsetCents + Float.random(in: -pitchVariationCents...pitchVariationCents)
-        let pan = (x - 0.5) * 2 * 0.35 * stereoSpread
         let gain = packGain * (up ? 0.8 : 1.0) * velocity
-        play(buffer: buffer, cents: cents, pan: pan, gain: gain)
+        if spatial {
+            playSpatial(buffer: buffer, cents: cents, x: x, gain: gain)
+        } else {
+            let pan = (x - 0.5) * 2 * 0.35 * stereoSpread
+            play(buffer: buffer, cents: cents, pan: pan, gain: gain)
+        }
         return true
     }
 
     /// The next voice in turn that isn't sounding. Only when every voice is
     /// busy (e.g. under a long ding) does the next one in turn get cut off.
     /// Voices still rendering a sound (for tests: they must free up again).
-    var busyVoiceCount: Int { voices.filter(\.isSounding).count }
+    var busyVoiceCount: Int { (voices + spatialVoices).filter(\.isSounding).count }
 
     /// The output's render clock in samples, or nil before it has rendered.
     /// Tests use it to tell a slow or stalled audio device (CI runners) from
@@ -535,6 +614,32 @@ final class SoundEngine {
                 voice.isSounding = false
                 voice.varispeed.bypass = true
                 voice.player.pan = 0
+            }
+        }
+        if !voice.player.isPlaying { voice.player.play() }
+    }
+
+    private func playSpatial(buffer: AVAudioPCMBuffer, cents: Float, x: Float, gain: Float) {
+        lastSound = Date()
+        if isIdlePaused { resumeFromIdle() }
+        guard engine.isRunning, !spatialVoices.isEmpty else { return }
+        let key = ObjectIdentifier(buffer)
+        guard let mono = monoBuffers[key] ?? Self.mono(buffer, format: monoFormat) else { return }
+        monoBuffers[key] = mono
+        let index = Self.voiceIndex(next: nextSpatialVoice, count: spatialVoices.count) { spatialVoices[$0].isSounding }
+        let voice = spatialVoices[index]
+        nextSpatialVoice = (index + 1) % spatialVoices.count
+        voice.isSounding = true
+        voice.player.rate = pow(2, cents / 1_200)
+        voice.player.position = Self.spatialPosition(x: x, spread: stereoSpread)
+        voice.player.volume = gain
+        voice.generation &+= 1
+        let generation = voice.generation
+        voice.player.scheduleBuffer(mono, at: nil, options: .interrupts,
+                                    completionCallbackType: .dataRendered) { [weak voice] _ in
+            DispatchQueue.main.async {
+                guard let voice, voice.generation == generation else { return }
+                voice.isSounding = false
             }
         }
         if !voice.player.isPlaying { voice.player.play() }

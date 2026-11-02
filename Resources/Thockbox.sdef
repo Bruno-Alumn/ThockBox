@@ -44,6 +44,9 @@
             <property name="mute while sharing" code="Tbms" type="boolean" access="rw" description="Whether sounds stop while the screen is shared or recorded.">
                 <cocoa key="muteWhileSharing"/>
             </property>
+            <property name="mute after idle" code="Tbmi" type="integer" access="rw" description="Minutes without typing before sounds mute: 0 (never), 1, 5, 15, 30 or 60. Other values round to the nearest.">
+                <cocoa key="muteAfterIdle"/>
+            </property>
             <property name="automatically muted" code="Tbam" type="boolean" access="r" description="Whether sounds are muted right now by a call, the lock screen, a muted app or inactivity.">
                 <cocoa key="automaticallyMuted"/>
             </property>
