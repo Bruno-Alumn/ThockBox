@@ -52,7 +52,6 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   accent as well, and Settings now says what works instead of just beeping.
   The shortcut is now a system hotkey, so the app in front no longer gets
   the key press as well.
-
 - **System Default** follows the system's output again after you've
   picked another device in Settings: plugging in headphones used to leave
   sound on the speakers.
