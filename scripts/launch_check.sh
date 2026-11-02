@@ -11,7 +11,11 @@ set -eu
 
 BUNDLE=$1
 ID=io.github.bruno-alumn.thockbox.healthcheck
-MAX_CPU=5        # percent of one core, averaged over the measurement
+# Shared CI machines are noisier (0.1-5.3% seen, vs ~1% on a Mac at
+# rest), so CI measures longer with more headroom. Either still catches a
+# runaway loop by a wide margin (#23 ran at 96%).
+MAX_CPU=${MAX_CPU:-5}          # percent of one core, averaged over the window
+MEASURE_SECONDS=${MEASURE_SECONDS:-15}
 MAX_RSS_MB=250   # ~85 MB today
 
 work=$(mktemp -d)
@@ -41,14 +45,14 @@ sleep 8   # launch and settle: first-launch settings window, pack decoding
 kill -0 "$pid" 2>/dev/null || { echo "FAIL: app exited during launch"; exit 1; }
 start=$(cpu_seconds)
 rss_start=$(ps -o rss= -p "$pid")
-sleep 15
+sleep "$MEASURE_SECONDS"
 end=$(cpu_seconds)
 rss_end=$(ps -o rss= -p "$pid")
 
-cpu=$(echo "$start $end" | awk '{ printf "%.1f", ($2 - $1) / 15 * 100 }')
+cpu=$(echo "$start $end $MEASURE_SECONDS" | awk '{ printf "%.1f", ($2 - $1) / $3 * 100 }')
 rss=$((rss_end / 1024))
 growth=$(((rss_end - rss_start) / 1024))
-echo "launched app: ${cpu}% CPU, ${rss} MB memory (${growth} MB growth over 15 s)"
+echo "launched app: ${cpu}% CPU, ${rss} MB memory (${growth} MB growth over ${MEASURE_SECONDS} s)"
 
 failed=0
 awk "BEGIN { exit !($cpu > $MAX_CPU) }" && { echo "FAIL: CPU above ${MAX_CPU}%"; failed=1; }

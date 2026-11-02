@@ -162,6 +162,7 @@ final class AppState: ObservableObject {
 
     private let defaults: UserDefaults
     private var idleMode = IdleMode()
+    private var dynamics = TypingDynamics()
     private var screenLocked = false
     private var microphoneMonitor: MicrophoneMonitor?
     /// Each output device keeps its own volume, as macOS does for system
@@ -424,11 +425,12 @@ final class AppState: ObservableObject {
             guard enabled, !isAutomaticallyMuted, !isRepeat, audible(keycode) else { return }
             // Sound first; stats and haptics can trail it.
             let info = KeyMap.info(for: keycode)
+            let velocity = dynamics.press(keycode, at: ProcessInfo.processInfo.systemUptime)
             if returnDing, KeyMap.returnKeycodes.contains(keycode) {
-                engine.playKey(keyClass: .enter, up: false, x: info.x)
+                engine.playKey(keyClass: .enter, up: false, x: info.x, velocity: velocity)
                 playDing()
             } else {
-                engine.playKey(keyClass: info.keyClass, up: false, x: info.x)
+                engine.playKey(keyClass: info.keyClass, up: false, x: info.x, velocity: velocity)
             }
             if hapticFeedback {
                 NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
@@ -441,7 +443,7 @@ final class AppState: ObservableObject {
             }
             guard enabled, !isAutomaticallyMuted, audible(keycode) else { return }
             let info = KeyMap.info(for: keycode)
-            engine.playKey(keyClass: info.keyClass, up: true, x: info.x)
+            engine.playKey(keyClass: info.keyClass, up: true, x: info.x, velocity: dynamics.release(keycode))
         case .mouseDown:
             guard enabled, !isAutomaticallyMuted, mouseClicks else { return }
             engine.playExtra(named: "click_down", gain: 0.9)
