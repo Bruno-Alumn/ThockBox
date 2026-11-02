@@ -54,9 +54,7 @@ struct WelcomeView: View {
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 6) {
-                Image(nsImage: NSApp.applicationIconImage)
-                    .resizable()
-                    .frame(width: 64, height: 64)
+                TappableAppIcon(state: state)
                 Text("Welcome to ThockBox")
                     .font(.title2.bold())
                 Text("Mechanical keyboard sounds for every key you type.")
