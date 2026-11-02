@@ -7,6 +7,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 - **AppleScript can turn sounds off for a while:** `set off until to (current
   date) + 30 * minutes`. Setting it to `missing value` turns sounds back on.
+- **Mute while sharing or recording the screen** (Settings › Muting), so a
+  call's screen share doesn't carry your typing.
 - **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain
   click often showed nothing and only a Control-click opened it.
 
