@@ -45,12 +45,19 @@ final class HeadphonesOnlyTests: XCTestCase {
     /// back, instead of staying on the speakers until it's picked again.
     func testPickedDeviceIsReappliedWhenItComesAndGoes() {
         // 42: the picked USB device, 7: speakers (default), 9: a new default.
-        XCTAssertFalse(AppState.needsReapply(picked: nil, target: 7, applied: nil), "following the default")
-        XCTAssertFalse(AppState.needsReapply(picked: "usb", target: 42, applied: 42), "already there")
-        XCTAssertTrue(AppState.needsReapply(picked: "usb", target: 7, applied: 42), "unplugged: go to the default now")
-        XCTAssertFalse(AppState.needsReapply(picked: "usb", target: 7, applied: 7), "still unplugged, same default")
-        XCTAssertTrue(AppState.needsReapply(picked: "usb", target: 9, applied: 7), "default changed while unplugged")
-        XCTAssertTrue(AppState.needsReapply(picked: "usb", target: 57, applied: 7), "plugged back in with a new id")
+        XCTAssertFalse(AppState.needsReapply(target: 42, applied: 42), "already there")
+        XCTAssertTrue(AppState.needsReapply(target: 7, applied: 42), "unplugged: go to the default now")
+        XCTAssertFalse(AppState.needsReapply(target: 7, applied: 7), "still unplugged, same default")
+        XCTAssertTrue(AppState.needsReapply(target: 9, applied: 7), "default changed while unplugged")
+        XCTAssertTrue(AppState.needsReapply(target: 57, applied: 7), "plugged back in with a new id")
+    }
+
+    /// With System Default chosen after a specific device, the engine is
+    /// pinned to the default of that moment; a new default must be followed.
+    func testSystemDefaultFollowsTheDefault() {
+        XCTAssertTrue(AppState.needsReapply(target: 7, applied: nil), "first time: point it")
+        XCTAssertFalse(AppState.needsReapply(target: 7, applied: 7))
+        XCTAssertTrue(AppState.needsReapply(target: 9, applied: 7), "headphones became the default")
     }
 
     /// A picked device keeps its last known name while it's unplugged, so
