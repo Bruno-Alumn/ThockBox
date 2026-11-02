@@ -14,8 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Warnings fail the build, so new ones get fixed rather than pile up.
       - name: Unit tests
-        run: swift test
+        run: swift test -Xswiftc -warnings-as-errors
 
   app:
     name: App bundle and launch check
