@@ -361,6 +361,17 @@ final class AppState: ObservableObject {
     @Published private(set) var microphoneInUse = false
     /// Another app is playing sound (only tracked while muteWhileMedia is on).
     @Published private(set) var mediaPlaying = false
+    /// The other apps holding sound output now (bundle IDs), while
+    /// muteWhileMedia is on.
+    @Published private(set) var playingApps: Set<String> = []
+    /// Apps whose sound doesn't count, for ones that keep audio open while
+    /// silent (call apps, a browser after a video).
+    @Published var ignoredMediaApps: Set<String> {
+        didSet {
+            defaults.set(Array(ignoredMediaApps), forKey: "ignoredMediaApps")
+            setPlayingApps(playingApps)
+        }
+    }
     /// A calendar event is on (only tracked while muteDuringMeetings is on).
     @Published private(set) var inCalendarEvent = false
     /// Whether ThockBox may read calendars, once it has asked.
@@ -442,6 +453,7 @@ final class AppState: ObservableObject {
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
         muteWhileGaming = defaults.bool(forKey: "muteWhileGaming")
         muteWhileMedia = defaults.bool(forKey: "muteWhileMedia")
+        ignoredMediaApps = Set(defaults.stringArray(forKey: "ignoredMediaApps") ?? [])
         muteDuringMeetings = defaults.bool(forKey: "muteDuringMeetings")
         ignoredCalendarIDs = Set(defaults.stringArray(forKey: "ignoredCalendars") ?? [])
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
@@ -918,7 +930,7 @@ final class AppState: ObservableObject {
             return
         }
         guard microphoneMonitor == nil else { return }
-        let monitor = AudioActivityMonitor(.recording) { [weak self] inUse in self?.setMicrophoneInUse(inUse) }
+        let monitor = AudioActivityMonitor(.recording) { [weak self] apps in self?.setMicrophoneInUse(!apps.isEmpty) }
         microphoneMonitor = monitor
         microphoneInUse = monitor.inUse
     }
@@ -926,19 +938,26 @@ final class AppState: ObservableObject {
     private func updateMediaMonitor() {
         guard muteWhileMedia else {
             mediaMonitor = nil
-            setMediaPlaying(false)
+            setPlayingApps([])
             return
         }
         guard mediaMonitor == nil else { return }
-        let monitor = AudioActivityMonitor(.playing) { [weak self] playing in self?.setMediaPlaying(playing) }
+        let monitor = AudioActivityMonitor(.playing) { [weak self] apps in self?.setPlayingApps(apps) }
         mediaMonitor = monitor
-        setMediaPlaying(monitor.inUse)
+        setPlayingApps(monitor.apps)
     }
 
-    /// Called by the media monitor (and by tests).
-    func setMediaPlaying(_ playing: Bool) {
-        mediaPlaying = playing
+    /// Called by the media monitor (and by tests). Sound counts unless every
+    /// app making it is ignored.
+    func setPlayingApps(_ apps: Set<String>) {
+        if playingApps != apps { playingApps = apps }
+        mediaPlaying = !apps.subtracting(ignoredMediaApps).isEmpty
         updateAutomaticMute()
+    }
+
+    /// For tests: some app (not ignored) is playing, or none.
+    func setMediaPlaying(_ playing: Bool) {
+        setPlayingApps(playing ? ["com.example.player"] : [])
     }
 
     private func updateCalendarMonitor() {

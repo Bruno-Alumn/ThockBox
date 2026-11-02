@@ -330,13 +330,16 @@ private struct MutingPage: View {
                 }
                 if AudioActivityMonitor.isSupported {
                     Toggle("Other apps playing sound", isOn: $state.muteWhileMedia)
+                    if state.muteWhileMedia {
+                        MediaAppsChoice(state: state)
+                    }
                 }
                 Toggle("Games", isOn: $state.muteWhileGaming)
             } header: {
                 Text("Mute During")
             } footer: {
                 formFooter((AudioActivityMonitor.isSupported
-                      ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts; some apps (call apps, a browser just after a video) keep their sound open while silent and count too. "
+                      ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts; some apps (call apps, a browser just after a video) keep their sound open while silent; uncheck them under Playing now. "
                       : "")
                      + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam. Screen sharing also counts screen mirroring and apps that watch the screen in the background.")
             }

@@ -52,5 +52,6 @@ final class AudioActivityFilterTests: XCTestCase {
             XCTAssertFalse(media(bundleID: id), id)
         }
         XCTAssertTrue(AudioActivityMonitor.systemSounds.contains("systemsoundserverd"), "the one seen on a real Mac")
+        XCTAssertFalse(media(bundleID: "com.apple.CoreSpeech"), "Siri's listener holds output open")
     }
 }
