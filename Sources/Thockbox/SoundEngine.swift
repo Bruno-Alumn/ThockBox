@@ -480,6 +480,13 @@ final class SoundEngine {
     /// Voices still rendering a sound (for tests: they must free up again).
     var busyVoiceCount: Int { voices.filter(\.isSounding).count }
 
+    /// The output's render clock in samples, or nil before it has rendered.
+    /// Tests use it to tell a slow or stalled audio device (CI runners) from
+    /// voices that never free up.
+    var renderedSamples: Double? {
+        engine.outputNode.lastRenderTime.map { Double($0.sampleTime) }
+    }
+
     static func voiceIndex(next: Int, count: Int, isBusy: (Int) -> Bool) -> Int {
         (0..<count).lazy.map { (next + $0) % count }.first { !isBusy($0) } ?? next
     }
