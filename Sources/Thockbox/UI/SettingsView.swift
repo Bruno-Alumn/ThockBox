@@ -49,17 +49,6 @@ struct SettingsPageView: View {
     }
 }
 
-/// Section footer text in the standard footnote style, leading-aligned as
-/// in System Settings. A Form sized to its content (as each tab is) drops
-/// the default footer styling and alignment, so it's set explicitly.
-private func footer(_ text: String) -> some View {
-    Text(text)
-        .font(.footnote)
-        .foregroundStyle(.secondary)
-        .multilineTextAlignment(.leading)
-        .frame(maxWidth: .infinity, alignment: .leading)
-}
-
 /// Shown at the top of a page only when something needs fixing.
 private struct AttentionSection: View {
     @ObservedObject var state: AppState
@@ -95,18 +84,12 @@ private struct SoundPage: View {
             Section {
                 Toggle("Play keyboard sounds", isOn: $state.enabled)
             } footer: {
-                footer("Turn sounds on or off anytime with \(state.toggleShortcut.display).")
+                formFooter("Turn sounds on or off anytime with \(state.toggleShortcut.display).")
             }
 
             Section {
-                Picker("Switch set", selection: Binding(
-                    get: { state.currentPack?.id ?? "" },
-                    set: { state.selectedPackID = $0 }
-                )) {
-                    ForEach(state.packs) { pack in
-                        Text(pack.name).tag(pack.id)
-                    }
-                }
+                SwitchSetPicker(state: state)
+                TryItField()
                 HStack {
                     Button("Add Your Own…", action: addSwitchSet)
                     let added = state.packs.filter { UserPacks.isUserPack($0) }
@@ -120,7 +103,7 @@ private struct SoundPage: View {
                     }
                 }
             } footer: {
-                footer("Choosing a set plays a sample of it. Add a Mechvibes sound pack or a folder of your own recordings, or drop one on this window.")
+                formFooter("Choosing a set plays a sample of it. Add a Mechvibes sound pack or a folder of your own recordings, or drop one on this window.")
             }
 
             Section {
@@ -133,7 +116,7 @@ private struct SoundPage: View {
                 }
                 OutputDevicePicker(state: state)
             } footer: {
-                footer("Each output device keeps its own volume.")
+                formFooter("Each output device keeps its own volume.")
             }
 
             Section {
@@ -167,7 +150,7 @@ private struct SoundPage: View {
             } header: {
                 Text("Tone")
             } footer: {
-                footer("Variation changes the pitch of each key a little, like a real keyboard.")
+                formFooter("Variation changes the pitch of each key a little, like a real keyboard.")
             }
         }
         // Dropping a pack or a folder of recordings adds it, like the button.
@@ -233,7 +216,7 @@ private struct KeysPage: View {
             } header: {
                 Text("Also Play Sounds For")
             } footer: {
-                footer("Letters, numbers, Space, Return and the other typing keys always play.")
+                formFooter("Letters, numbers, Space, Return and the other typing keys always play.")
             }
 
             Section {
@@ -242,7 +225,7 @@ private struct KeysPage: View {
             } header: {
                 Text("Extras")
             } footer: {
-                footer("The trackpad tap needs a Force Touch trackpad.")
+                formFooter("The trackpad tap needs a Force Touch trackpad.")
             }
         }
     }
@@ -272,7 +255,7 @@ private struct MutingPage: View {
             } header: {
                 Text("Mute Automatically")
             } footer: {
-                footer((MicrophoneMonitor.isSupported
+                formFooter((MicrophoneMonitor.isSupported
                       ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. "
                       : "")
                      + "Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
@@ -283,7 +266,7 @@ private struct MutingPage: View {
             } header: {
                 Text("Mute in These Apps")
             } footer: {
-                footer("ThockBox stays quiet while one of these apps is in front. The menu bar menu can also mute the app you're in.")
+                formFooter("ThockBox stays quiet while one of these apps is in front. The menu bar menu can also mute the app you're in.")
             }
         }
     }
@@ -346,7 +329,7 @@ private struct GeneralPage: View {
                 Text("Updates")
             } footer: {
                 if updater.availableRelease != nil && Updater.isAdHocSigned {
-                    footer("After updating, macOS may ask you to allow Accessibility access again.")
+                    formFooter("After updating, macOS may ask you to allow Accessibility access again.")
                 }
             }
 

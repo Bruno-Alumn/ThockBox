@@ -62,8 +62,9 @@ ThockBox is doing (playing, off, muted and why, or what needs fixing), then:
 
 The settings window is a standard Mac preferences window with five tabs:
 
-- **Sound:** on and off, the switch set (including your own), volume and
-  output device, and tone (brightness, pitch and variation).
+- **Sound:** on and off, the switch set (including your own) with a field
+  to try it, volume and output device, and tone (brightness, pitch and
+  variation).
 - **Keys:** the on/off shortcut, which keys play, and extras like the Return
   ding.
 - **Muting:** when ThockBox goes quiet by itself, and the apps it stays quiet
@@ -110,8 +111,9 @@ signed archive, `dist/ThockBox-<version>.zip`, for sharing.
 ### Accessibility permission
 
 macOS requires Accessibility access for an app to receive key presses from
-other apps. On first launch ThockBox opens its settings window and asks for
-it. Grant it in System Settings → Privacy & Security → Accessibility.
+other apps. On first launch a short welcome window asks for it, and lets you pick a
+switch set and try it in a text field while you wait. Grant it in System
+Settings → Privacy & Security → Accessibility.
 
 macOS ties the permission to how the app is signed. Releases are signed with
 the same certificate every time, so the permission carries over to new

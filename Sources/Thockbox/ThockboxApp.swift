@@ -31,12 +31,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppState.shared.startUp()
         Updater.shared.startUp()
-        // Show the settings window once, on the very first launch (it walks
-        // through the Accessibility grant), and right after an update, which
-        // may need the grant again. Otherwise start in the menu bar.
+        // New installs get the welcome window (Accessibility access, pick a
+        // sound) until they finish it; updates that need the grant again
+        // open Settings. Otherwise start in the menu bar.
         let defaults = UserDefaults.standard
-        if !defaults.bool(forKey: "hasShownSettingsWindow") || defaults.bool(forKey: "showSettingsAfterUpdate") {
-            defaults.set(true, forKey: "hasShownSettingsWindow")
+        if WelcomeWindow.isNeeded() {
+            WelcomeWindow.shared.show()
+        } else if defaults.bool(forKey: "showSettingsAfterUpdate") {
             defaults.set(false, forKey: "showSettingsAfterUpdate")
             MainWindow.shared.show()
         }
