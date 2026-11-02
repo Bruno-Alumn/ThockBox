@@ -1,116 +1,56 @@
 import SwiftUI
 
-/// The menu bar panel: what ThockBox is doing, and the few things people
-/// change from day to day. Everything else is in the settings window.
+/// The menu bar menu: a standard macOS menu. What ThockBox is doing comes
+/// first, then the things people change day to day. Everything else is in
+/// Settings.
 struct MenuView: View {
     @ObservedObject var state: AppState
     @ObservedObject var updater = Updater.shared
 
+    /// Volume steps offered in the menu; Settings has the full slider.
+    static let volumeSteps = Array(stride(from: 10, through: 100, by: 10))
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
-                .padding(14)
-            Divider()
-            sound
-                .padding(14)
-            if let app = state.frontApp {
-                Divider()
-                muteInApp(app)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-            }
-            if let release = updater.availableRelease {
-                Divider()
-                updateRow(release)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-            }
-            Divider()
-            footer
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
+        let status = state.status
+        Text(status.title)
+        if status == .needsAccess {
+            Button("Open Accessibility Settings…") { Permissions.openSystemSettings() }
         }
-        .frame(width: 300)
-        .tint(.thockCoral)
-        .onAppear { state.refreshAccessibilityStatus() }
-    }
+        Divider()
 
-    /// Name, status and the switch that turns everything on or off.
-    private var header: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(nsImage: NSApp.applicationIconImage)
-                .resizable()
-                .frame(width: 32, height: 32)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("ThockBox")
-                    .font(.headline)
-                StatusView(state: state)
-            }
-            Spacer(minLength: 8)
-            Toggle("Sounds", isOn: $state.enabled)
-                .toggleStyle(.switch)
-                .labelsHidden()
-                .help("Turn sounds on or off (\(state.toggleShortcut.display))")
-        }
-    }
-
-    private var sound: some View {
-        Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 12) {
-            GridRow {
-                Text("Switch")
-                    .foregroundStyle(.secondary)
-                SwitchPicker(state: state)
-                    .labelsHidden()
-            }
-            GridRow {
-                Text("Volume")
-                    .foregroundStyle(.secondary)
-                VolumeSlider(state: state)
+        Toggle("Sounds On", isOn: $state.enabled)
+        Picker("Switch", selection: Binding(
+            get: { state.currentPack?.id ?? "" },
+            set: { state.selectedPackID = $0 }
+        )) {
+            ForEach(state.packs) { pack in
+                Text(pack.name).tag(pack.id)
             }
         }
         .disabled(!state.enabled)
-    }
-
-    /// The app you came from, one switch away from being muted.
-    private func muteInApp(_ app: FrontApp) -> some View {
-        HStack(spacing: 8) {
-            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: app.id) {
-                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                    .resizable()
-                    .frame(width: 18, height: 18)
+        Picker("Volume", selection: Binding(
+            get: { Int((state.volume * 10).rounded()) * 10 },
+            set: { state.volume = Float($0) / 100 }
+        )) {
+            ForEach(Self.volumeSteps, id: \.self) { step in
+                Text("\(step)%").tag(step)
             }
-            Text("Mute in \(app.name)")
-            Spacer()
+        }
+        .disabled(!state.enabled)
+        if let app = state.frontApp {
             Toggle("Mute in \(app.name)", isOn: Binding(
                 get: { state.mutedApps.contains(app.id) },
                 set: { state.setMuted($0, appID: app.id) }))
-                .toggleStyle(.switch)
-                .controlSize(.small)
-                .labelsHidden()
         }
-    }
+        Divider()
 
-    private func updateRow(_ release: Release) -> some View {
-        Button {
-            MainWindow.shared.show(.general)
-        } label: {
-            Label("Update to \(release.version)…", systemImage: "arrow.down.circle.fill")
+        if let release = updater.availableRelease {
+            Button("Update to \(release.version)…") { MainWindow.shared.show(.general) }
         }
-        .buttonStyle(.borderless)
-        .foregroundStyle(Color.thockCoral)
-    }
-
-    private var footer: some View {
-        HStack {
-            KeysTodayText(store: state.stats)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Spacer()
-            Button("Settings…") { MainWindow.shared.show() }
-                .keyboardShortcut(",")
-            Button("Quit") { NSApp.terminate(nil) }
-                .keyboardShortcut("q")
-        }
-        .controlSize(.small)
+        Button("Settings…") { MainWindow.shared.show() }
+            .keyboardShortcut(",")
+        Divider()
+        Button("Quit ThockBox") { NSApp.terminate(nil) }
+            .keyboardShortcut("q")
     }
 }
