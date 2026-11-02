@@ -7,6 +7,37 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 - **Spatial audio on headphones** (Settings › Sound): each key comes from its
   place around you in 3D. Speakers stay as they are.
+- **Safer updates:** ThockBox only installs an update signed with its own
+  release certificate, not just any valid signature, and release builds
+  always check GitHub for updates.
+- The volume slider taps the trackpad at every 10%, and the brightness and
+  pitch sliders at their middle (Force Touch trackpads).
+- **Scrolling sounds** (Settings › Keys, off by default): a soft tick per
+  notch, like a mouse wheel, and a trackpad tap with it when the trackpad
+  tap is on.
+- **What's New** opens once after an update with the notes for that
+  version. Settings › General › Help reopens it, and the Welcome window.
+- **Notify when the switch set changes** (Settings › General, off by
+  default): a notification says which set a Focus, Shortcuts or AppleScript
+  picked.
+- **Mute while playing a game** (Settings › Muting): any app filed under
+  Games, or installed by Steam.
+- **Mute while other apps play sound** (Settings → Muting): music, videos
+  and games quiet the keys; alerts don't. Needs macOS 14.2 or later.
+- **Focus filter:** turn sounds off, or pick a switch set, while a Focus is on
+  (System Settings › Focus › Focus Filters). It goes back when the Focus ends.
+- The ThockBox icon in the Welcome window presses like a key.
+- **The menu bar icon dims while sounds are off,** so it's easy to tell at a
+  glance. Turn it off in Settings › General.
+- **Today's keystrokes in the menu bar,** next to the icon, if you turn it
+  on in Settings › General.
+- **AppleScript can turn sounds off for a while:** `set off until to (current
+  date) + 30 * minutes`. Setting it to `missing value` turns sounds back on.
+- **Mute during calendar events** (Settings › Muting). ThockBox asks for
+  Calendars access the first time; all-day, free and declined events don't
+  count.
+- **Mute while sharing or recording the screen** (Settings › Muting), so a
+  call's screen share doesn't carry your typing.
 - **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain
   click often showed nothing and only a Control-click opened it.
 
