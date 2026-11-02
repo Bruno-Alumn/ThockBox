@@ -288,6 +288,12 @@ final class SoundEngine {
         if running || shouldRun { restart() }
     }
 
+    /// Which way the listener faces in spatial mode, in degrees: head
+    /// tracking turns it so keys stay put when the head turns.
+    func setListenerOrientation(yaw: Float, pitch: Float) {
+        environment.listenerAngularOrientation = AVAudio3DAngularOrientation(yaw: yaw, pitch: pitch, roll: 0)
+    }
+
     /// Where a key sits around the listener: on an arc in front, about half
     /// a meter away, from 50° left (x = 0) to 50° right (x = 1).
     static func spatialPosition(x: Float, spread: Float) -> AVAudio3DPoint {
