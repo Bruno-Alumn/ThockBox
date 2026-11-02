@@ -27,6 +27,18 @@ final class IntentsTests: XCTestCase {
         XCTAssertTrue(AppState.shared.enabled)
     }
 
+    func testTurnOffForAWhile() async throws {
+        var intent = TurnOffForIntent()
+        intent.minutes = 30
+        let before = Date()
+        _ = try await intent.perform()
+        XCTAssertFalse(AppState.shared.enabled)
+        let until = try XCTUnwrap(AppState.shared.offUntil)
+        XCTAssertEqual(until.timeIntervalSince(before), 30 * 60, accuracy: 5)
+        AppState.shared.enabled = true
+        XCTAssertNil(AppState.shared.offUntil)
+    }
+
     func testSetVolumeClampsToRange() async throws {
         var intent = SetVolumeIntent()
         intent.percent = 30
