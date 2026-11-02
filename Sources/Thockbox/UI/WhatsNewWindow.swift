@@ -99,9 +99,7 @@ struct WhatsNewView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 12) {
-                Image(nsImage: NSApp.applicationIconImage)
-                    .resizable()
-                    .frame(width: 48, height: 48)
+                TappableAppIcon(state: AppState.shared, size: 48)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("What's New")
                         .font(.title2.bold())
