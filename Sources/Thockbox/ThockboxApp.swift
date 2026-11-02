@@ -34,7 +34,8 @@ private struct MenuBarLabel: View {
     @ObservedObject var stats: StatsStore
 
     var body: some View {
-        let icon = Image(nsImage: state.status.isPlaying ? MenuBarIcon.on : MenuBarIcon.off)
+        let icon = Image(nsImage: state.status.isPlaying ? MenuBarIcon.on
+                         : state.dimIconWhenOff ? MenuBarIcon.offDimmed : MenuBarIcon.off)
         if state.showKeystrokesInMenuBar {
             Label {
                 Text(stats.shown.today, format: .number.notation(.compactName))
@@ -56,12 +57,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // New installs get the welcome window (Accessibility access, pick a
         // sound) until they finish it; updates that need the grant again
         // open Settings. Otherwise start in the menu bar.
+        // After any other update, What's New lists what changed.
         let defaults = UserDefaults.standard
-        if WelcomeWindow.isNeeded() {
+        let isNew = WelcomeWindow.isNeeded()
+        let notes = WhatsNew.afterLaunch(usedBefore: !isNew)
+        if isNew {
             WelcomeWindow.shared.show()
         } else if defaults.bool(forKey: "showSettingsAfterUpdate") {
             defaults.set(false, forKey: "showSettingsAfterUpdate")
             MainWindow.shared.show()
+        } else if let notes {
+            WhatsNewWindow.shared.show(notes)
         }
     }
 
@@ -77,7 +83,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ sender: NSApplication, delegateHandlesKey key: String) -> Bool {
-        ["soundsEnabled", "soundPack", "soundVolume", "muteDuringCalls", "muteDuringMeetings", "headphonesOnly",
+        ["soundsEnabled", "soundPack", "soundVolume", "muteDuringCalls", "muteDuringMeetings", "muteWhileMedia", "muteWhileGaming", "headphonesOnly",
          "muteWhenLocked", "muteWhileSharing", "automaticallyMuted", "muteReason", "offUntil", "keystrokesToday",
          "keystrokesTotal"].contains(key)
     }
@@ -94,7 +100,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let pack = state.packs.first(where: {
                 $0.id == newValue || $0.name.caseInsensitiveCompare(newValue) == .orderedSame
             }) else { return }
-            state.selectedPackID = pack.id
+            state.selectPackFromElsewhere(pack.id)
         }
     }
 
@@ -106,6 +112,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc var muteDuringCalls: Bool {
         get { AppState.shared.muteDuringCalls }
         set { AppState.shared.muteDuringCalls = newValue }
+    }
+
+    @objc var muteWhileGaming: Bool {
+        get { AppState.shared.muteWhileGaming }
+        set { AppState.shared.muteWhileGaming = newValue }
+    }
+
+    @objc var muteWhileMedia: Bool {
+        get { AppState.shared.muteWhileMedia }
+        set { AppState.shared.muteWhileMedia = newValue }
     }
 
     @objc var muteDuringMeetings: Bool {

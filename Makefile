@@ -27,6 +27,7 @@ bundle: build
 	cp Resources/Thockbox.sdef $(BUNDLE)/Contents/Resources/
 	cp -R Resources/Sounds $(BUNDLE)/Contents/Resources/Sounds
 	cp Resources/AppIcon.icns $(BUNDLE)/Contents/Resources/
+	cp CHANGELOG.md $(BUNDLE)/Contents/Resources/
 	scripts/build_intents_metadata.sh $(BUNDLE)
 	codesign --force --sign "$(CODESIGN_ID)" $(BUNDLE)
 	@du -sh $(BUNDLE)

@@ -34,6 +34,28 @@ final class AppStateTests: XCTestCase {
         XCTAssertFalse(state.mouseClicks)
     }
 
+    func testScrollSoundsListenOnlyWhenOn() {
+        let state = AppState(defaults: defaults)
+        XCTAssertFalse(state.scrollSounds, "off by default")
+        XCTAssertFalse(state.listener.listensToScroll)
+        state.scrollSounds = true
+        XCTAssertTrue(state.listener.listensToScroll)
+        XCTAssertTrue(AppState(defaults: defaults).scrollSounds, "saved")
+    }
+
+    func testSetChangesFromElsewhereNotifyOnlyWhenAsked() {
+        let state = AppState(defaults: defaults)
+        state.postsNotifications = false
+        let other = "holy-panda"
+        XCTAssertFalse(state.notifySetChanges, "off by default")
+        XCTAssertFalse(state.selectPackFromElsewhere(other))
+        XCTAssertEqual(state.selectedPackID, other)
+
+        state.notifySetChanges = true
+        XCTAssertFalse(state.selectPackFromElsewhere(other), "no change, no notification")
+        XCTAssertTrue(state.selectPackFromElsewhere("cream"))
+    }
+
     func testStoredValuesAreClampedOnLoad() {
         defaults.set(5.0, forKey: "volume")
         defaults.set(-9.0, forKey: "toneX")
@@ -102,6 +124,35 @@ final class AppStateTests: XCTestCase {
         XCTAssertFalse(state.suppressedKeyUps.contains(55), "used up")
         keyDown(state, 0)
         XCTAssertTrue(state.suppressedKeyUps.isEmpty, "a new press ends it")
+    }
+
+    /// A Focus filter turns sounds off or picks a set while the Focus is on,
+    /// and the Focus ending (default values) puts back what was there.
+    func testFocusFilterAppliesAndRestores() {
+        let state = AppState(defaults: defaults)
+        state.selectedPackID = "cream"
+        state.applyFocusFilter(soundsOn: false, packID: nil)
+        XCTAssertFalse(state.enabled)
+        state.applyFocusFilter(soundsOn: true, packID: nil)
+        XCTAssertTrue(state.enabled, "back on when the Focus ends")
+
+        state.applyFocusFilter(soundsOn: true, packID: "holy-panda")
+        XCTAssertEqual(state.selectedPackID, "holy-panda")
+        state.applyFocusFilter(soundsOn: false, packID: nil)   // switching Focus
+        state.applyFocusFilter(soundsOn: true, packID: nil)
+        XCTAssertEqual(state.selectedPackID, "cream", "the set from before any Focus")
+        XCTAssertTrue(state.enabled)
+
+        state.enabled = false
+        state.applyFocusFilter(soundsOn: true, packID: nil)
+        XCTAssertFalse(state.enabled, "no Focus active: nothing to put back")
+    }
+
+    /// Like Klack, the icon dims while sounds are off unless that's turned off.
+    func testIconDimsWhenOffByDefault() {
+        XCTAssertTrue(AppState(defaults: defaults).dimIconWhenOff)
+        AppState(defaults: defaults).dimIconWhenOff = false
+        XCTAssertFalse(AppState(defaults: defaults).dimIconWhenOff, "saved")
     }
 
     func testCustomShortcutReplacesTheDefaultAndMatchesExactly() {
@@ -207,6 +258,18 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertFalse(state.isAutomaticallyMuted)
     }
 
+    func testMediaMutesOnlyWhenEnabledAndUntilItStops() {
+        let state = AppState(defaults: defaults)
+        state.setMediaPlaying(true)
+        XCTAssertFalse(state.isAutomaticallyMuted, "mute-while-media is off")
+
+        state.muteWhileMedia = true
+        state.setMediaPlaying(true)
+        XCTAssertEqual(state.automaticMute, .media)
+        state.setMediaPlaying(false)
+        XCTAssertFalse(state.isAutomaticallyMuted)
+    }
+
     func testCalendarEventMutesOnlyWhenEnabled() {
         let state = AppState(defaults: defaults)
         state.readsCalendars = false
@@ -248,6 +311,25 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertEqual(state.mutedApps, ["com.example.game", "com.example.editor"])
         state.setMuted(false, appID: "com.example.game")
         XCTAssertEqual(state.mutedApps, ["com.example.editor"])
+    }
+
+    func testGameMutesOnlyWhenEnabledAndInFront() {
+        let state = AppState(defaults: defaults)
+        state.setFrontApp(id: "com.example.game", name: "Game", isGame: true)
+        XCTAssertNil(state.automaticMute, "mute-while-gaming is off")
+        state.muteWhileGaming = true
+        XCTAssertEqual(state.automaticMute, .game("Game"))
+        state.setFrontApp(id: "com.apple.TextEdit", name: "TextEdit")
+        XCTAssertNil(state.automaticMute)
+    }
+
+    func testGamesAreRecognized() {
+        XCTAssertTrue(FrontApp.isGame(category: "public.app-category.games", path: nil))
+        XCTAssertTrue(FrontApp.isGame(category: "public.app-category.puzzle-games", path: nil))
+        XCTAssertFalse(FrontApp.isGame(category: "public.app-category.productivity", path: nil))
+        XCTAssertFalse(FrontApp.isGame(category: nil, path: "/Applications/TextEdit.app"))
+        XCTAssertTrue(FrontApp.isGame(category: nil,
+            path: "/Users/me/Library/Application Support/Steam/steamapps/common/Portal 2/portal2.app"))
     }
 
     func testOwnWindowsDontChangeTheFrontApp() {
@@ -293,6 +375,7 @@ final class AutoMuteTests: XCTestCase {
     func testMutesWhileTheScreenIsShared() {
         let defaults = UserDefaults(suiteName: "AutoMute.sharing.\(UUID().uuidString)")!
         let state = AppState(defaults: defaults)
+        state.isScreenCaptured = { false }
         state.setScreenShared(true)
         XCTAssertNil(state.automaticMute, "setting off")
         state.muteWhileSharing = true
@@ -301,5 +384,17 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertEqual(state.status.title, "Muted while sharing")
         state.setScreenShared(false)
         XCTAssertNil(state.automaticMute)
+    }
+
+    /// Capture already going when the setting is turned on (a recording, or
+    /// a screenshot tool) mutes right away. This used to depend on whether
+    /// the Mac was being captured while the tests ran.
+    func testTurningSharingMuteOnDuringACaptureMutes() {
+        let defaults = UserDefaults(suiteName: "AutoMute.sharing.\(UUID().uuidString)")!
+        let state = AppState(defaults: defaults)
+        state.isScreenCaptured = { true }
+        state.setScreenShared(true)
+        state.muteWhileSharing = true
+        XCTAssertEqual(state.automaticMute, .screenShared)
     }
 }
