@@ -28,7 +28,8 @@ ThockBox sits in the menu bar and plays a switch sound for every key you
 type. It ships with seven switch sets, with samples per keyboard row and
 separate ones for Space, Return and Backspace. Most sets also have their own
 release sounds. Keys are panned by their position on the keyboard and pitched
-slightly differently each time, so typing sounds like a real board rather
+slightly differently each time, and fast bursts are struck a little lighter
+than slow, deliberate presses, so typing sounds like a real board rather
 than one sample on repeat. Every set plays at the same loudness, so switching
 sets doesn't change the volume.
 

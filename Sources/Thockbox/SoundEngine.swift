@@ -451,7 +451,8 @@ final class SoundEngine {
     /// Play a keystroke sound. `up` selects release samples; returns false if
     /// the pack has no sample for this class/direction.
     @discardableResult
-    func playKey(keyClass: KeyClass, up: Bool, x: Float) -> Bool {
+    /// `velocity` (0...1) scales the gain; see TypingDynamics.
+    func playKey(keyClass: KeyClass, up: Bool, x: Float, velocity: Float = 1) -> Bool {
         guard let pack = currentPack else { return false }
         let candidates = pack.samples(for: keyClass, up: up)
         guard !candidates.isEmpty,
@@ -469,7 +470,7 @@ final class SoundEngine {
 
         let cents = pitchOffsetCents + Float.random(in: -pitchVariationCents...pitchVariationCents)
         let pan = (x - 0.5) * 2 * 0.35 * stereoSpread
-        let gain = packGain * (up ? 0.8 : 1.0)
+        let gain = packGain * (up ? 0.8 : 1.0) * velocity
         play(buffer: buffer, cents: cents, pan: pan, gain: gain)
         return true
     }
