@@ -9,7 +9,7 @@ ZIP := dist/$(NAME)-$(VERSION).zip
 # updates. Otherwise ad-hoc ("-"), where every rebuild needs a new grant.
 CODESIGN_ID ?= $(or $(shell security find-identity -p codesigning 2>/dev/null | awk -F'"' '/"ThockBox Signing"/ {split($$1, a, " "); print a[2]; exit}'),-)
 
-.PHONY: all build bundle zip release signing-cert test bench sounds icon clean run
+.PHONY: all build bundle zip release cask signing-cert test bench sounds icon clean run
 
 all: bundle
 
@@ -70,9 +70,14 @@ zip: bundle
 
 # Publish the zip as GitHub release v<version>. The app's updater looks for
 # the newest release and its ThockBox-<version>.zip asset.
-release: zip
+release: zip cask
 	@if [ "$(CODESIGN_ID)" = "-" ]; then echo "refusing to release an ad-hoc build; run 'make signing-cert'"; exit 1; fi
 	gh release create v$(VERSION) $(ZIP) --title "ThockBox $(VERSION)" --generate-notes
+	@echo "Now copy packaging/thockbox.rb to Casks/thockbox.rb in Bruno-Alumn/homebrew-thockbox."
+
+# Point the Homebrew cask (packaging/thockbox.rb) at this version's zip.
+cask: zip
+	scripts/update_cask.sh $(VERSION) $(ZIP)
 
 clean:
 	rm -rf .build dist/$(NAME).app dist/$(NAME)-*.zip
