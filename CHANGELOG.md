@@ -22,6 +22,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - **Adding a shared set** whose sound files are missing or broken now says
   which file is the problem, instead of adding a set that plays nothing.
   Recordings with the same name from several folders are all kept.
+- **Mechvibes packs** that name a sound file they don't include now import,
+  with those keys using the pack's other sounds. Before, the whole import
+  failed with a message blaming the audio format.
 
 ## 1.1.1
 
