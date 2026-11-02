@@ -5,6 +5,7 @@ import SwiftUI
 /// tab per page. ThockBox normally lives only in the menu bar (LSUIElement);
 /// while this window is open it also shows a Dock icon and app menu, like a
 /// regular app, and goes back to menu-bar-only on close.
+@MainActor
 final class MainWindow: NSObject, NSWindowDelegate {
     static let shared = MainWindow()
 
