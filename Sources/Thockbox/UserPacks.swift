@@ -119,19 +119,21 @@ enum UserPacks {
         }
     }
 
-    /// Copies a set into `destination` as a folder named after it, ready
-    /// to share and to add again with Add Your Own. Returns the folder.
-    @discardableResult
-    static func export(_ pack: SoundPack, to destination: URL) throws -> URL {
+    /// Copies a set to `target`, a folder ready to share and to add again
+    /// with Add Your Own. Something already there was confirmed for
+    /// replacing in the save panel, and is swapped out in one step.
+    static func export(_ pack: SoundPack, as target: URL) throws {
         let fm = FileManager.default
-        var target = destination.appendingPathComponent(pack.name)
-        var suffix = 2
-        while fm.fileExists(atPath: target.path) {
-            target = destination.appendingPathComponent("\(pack.name) \(suffix)")
-            suffix += 1
+        guard fm.fileExists(atPath: target.path) else {
+            try fm.copyItem(at: pack.url, to: target)
+            return
         }
-        try fm.copyItem(at: pack.url, to: target)
-        return target
+        let staging = try fm.url(for: .itemReplacementDirectory, in: .userDomainMask,
+                                 appropriateFor: target, create: true)
+        defer { try? fm.removeItem(at: staging) }
+        let copy = staging.appendingPathComponent(target.lastPathComponent)
+        try fm.copyItem(at: pack.url, to: copy)
+        _ = try fm.replaceItemAt(target, withItemAt: copy)
     }
 
     /// A new, empty pack folder with an id made from `name` ("My Board" →

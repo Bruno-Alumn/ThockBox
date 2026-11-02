@@ -187,16 +187,15 @@ private struct SoundPage: View {
     }
 
     private func export(_ pack: SoundPack) {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = pack.name
         panel.canCreateDirectories = true
         panel.prompt = "Export"
-        panel.message = "Choose where to save \(pack.name). It can be added again with Add Your Own."
-        guard panel.runModal() == .OK, let destination = panel.url else { return }
+        panel.message = "\(pack.name) is saved as a folder. Anyone can add it with Add Your Own."
+        guard panel.runModal() == .OK, let target = panel.url else { return }
         do {
-            let folder = try UserPacks.export(pack, to: destination)
-            NSWorkspace.shared.activateFileViewerSelecting([folder])
+            try UserPacks.export(pack, as: target)
+            NSWorkspace.shared.activateFileViewerSelecting([target])
         } catch {
             NSAlert(error: error).runModal()
         }
