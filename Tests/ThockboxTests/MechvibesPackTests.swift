@@ -132,8 +132,28 @@ final class MechvibesPackTests: XCTestCase {
         let folder = try pack("broken", config: [
             "name": "Broken", "audio_file": "missing.ogg", "definitions": ["KeyA": ["timing": [[0, 100]]]],
         ])
-        XCTAssertThrowsError(try UserPacks.importPack(from: [folder], into: library))
+        XCTAssertThrowsError(try UserPacks.importPack(from: [folder], into: library)) { error in
+            XCTAssertEqual(error.localizedDescription, "The pack's sound file missing.ogg is missing.")
+        }
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.path), [], "nothing left behind")
+    }
+
+    /// A pack that names a file it doesn't have, or one outside its folder,
+    /// still imports: those keys use the pack's other sounds.
+    func testMissingFileForSomeKeysIsSkipped() throws {
+        let folder = try pack("partial", config: [
+            "name": "Partial", "key_define_type": "multi",
+            "defines": ["30": "a.mp3", "31": "gone.mp3", "57": "../outside.mp3"],
+        ])
+        try FileManager.default.copyItem(at: Self.cream.appendingPathComponent("press/GENERIC_R2.mp3"),
+                                         to: folder.appendingPathComponent("a.mp3"))
+        try FileManager.default.copyItem(at: Self.cream.appendingPathComponent("press/SPACE.mp3"),
+                                         to: folder.deletingLastPathComponent().appendingPathComponent("outside.mp3"))
+        _ = try UserPacks.importPack(from: [folder], into: library)
+        let pack = try XCTUnwrap(SoundPack.discover(in: library).first)
+        XCTAssertEqual(pack.samples(for: .default, up: false).count, 1)
+        XCTAssertEqual(pack.samples(for: .space, up: false), pack.samples(for: .default, up: false),
+                       "the file outside the pack isn't read")
     }
 
     func testKeyNamesMapToRows() {
