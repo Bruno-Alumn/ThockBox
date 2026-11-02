@@ -52,6 +52,7 @@ private struct MenuBarLabel: View {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppState.shared.startUp()
+        DockIcon.install(state: AppState.shared)
         Updater.shared.startUp()
         // New installs get the welcome window (Accessibility access, pick a
         // sound) until they finish it; updates that need the grant again

@@ -33,4 +33,25 @@ final class CalendarMonitorTests: XCTestCase {
         XCTAssertEqual(CalendarMonitor.nextCheck([event(from: 3, to: 60, free: true)], after: now),
                        now.addingTimeInterval(15 * 60), "free events don't matter")
     }
+
+    func testCalendarChoiceSummary() {
+        let calendars = ["work", "home", "holidays"].map {
+            CalendarMonitor.CalendarInfo(id: $0, title: $0, account: "iCloud")
+        }
+        XCTAssertEqual(CalendarMonitor.summary(calendars, ignoring: []), "All")
+        XCTAssertEqual(CalendarMonitor.summary(calendars, ignoring: ["holidays"]), "2 of 3")
+        XCTAssertEqual(CalendarMonitor.summary(calendars, ignoring: ["work", "home", "holidays"]), "None")
+        XCTAssertEqual(CalendarMonitor.summary(calendars, ignoring: ["gone"]), "All",
+                       "a removed calendar doesn't count against the others")
+    }
+
+    func testIgnoredCalendarsAreSaved() {
+        let suite = "ThockboxTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let state = AppState(defaults: defaults)
+        state.readsCalendars = false
+        state.ignoredCalendarIDs = ["holidays"]
+        XCTAssertEqual(AppState(defaults: defaults).ignoredCalendarIDs, ["holidays"])
+    }
 }

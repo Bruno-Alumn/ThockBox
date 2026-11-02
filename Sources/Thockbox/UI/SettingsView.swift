@@ -284,6 +284,28 @@ private struct KeysPage: View {
 
 // MARK: - Muting
 
+/// Which calendars' events mute: all by default.
+private struct CalendarChoice: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        LabeledContent("Calendars") {
+            Menu(CalendarMonitor.summary(state.calendars, ignoring: state.ignoredCalendarIDs)) {
+                ForEach(state.calendars) { calendar in
+                    Toggle(calendar.account.isEmpty ? calendar.title : "\(calendar.title) (\(calendar.account))",
+                           isOn: Binding(
+                            get: { !state.ignoredCalendarIDs.contains(calendar.id) },
+                            set: { counts in
+                                if counts { state.ignoredCalendarIDs.remove(calendar.id) }
+                                else { state.ignoredCalendarIDs.insert(calendar.id) }
+                            }))
+                }
+            }
+            .fixedSize()
+        }
+    }
+}
+
 private struct MutingPage: View {
     @ObservedObject var state: AppState
 
@@ -291,22 +313,37 @@ private struct MutingPage: View {
         Form {
             Section {
                 if AudioActivityMonitor.isSupported {
-                    Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
-                    Toggle("While other apps play sound", isOn: $state.muteWhileMedia)
+                    Toggle("Calls and recordings", isOn: $state.muteDuringCalls)
                 }
-                Toggle("During calendar events", isOn: $state.muteDuringMeetings)
+                Toggle("Calendar events", isOn: $state.muteDuringMeetings)
+                if state.muteDuringMeetings && !state.calendars.isEmpty {
+                    CalendarChoice(state: state)
+                }
                 if state.muteDuringMeetings && state.calendarAccess == .denied {
                     Text("ThockBox can't see your calendars. Allow it in System Settings › Privacy & Security › Calendars.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                Toggle("While playing a game", isOn: $state.muteWhileGaming)
-                Toggle("While the screen is locked", isOn: $state.muteWhenLocked)
                 if ScreenCapture.isAvailable {
-                    Toggle("While sharing or recording the screen", isOn: $state.muteWhileSharing)
+                    Toggle("Screen sharing and recording", isOn: $state.muteWhileSharing)
                 }
-                Toggle("On speakers (headphones only)", isOn: $state.headphonesOnly)
-                Picker("After no typing for", selection: $state.idleTimeoutMinutes) {
+                if AudioActivityMonitor.isSupported {
+                    Toggle("Other apps playing sound", isOn: $state.muteWhileMedia)
+                }
+                Toggle("Games", isOn: $state.muteWhileGaming)
+            } header: {
+                Text("Mute During")
+            } footer: {
+                formFooter((AudioActivityMonitor.isSupported
+                      ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts. "
+                      : "")
+                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam.")
+            }
+
+            Section {
+                Toggle("The screen is locked", isOn: $state.muteWhenLocked)
+                Toggle("Playing on speakers (headphones only)", isOn: $state.headphonesOnly)
+                Picker("No typing for", selection: $state.idleTimeoutMinutes) {
                     Text("Never").tag(0)
                     Text("1 minute").tag(1)
                     Text("5 minutes").tag(5)
@@ -315,12 +352,9 @@ private struct MutingPage: View {
                     Text("1 hour").tag(60)
                 }
             } header: {
-                Text("Mute Automatically")
+                Text("Mute When")
             } footer: {
-                formFooter((AudioActivityMonitor.isSupported
-                      ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. Other apps playing sound includes music, videos and games, but not alerts. "
-                      : "")
-                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam. Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
+                formFooter("Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
             }
 
             Section {
@@ -375,6 +409,12 @@ private struct GeneralPage: View {
                     if !state.showMenuBarIcon {
                         Text("Open ThockBox from Applications or Spotlight to get back here.")
                     }
+                }
+                Picker(selection: $state.dockIconStyle) {
+                    ForEach(DockIconStyle.allCases) { Text($0.title).tag($0) }
+                } label: {
+                    Text("App icon")
+                    Text("Shown in the Dock and ThockBox's windows.")
                 }
                 Toggle("Show today's keystrokes in the menu bar", isOn: $state.showKeystrokesInMenuBar)
                 Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)

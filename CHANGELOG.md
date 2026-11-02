@@ -7,6 +7,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 - **Spatial audio on headphones** (Settings › Sound): each key comes from its
   place around you in 3D. Speakers stay as they are.
+- **App icon style** (Settings › General): Color, Graphite, or Graphite
+  while sounds are off, for the Dock and ThockBox's windows.
 - **Safer updates:** ThockBox only installs an update signed with its own
   release certificate, not just any valid signature, and release builds
   always check GitHub for updates.
@@ -35,7 +37,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   date) + 30 * minutes`. Setting it to `missing value` turns sounds back on.
 - **Mute during calendar events** (Settings › Muting). ThockBox asks for
   Calendars access the first time; all-day, free and declined events don't
-  count.
+  count. Choose which calendars count, for example to
+  leave out a shared family calendar.
 - **Mute while sharing or recording the screen** (Settings › Muting), so a
   call's screen share doesn't carry your typing.
 - **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain
