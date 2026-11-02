@@ -24,8 +24,7 @@ final class GlobalHotKey {
         guard installed == noErr,
               RegisterEventHotKey(UInt32(shortcut.keyCode), Self.carbonModifiers(shortcut.flags), id,
                                   GetApplicationEventTarget(), 0, &ref) == noErr else {
-            if let handler { RemoveEventHandler(handler) }
-            return nil
+            return nil // deinit removes the handler
         }
     }
 
