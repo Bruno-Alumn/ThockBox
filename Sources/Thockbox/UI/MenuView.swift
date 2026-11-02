@@ -7,9 +7,6 @@ struct MenuView: View {
     @ObservedObject var state: AppState
     @ObservedObject var updater = Updater.shared
 
-    /// Volume steps offered in the menu; Settings has the full slider.
-    static let volumeSteps = Array(stride(from: 10, through: 100, by: 10))
-
     var body: some View {
         let status = state.status
         Text(status.title)
@@ -34,16 +31,9 @@ struct MenuView: View {
             }
         }
         .disabled(!state.enabled)
-        Picker("Volume", selection: Binding(
-            // Below 5% rounds to 0, which isn't a step; show 10% checked.
-            get: { max(10, Int((state.volume * 10).rounded()) * 10) },
-            set: { state.volume = Float($0) / 100 }
-        )) {
-            ForEach(Self.volumeSteps, id: \.self) { step in
-                Text("\(step)%").tag(step)
-            }
-        }
-        .disabled(!state.enabled)
+        // The slider itself is an AppKit item added under this heading when
+        // the menu opens; see MenuVolumeItem.
+        Text(MenuVolumeItem.heading)
         if let app = state.frontApp {
             Toggle("Mute in \(app.name)", isOn: Binding(
                 get: { state.mutedApps.contains(app.id) },
