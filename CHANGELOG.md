@@ -3,6 +3,12 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- **Spatial audio follows your head** with AirPods (Settings › Sound › Follow
+  head movement): the keys stay in place when you turn your head. Needs
+  macOS 14.
+
 ## 1.2.1
 
 - **See and ignore what counts as playing sound.** With Mute while other apps

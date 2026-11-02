@@ -126,8 +126,11 @@ private struct SoundPage: View {
                 .sliderHaptics(state.volume, in: 0...1, step: 0.1)
                 OutputDevicePicker(state: state)
                 Toggle("Spatial audio on headphones", isOn: $state.spatialAudio)
+                if #available(macOS 14, *), state.spatialAudio {
+                    Toggle("Follow head movement (AirPods)", isOn: $state.followHeadMovement)
+                }
             } footer: {
-                formFooter("Each output device keeps its own volume. Spatial audio places each key around you in 3D; it works through headphones only.")
+                formFooter("Each output device keeps its own volume. Spatial audio places each key around you in 3D; it works through headphones only. Following head movement keeps the keys in place as you turn your head.")
             }
 
             Section {

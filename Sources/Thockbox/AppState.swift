@@ -21,6 +21,7 @@ final class AppState: ObservableObject {
             // Turning sounds on by hand ends a timed off.
             if enabled { setOffUntil(nil) }
             syncEngineState()
+            updateHeadTracking()
         }
     }
     /// When sounds come back after Turn Off for an Hour; nil otherwise.
@@ -185,6 +186,14 @@ final class AppState: ObservableObject {
     @Published var spatialAudio: Bool {
         didSet {
             defaults.set(spatialAudio, forKey: "spatialAudio")
+            updateSpatial()
+        }
+    }
+    /// With spatial audio, keep keys in place as the head turns (AirPods and
+    /// other headphones that report head movement).
+    @Published var followHeadMovement: Bool {
+        didSet {
+            defaults.set(followHeadMovement, forKey: "followHeadMovement")
             updateSpatial()
         }
     }
@@ -445,6 +454,7 @@ final class AppState: ObservableObject {
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
         iconClickAction = defaults.string(forKey: "iconClickAction").flatMap(IconClickAction.init) ?? .openMenu
         spatialAudio = defaults.bool(forKey: "spatialAudio")
+        followHeadMovement = defaults.bool(forKey: "followHeadMovement")
         dockIconStyle = defaults.string(forKey: "dockIconStyle").flatMap(DockIconStyle.init) ?? .color
         dimIconWhenOff = defaults.bool(forKey: "dimIconWhenOff")
         showKeystrokesInMenuBar = defaults.bool(forKey: "showKeystrokesInMenuBar")
@@ -1059,9 +1069,34 @@ final class AppState: ObservableObject {
 
     /// 3D needs headphones: on speakers the binaural rendering just sounds
     /// odd, so spatial audio only applies while the output isn't a speaker.
+    private var headTracker: AnyObject?
+
     private func updateSpatial() {
         engine.spatial = Self.usesSpatial(setting: spatialAudio, outputIsSpeaker: outputIsSpeaker)
+        updateHeadTracking()
     }
+
+    /// Head tracking runs only while spatial audio is actually in use and
+    /// the user asked for it; otherwise the listener faces ahead.
+    private func updateHeadTracking() {
+        guard #available(macOS 14, *), tracksHead else { return }
+        let wanted = followHeadMovement && engine.spatial && enabled
+        let tracker = headTracker as? HeadTracker
+        if wanted, tracker == nil {
+            let new = HeadTracker { [weak self] yaw, pitch in
+                self?.engine.setListenerOrientation(yaw: yaw, pitch: pitch)
+            }
+            headTracker = new
+            new.start()
+        } else if !wanted, let tracker {
+            tracker.stop()
+            headTracker = nil
+            engine.setListenerOrientation(yaw: 0, pitch: 0)
+        }
+    }
+
+    /// Tests turn this off: head tracking asks for Motion access.
+    var tracksHead = true
 
     static func usesSpatial(setting: Bool, outputIsSpeaker: Bool) -> Bool {
         setting && !outputIsSpeaker
