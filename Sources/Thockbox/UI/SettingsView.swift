@@ -173,7 +173,7 @@ private struct SoundPage: View {
             } header: {
                 Text("Switch")
             } footer: {
-                Text("Choose a set to hear it. To use your own recordings, add a folder of them or drop it on the list. Name files with space, enter or backspace to give those keys their own sound, and with up or release for the sound of a key being let go.")
+                Text("Choose a set to hear it. To add more, choose or drop a Mechvibes sound pack folder, or a folder of your own recordings. Name recordings with space, enter or backspace to give those keys their own sound, and with up or release for the sound of a key being let go.")
             }
 
             Section {
@@ -212,7 +212,7 @@ private struct SoundPage: View {
         panel.allowedContentTypes = [.audio, .folder]
         panel.allowsMultipleSelection = true
         panel.prompt = "Add"
-        panel.message = "Choose a folder of key recordings, or the files themselves."
+        panel.message = "Choose a Mechvibes sound pack folder, a folder of key recordings, or the recordings themselves."
         guard panel.runModal() == .OK else { return }
         importSwitchSet(from: panel.urls)
     }

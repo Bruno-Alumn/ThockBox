@@ -45,7 +45,7 @@ check.
 
 | Sound | Control | Automation |
 |---|---|---|
-| Seven switch sets, plus your own recordings | ⌃⌘K (or your own shortcut) or option-click to toggle | Mute when the screen locks, during calls, or on speakers |
+| Seven switch sets, Mechvibes packs and your own recordings | ⌃⌘K (or your own shortcut) or option-click to toggle | Mute when the screen locks, during calls, or on speakers |
 | Press and release samples (most sets) | Volume presets, remembered per output device | Mute after 1 to 60 minutes idle |
 | Per-row samples, panned by key position | Choose any output device | Mute in apps you choose |
 | Tone Pad for darker or brighter sound | Mute modifier or function keys | AppleScript control |
@@ -209,14 +209,23 @@ whether to allow it.
 
 ## Custom switch sets
 
-The quickest way is **Settings → Sound → Add Your Own…**, or dropping a folder onto the switch list. Pick a folder
-of recordings (or the files themselves) and it becomes a switch set named
-after the folder. Files with *space*, *enter*/*return* or
-*backspace*/*delete* in the name play for those keys. Files with *up* or
-*release* in the name play when a key is let go. Everything else plays for
-any key. Added sets are kept in `~/Library/Application Support/ThockBox/Sounds/`,
-so they survive updates, and the button next to one in Settings moves it to
-the Trash.
+The quickest way is **Settings → Sound → Add Your Own…**, or dropping a
+folder onto the switch list. Two kinds of folder work:
+
+- **A Mechvibes sound pack** (a folder with a `config.json`, from
+  [Mechvibes](https://github.com/hainguyents13/mechvibes) or its community).
+  Both the current format, with press and release sounds for every key, and
+  the older one are read. Each key's sound goes to its row, so a pack gives
+  many different recordings per row.
+- **Your own recordings.** Files with *space*, *enter*/*return* or
+  *backspace*/*delete* in the name play for those keys, files with *up* or
+  *release* in the name play when a key is let go, and everything else plays
+  for any key.
+
+Added sets are converted into `~/Library/Application Support/ThockBox/Sounds/`,
+so they survive updates. They get the same noise trimming and loudness
+matching as the built-in sets. The button next to one in Settings moves it
+to the Trash.
 
 For full control (per-row sounds, a gain trim), add a folder under
 `Resources/Sounds/` with your samples and a `pack.json`, then run
