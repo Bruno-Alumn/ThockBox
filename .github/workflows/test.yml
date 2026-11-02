@@ -23,3 +23,6 @@ jobs:
       # memory. The unit tests don't run the app's SwiftUI scene.
       - name: Launch check
         run: scripts/launch_check.sh dist/ThockBox.app
+        env:
+          MAX_CPU: 10
+          MEASURE_SECONDS: 30
