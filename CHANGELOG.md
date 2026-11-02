@@ -25,6 +25,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - **Mechvibes packs** that name a sound file they don't include now import,
   with those keys using the pack's other sounds. Before, the whole import
   failed with a message blaming the audio format.
+- **Check Now** says what went wrong when it fails: no internet, GitHub
+  rate-limiting your network, or GitHub being down, instead of always
+  "Couldn't reach GitHub".
 
 ## 1.1.1
 
