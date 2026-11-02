@@ -122,8 +122,8 @@ loudness-matched like the built-in ones, and survive updates.
   speakers only (“headphones only”), in chosen apps, and after 1 to 60
   minutes without typing.
 - **Activity:** keystrokes today, in total, and over the last week.
-- **General:** login, the menu bar icon (and today's keystrokes beside it),
-  updates and help.
+- **General:** login, the menu bar icon (dimmed while sounds are off, if you
+  like, and today's keystrokes beside it), updates and help.
 
 </details>
 

@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **The menu bar icon dims while sounds are off,** so it's easy to tell at a
+  glance. Turn it off in Settings › General.
 - **Today's keystrokes in the menu bar,** next to the icon, if you turn it
   on in Settings › General.
 - **AppleScript can turn sounds off for a while:** `set off until to (current

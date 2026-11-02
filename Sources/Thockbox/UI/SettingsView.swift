@@ -370,6 +370,7 @@ private struct GeneralPage: View {
                     }
                 }
                 Toggle("Show today's keystrokes in the menu bar", isOn: $state.showKeystrokesInMenuBar)
+                Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)
                     .disabled(!state.showMenuBarIcon)
             }
 

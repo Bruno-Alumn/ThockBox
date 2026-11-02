@@ -123,6 +123,10 @@ final class AppState: ObservableObject {
     @Published var showMenuBarIcon: Bool {
         didSet { defaults.set(showMenuBarIcon, forKey: "showMenuBarIcon") }
     }
+    /// The menu bar icon is drawn fainter while keys make no sound.
+    @Published var dimIconWhenOff: Bool {
+        didSet { defaults.set(dimIconWhenOff, forKey: "dimIconWhenOff") }
+    }
     /// Today's keystrokes next to the menu bar icon.
     @Published var showKeystrokesInMenuBar: Bool {
         didSet { defaults.set(showKeystrokesInMenuBar, forKey: "showKeystrokesInMenuBar") }
@@ -296,7 +300,7 @@ final class AppState: ObservableObject {
             "muteModifiers": false, "functionKeysAudible": true,
             "returnDing": false, "mouseClicks": false,
             "hapticFeedback": false,
-            "launchAtLogin": false, "showMenuBarIcon": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
+            "launchAtLogin": false, "showMenuBarIcon": true, "dimIconWhenOff": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
             "muteDuringMeetings": false,
             "idleTimeoutMinutes": 0,
         ])
@@ -313,6 +317,7 @@ final class AppState: ObservableObject {
         hapticFeedback = defaults.bool(forKey: "hapticFeedback")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
+        dimIconWhenOff = defaults.bool(forKey: "dimIconWhenOff")
         showKeystrokesInMenuBar = defaults.bool(forKey: "showKeystrokesInMenuBar")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteWhileSharing = defaults.bool(forKey: "muteWhileSharing")

@@ -34,7 +34,8 @@ private struct MenuBarLabel: View {
     @ObservedObject var stats: StatsStore
 
     var body: some View {
-        let icon = Image(nsImage: state.status.isPlaying ? MenuBarIcon.on : MenuBarIcon.off)
+        let icon = Image(nsImage: state.status.isPlaying ? MenuBarIcon.on
+                         : state.dimIconWhenOff ? MenuBarIcon.offDimmed : MenuBarIcon.off)
         if state.showKeystrokesInMenuBar {
             Label {
                 Text(stats.shown.today, format: .number.notation(.compactName))
