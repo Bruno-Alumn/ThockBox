@@ -43,7 +43,7 @@ final class WelcomeWindow: NSObject, NSWindowDelegate {
         let defaults = UserDefaults.standard
         defaults.set(true, forKey: Self.finishedKey)
         defaults.set(true, forKey: "hasShownSettingsWindow")
-        NSApp.setActivationPolicy(.accessory)
+        MainWindow.backToMenuBar(closing: notification.object as? NSWindow)
     }
 }
 
