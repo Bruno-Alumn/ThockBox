@@ -3,60 +3,45 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.2.0
 
-- **Choose what clicking the menu bar icon does** (Settings › General):
-  open the menu, or turn sounds on or off. Control-click always opens the
-  menu.
-- **Spatial audio on headphones** (Settings › Sound): each key comes from its
-  place around you in 3D. Speakers stay as they are.
-- **A volume slider in the menu bar menu,** like the system Sound menu,
-  instead of 10% steps.
-- Fixed: **Mute during calendar events** didn't work after ThockBox
-  restarted until the switch was turned off and on.
-- Fixed: a Focus that turned sounds off could leave them off for good if
-  ThockBox restarted during it. A Focus that only picks a set no longer turns
-  sounds on.
-- **Export daily keystroke counts** as a CSV from Settings › Activity.
-- **AppleScript** can turn mouse clicks, scroll sounds and the Return ding
-  on and off, and set `mute after idle` (minutes).
-- **App icon style** (Settings › General): Color, Graphite, or Graphite
-  while sounds are off, for the Dock and ThockBox's windows.
-- **Safer updates:** ThockBox only installs an update signed with its own
-  release certificate, not just any valid signature, and release builds
-  always check GitHub for updates.
-- The volume sliders (Settings and the menu) tap the trackpad at every 10%,
-  and the brightness and pitch sliders at their middle (Force Touch
-  trackpads).
+- **Mute during calendar events,** from the calendars you choose. All-day,
+  free and declined events don't count. ThockBox asks for Calendars access
+  the first time.
+- **Mute while sharing or recording the screen,** so a call's screen share
+  doesn't carry your typing.
+- **Mute while other apps play sound,** such as music and videos (macOS 14.2
+  or later). Alerts don't count.
+- **Mute while playing a game:** any app filed under Games, or installed by
+  Steam.
+- **Focus filters:** a Focus can turn sounds off or pick a switch set
+  (System Settings › Focus › Focus Filters), and it goes back when the Focus
+  ends. Settings › Muting is now grouped into Mute During and Mute When.
+- **Spatial audio on headphones** (Settings › Sound): each key comes from
+  its place around you. Speakers stay as they are.
 - **Scrolling sounds** (Settings › Keys, off by default): a soft tick per
-  notch, like a mouse wheel, and a trackpad tap with it when the trackpad
-  tap is on.
-- **What's New** opens once after an update with the notes for that
-  version. Settings › General › Help reopens it, and the Welcome window.
+  notch, like a mouse wheel.
+- **A volume slider in the menu bar menu,** like the system Sound menu.
+- The volume sliders tap a Force Touch trackpad at every 10%, and the
+  brightness and pitch sliders at their middle.
+- **The menu bar icon dims while sounds are off,** and can show today's
+  keystrokes beside it (Settings › General).
+- **Choose what clicking the icon does:** open the menu, or turn sounds on
+  or off. Control-click always opens the menu.
+- **App icon style:** Color, Graphite, or Graphite while sounds are off.
+- **What's New** opens once after an update, like this. Settings › General ›
+  Help reopens it and the Welcome window, whose icon presses like a key.
+- **Export daily keystroke counts** as a CSV from Settings › Activity.
+- **AppleScript** can turn sounds off for a while (`set off until to
+  (current date) + 30 * minutes`), turn mouse clicks, scroll sounds and the
+  Return ding on and off, and set `mute after idle`.
 - **Notify when the switch set changes** (Settings › General, off by
-  default): a notification says which set a Focus, Shortcuts or AppleScript
+  default): a notification names the set a Focus, Shortcuts or AppleScript
   picked.
-- **Mute while playing a game** (Settings › Muting): any app filed under
-  Games, or installed by Steam.
-- **Mute while other apps play sound** (Settings → Muting): music, videos
-  and games quiet the keys; alerts don't. Needs macOS 14.2 or later.
-- **Focus filter:** turn sounds off, or pick a switch set, while a Focus is on
-  (System Settings › Focus › Focus Filters). It goes back when the Focus ends.
-- The ThockBox icon in the Welcome window presses like a key.
-- **The menu bar icon dims while sounds are off,** so it's easy to tell at a
-  glance. Turn it off in Settings › General.
-- **Today's keystrokes in the menu bar,** next to the icon, if you turn it
-  on in Settings › General.
-- **AppleScript can turn sounds off for a while:** `set off until to (current
-  date) + 30 * minutes`. Setting it to `missing value` turns sounds back on.
-- **Mute during calendar events** (Settings › Muting). ThockBox asks for
-  Calendars access the first time; all-day, free and declined events don't
-  count. Choose which calendars count, for example to
-  leave out a shared family calendar.
-- **Mute while sharing or recording the screen** (Settings › Muting), so a
-  call's screen share doesn't carry your typing.
 - **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain
-  click often showed nothing and only a Control-click opened it.
+  click often showed nothing, and only a Control-click opened it.
+- **Safer updates:** ThockBox only installs an update signed with its own
+  release certificate, and always checks GitHub for updates.
 
 ## 1.1.2
 
