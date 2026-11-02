@@ -43,7 +43,7 @@ check.
 | Seven switch sets, Mechvibes packs and your own recordings | ⌃⌘K (or your own shortcut) or option-click to toggle | Mute when the screen locks, during calls, or on speakers |
 | Press and release samples (most sets) | Volume presets, remembered per output device | Mute after 1 to 60 minutes idle |
 | Per-row samples, panned by key position | Choose any output device | Mute in apps you choose |
-| Brightness and pitch controls | Mute modifier or function keys | AppleScript control |
+| Brightness and pitch controls | Mute modifier or function keys | Shortcuts and AppleScript |
 | Random pitch variation | Haptic feedback on Force Touch trackpads | Launch at login |
 | Optional Return ding and mouse clicks | Keystroke counts, with a chart of the last week | Updates from GitHub releases |
 
@@ -188,6 +188,14 @@ away, and CI runs the same check on every pull request.
 
 Bluetooth headphones add their own latency, around 160 ms for AirPods. Built-in
 speakers or wired headphones give the most immediate response.
+
+## Shortcuts
+
+ThockBox adds actions to the Shortcuts app: **Turn ThockBox Sounds On or
+Off**, **Toggle ThockBox Sounds**, **Set ThockBox Switch Set** and **Set
+ThockBox Volume**. Use them in a Focus automation (Work Focus → Holy Panda,
+Sleep → off) or any shortcut. "Toggle ThockBox sounds" and "Change ThockBox
+switches" also work from Spotlight and Siri with no setup.
 
 ## AppleScript
 
