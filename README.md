@@ -42,6 +42,7 @@ check.
 | Sound | Control | Automation |
 |---|---|---|
 | Seven switch sets, Mechvibes packs and your own recordings | ⌃⌘K (or your own shortcut) or option-click to toggle | Mute when the screen locks, during calls, or on speakers |
+| Share your sets as a folder | Turn off for an hour, back on by itself | Turn off for a while from Shortcuts |
 | Press and release samples (most sets) | Volume presets, remembered per output device | Mute after 1 to 60 minutes idle |
 | Per-row samples, panned by key position | Choose any output device | Mute in apps you choose |
 | Brightness and pitch controls | Mute modifier or function keys | Shortcuts and AppleScript |
