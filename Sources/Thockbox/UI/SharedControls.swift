@@ -129,14 +129,14 @@ struct UpdateStatusView: View {
 /// The apps ThockBox stays quiet in: a standard list with + and − below.
 struct MutedAppsList: View {
     @ObservedObject var state: AppState
-    @State private var selection: String?
+    @State private var selection: Set<String> = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             List(state.mutedApps, id: \.self, selection: $selection) { id in
                 let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)
                 Label {
-                    Text(url.map { $0.deletingPathExtension().lastPathComponent } ?? id)
+                    Text(url.map(Self.appName) ?? id)
                 } icon: {
                     if let url {
                         Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
@@ -147,6 +147,7 @@ struct MutedAppsList: View {
             }
             .listStyle(.bordered(alternatesRowBackgrounds: true))
             .frame(height: 110)
+            .onDeleteCommand(perform: removeSelection)
             .overlay {
                 if state.mutedApps.isEmpty {
                     Text("No apps").foregroundStyle(.secondary)
@@ -156,18 +157,32 @@ struct MutedAppsList: View {
                 Button(action: chooseApps) { Image(systemName: "plus") }
                     .help("Add apps")
                     .accessibilityLabel("Add Apps")
-                Button {
-                    if let selection { state.setMuted(false, appID: selection) }
-                    selection = nil
-                } label: {
+                Button(action: removeSelection) {
                     Image(systemName: "minus")
                 }
-                .disabled(selection == nil)
-                .help("Remove the selected app")
-                .accessibilityLabel("Remove Selected App")
+                .disabled(selection.isEmpty)
+                .help("Remove the selected apps")
+                .accessibilityLabel("Remove Selected Apps")
             }
             .buttonStyle(.borderless)
         }
+    }
+
+    /// The app's own name in the user's language: "Safari", never
+    /// "Safari.app", even with file extensions shown in Finder.
+    static func appName(_ url: URL) -> String {
+        let bundle = Bundle(url: url)
+        let info = bundle?.localizedInfoDictionary ?? [:]
+        let fallback = bundle?.infoDictionary ?? [:]
+        for key in ["CFBundleDisplayName", "CFBundleName"] {
+            if let name = (info[key] ?? fallback[key]) as? String, !name.isEmpty { return name }
+        }
+        return url.deletingPathExtension().lastPathComponent
+    }
+
+    private func removeSelection() {
+        selection.forEach { state.setMuted(false, appID: $0) }
+        selection = []
     }
 
     private func chooseApps() {
