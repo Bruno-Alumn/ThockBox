@@ -62,6 +62,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   while it checks the download.
 - **Turning sounds on with the shortcut** no longer clicks when you let go
   of ⌃ and ⌘.
+- **Settings keeps its Dock icon** when the welcome window is closed while
+  it's open (and the other way round), and the volume menu always shows a
+  checkmark.
 
 ## 1.1.1
 
