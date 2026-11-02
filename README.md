@@ -325,6 +325,10 @@ The switch recordings come from [tplai/kbsim](https://github.com/tplai/kbsim)
 and [mechvibes](https://github.com/hainguyents13/mechvibes), both MIT
 licensed. See [ATTRIBUTION.md](ATTRIBUTION.md) for details on each set.
 
+## Changes
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
