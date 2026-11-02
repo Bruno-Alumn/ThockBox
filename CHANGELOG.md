@@ -30,6 +30,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   "Couldn't reach GitHub".
 - **Muted apps** show their real names ("Safari", not "Safari.app"), and
   the Delete key removes the selected ones.
+- **The menu bar icon** shows "off" whenever keys make no sound, including
+  while Accessibility access is missing or another app's secure input is
+  blocking key presses. It used to look on in those cases.
 - **Settings** reopens on the tab you used last and where you left the
   window.
 
