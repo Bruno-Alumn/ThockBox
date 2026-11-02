@@ -173,6 +173,9 @@ without the signing certificate get a new identity each time. Run
 `make signing-cert` once, or reset the permission as shown under
 [Accessibility permission](#accessibility-permission).
 
+**Still stuck?** Settings → General → Report a Problem… opens a new issue
+with your ThockBox and macOS versions filled in.
+
 ## Privacy
 
 ThockBox uses key events only to choose and play a sound. It does not record,
@@ -239,7 +242,7 @@ whether to allow it.
 ## Custom switch sets
 
 The quickest way is **Settings → Sound → Add Your Own…**, or dropping a
-folder onto the switch list. Two kinds of folder work:
+folder onto the switch list. Three kinds of folder work:
 
 - **A Mechvibes sound pack** (a folder with a `config.json`, from
   [Mechvibes](https://github.com/hainguyents13/mechvibes) or its community).
