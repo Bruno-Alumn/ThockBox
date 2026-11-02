@@ -279,6 +279,28 @@ private struct KeysPage: View {
 
 // MARK: - Muting
 
+/// Which calendars' events mute: all by default.
+private struct CalendarChoice: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        LabeledContent("Calendars") {
+            Menu(CalendarMonitor.summary(state.calendars, ignoring: state.ignoredCalendarIDs)) {
+                ForEach(state.calendars) { calendar in
+                    Toggle(calendar.account.isEmpty ? calendar.title : "\(calendar.title) (\(calendar.account))",
+                           isOn: Binding(
+                            get: { !state.ignoredCalendarIDs.contains(calendar.id) },
+                            set: { counts in
+                                if counts { state.ignoredCalendarIDs.remove(calendar.id) }
+                                else { state.ignoredCalendarIDs.insert(calendar.id) }
+                            }))
+                }
+            }
+            .fixedSize()
+        }
+    }
+}
+
 private struct MutingPage: View {
     @ObservedObject var state: AppState
 
@@ -289,6 +311,9 @@ private struct MutingPage: View {
                     Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
                 }
                 Toggle("During calendar events", isOn: $state.muteDuringMeetings)
+                if state.muteDuringMeetings && !state.calendars.isEmpty {
+                    CalendarChoice(state: state)
+                }
                 if state.muteDuringMeetings && state.calendarAccess == .denied {
                     Text("ThockBox can't see your calendars. Allow it in System Settings › Privacy & Security › Calendars.")
                         .font(.callout)
