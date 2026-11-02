@@ -234,9 +234,14 @@ final class Updater: ObservableObject {
             let file = work.appendingPathComponent("update." + (archive.name as NSString).pathExtension)
             try FileManager.default.moveItem(at: download, to: file)
             status = .installing
-            let newApp = try Self.unpack(file, in: work, expecting: release.version)
+            // hdiutil, ditto and codesign take seconds: off the main thread,
+            // so typing keeps its sound and the menu stays responsive.
+            let version = release.version
+            let (newApp, keepsGrant) = try await Task.detached {
+                let app = try Self.unpack(file, in: work, expecting: version)
+                return (app, Self.satisfiesOwnRequirement(app))
+            }.value
 
-            let keepsGrant = Self.satisfiesOwnRequirement(newApp)
             do {
                 _ = try FileManager.default.replaceItemAt(target, withItemAt: newApp)
             } catch CocoaError.fileWriteNoPermission {
@@ -261,7 +266,7 @@ final class Updater: ObservableObject {
     /// Takes the app out of the download (a disk image or a zip) and checks
     /// it's a signed ThockBox of the version the release says, before
     /// anything touches the installed app.
-    static func unpack(_ download: URL, in work: URL, expecting version: String) throws -> URL {
+    nonisolated static func unpack(_ download: URL, in work: URL, expecting version: String) throws -> URL {
         let out = work.appendingPathComponent("unpacked")
         if download.pathExtension == "dmg" {
             // Mounted read-only and out of sight in Finder, just long enough
@@ -319,7 +324,7 @@ final class Updater: ObservableObject {
     /// same check macOS uses to decide if an Accessibility grant still
     /// applies. Ad-hoc requirements name an exact build, so this is false
     /// whenever the running app is ad-hoc signed.
-    static func satisfiesOwnRequirement(_ app: URL) -> Bool {
+    nonisolated static func satisfiesOwnRequirement(_ app: URL) -> Bool {
         var me: SecCode?
         var staticMe: SecStaticCode?
         var requirement: SecRequirement?
@@ -350,7 +355,7 @@ final class Updater: ObservableObject {
     }
 
     /// Runs a tool and returns what it printed.
-    static func output(_ tool: String, _ arguments: [String]) throws -> Data {
+    nonisolated static func output(_ tool: String, _ arguments: [String]) throws -> Data {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: tool)
         process.arguments = arguments
@@ -366,7 +371,7 @@ final class Updater: ObservableObject {
         return data
     }
 
-    static func run(_ tool: String, _ arguments: [String]) throws {
+    nonisolated static func run(_ tool: String, _ arguments: [String]) throws {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: tool)
         process.arguments = arguments
