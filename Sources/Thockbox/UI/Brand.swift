@@ -13,8 +13,12 @@ extension Color {
 enum MenuBarIcon {
     static let on = make(soundsOn: true)
     static let off = make(soundsOn: false)
+    /// The off icon at reduced opacity, for "Dim the icon while sounds are
+    /// off". A template image keeps its alpha, so the menu bar draws it
+    /// fainter in both light and dark menu bars.
+    static let offDimmed = make(soundsOn: false, alpha: 0.4)
 
-    private static func make(soundsOn: Bool) -> NSImage {
+    private static func make(soundsOn: Bool, alpha: CGFloat = 1) -> NSImage {
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { rect in
             let center = NSPoint(x: rect.midX, y: rect.midY)
             let transform = NSAffineTransform()
@@ -22,7 +26,7 @@ enum MenuBarIcon {
             transform.rotate(byDegrees: 35)
             transform.concat()
 
-            NSColor.black.set()
+            NSColor.black.withAlphaComponent(alpha).set()
             let key = NSSize(width: 3.6, height: 3.2)
             for offset in [-5.0, 0, 5.0] as [CGFloat] {
                 let keyRect = NSRect(x: offset - key.width / 2, y: -key.height / 2,
