@@ -47,4 +47,16 @@ final class UpdaterTests: XCTestCase {
         XCTAssertEqual(release.version, "1.2.0")
         XCTAssertNil(release.appArchive)
     }
+
+    /// A manual check says what went wrong, not always "couldn't reach GitHub".
+    @MainActor
+    func testCheckFailureMessages() {
+        XCTAssertEqual(Updater.checkFailure(URLError(.notConnectedToInternet)), "Your Mac isn't connected to the internet.")
+        XCTAssertEqual(Updater.checkFailure(URLError(.cannotFindHost)), "Couldn't reach GitHub. Try again later.")
+        XCTAssertTrue(Updater.checkFailure(URLError(.timedOut)).hasPrefix("GitHub took too long"))
+        XCTAssertTrue(Updater.checkFailure(HTTPStatusError(code: 403)).contains("limiting update checks"))
+        XCTAssertTrue(Updater.checkFailure(HTTPStatusError(code: 429)).contains("limiting update checks"))
+        XCTAssertTrue(Updater.checkFailure(HTTPStatusError(code: 502)).hasPrefix("GitHub isn't working"))
+        XCTAssertTrue(Updater.checkFailure(DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: ""))).contains("couldn't be read"))
+    }
 }
