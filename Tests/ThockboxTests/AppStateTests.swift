@@ -34,6 +34,15 @@ final class AppStateTests: XCTestCase {
         XCTAssertFalse(state.mouseClicks)
     }
 
+    func testScrollSoundsListenOnlyWhenOn() {
+        let state = AppState(defaults: defaults)
+        XCTAssertFalse(state.scrollSounds, "off by default")
+        XCTAssertFalse(state.listener.listensToScroll)
+        state.scrollSounds = true
+        XCTAssertTrue(state.listener.listensToScroll)
+        XCTAssertTrue(AppState(defaults: defaults).scrollSounds, "saved")
+    }
+
     func testSetChangesFromElsewhereNotifyOnlyWhenAsked() {
         let state = AppState(defaults: defaults)
         state.postsNotifications = false

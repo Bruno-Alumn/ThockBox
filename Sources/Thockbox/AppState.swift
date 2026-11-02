@@ -142,6 +142,14 @@ final class AppState: ObservableObject {
             }
         }
     }
+    /// A soft tick per notch of scrolling, plus a trackpad tap when
+    /// hapticFeedback is on.
+    @Published var scrollSounds: Bool {
+        didSet {
+            defaults.set(scrollSounds, forKey: "scrollSounds")
+            listener.listensToScroll = scrollSounds
+        }
+    }
     @Published var hapticFeedback: Bool {
         didSet { defaults.set(hapticFeedback, forKey: "hapticFeedback") }
     }
@@ -315,6 +323,7 @@ final class AppState: ObservableObject {
     private let defaults: UserDefaults
     private var idleMode = IdleMode()
     private var dynamics = TypingDynamics()
+    private var scrollTicker = ScrollTicker()
     private var screenLocked = false
     private var screenShared = false
     private var screenShareTimer: Timer?
@@ -346,7 +355,7 @@ final class AppState: ObservableObject {
             "toneX": 0.0, "toneY": 0.0, "pitchVariation": 60.0,
             "muteModifiers": false, "functionKeysAudible": true,
             "returnDing": false, "mouseClicks": false,
-            "hapticFeedback": false,
+            "hapticFeedback": false, "scrollSounds": false,
             "launchAtLogin": false, "showMenuBarIcon": true, "dimIconWhenOff": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
             "muteDuringMeetings": false,
             "muteWhileMedia": false,
@@ -365,6 +374,7 @@ final class AppState: ObservableObject {
         returnDing = defaults.bool(forKey: "returnDing")
         mouseClicks = defaults.bool(forKey: "mouseClicks")
         hapticFeedback = defaults.bool(forKey: "hapticFeedback")
+        scrollSounds = defaults.bool(forKey: "scrollSounds")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         showMenuBarIcon = defaults.bool(forKey: "showMenuBarIcon")
         dimIconWhenOff = defaults.bool(forKey: "dimIconWhenOff")
@@ -441,6 +451,7 @@ final class AppState: ObservableObject {
         }
         accessibilityTrusted = Permissions.requestIfNeeded()
         listener.listensToMouse = mouseClicks
+        listener.listensToScroll = scrollSounds
         listener.start()
         reconcileLoginItem()
         NotificationCenter.default.addObserver(
@@ -686,6 +697,14 @@ final class AppState: ObservableObject {
         case .mouseUp:
             guard enabled, !isAutomaticallyMuted, mouseClicks else { return }
             engine.playExtra(named: "click_up", gain: 0.7)
+        case let .scroll(delta, precise):
+            guard enabled, !isAutomaticallyMuted, scrollSounds,
+                  scrollTicker.scroll(delta: delta, precise: precise,
+                                      at: ProcessInfo.processInfo.systemUptime) else { return }
+            engine.playExtra(named: "click_up", gain: 0.3)
+            if hapticFeedback {
+                NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+            }
         case .optionStatusItemClick:
             enabled.toggle()
         }
