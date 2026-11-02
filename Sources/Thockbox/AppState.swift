@@ -166,6 +166,14 @@ final class AppState: ObservableObject {
     private var hotKey: GlobalHotKey?
     /// Set by startUp; tests that never start the app use the key monitor.
     private var registersHotKeys = false
+    /// Whether the shortcut is a system hotkey right now (for tests).
+    var usesSystemHotKey: Bool { hotKey != nil }
+
+    /// Internal so tests can turn hotkeys on without starting the app.
+    func startHotKeys() {
+        registersHotKeys = true
+        registerHotKey()
+    }
 
     private func registerHotKey() {
         hotKey = nil
@@ -303,8 +311,7 @@ final class AppState: ObservableObject {
         engine.setTone(x: toneX, y: toneY)
         applyPack(notify: false)
         engine.loadExtras(from: Self.soundsDirectory().appendingPathComponent("_extras"))
-        registersHotKeys = true
-        registerHotKey()
+        startHotKeys()
         if let session = CGSessionCopyCurrentDictionary() as NSDictionary? {
             screenLocked = session["CGSSessionScreenIsLocked"] as? Bool ?? false
         }
