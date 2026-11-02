@@ -19,6 +19,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   and sound falls back to Cream instead of going silent.
 - **Report a Problem…** in Settings → General opens a new GitHub issue with
   your ThockBox and macOS versions filled in, and nothing else.
+- **Adding a shared set** whose sound files are missing or broken now says
+  which file is the problem, instead of adding a set that plays nothing.
+  Recordings with the same name from several folders are all kept.
 
 ## 1.1.1
 
