@@ -334,6 +334,7 @@ final class AutoMuteTests: XCTestCase {
     func testMutesWhileTheScreenIsShared() {
         let defaults = UserDefaults(suiteName: "AutoMute.sharing.\(UUID().uuidString)")!
         let state = AppState(defaults: defaults)
+        state.isScreenCaptured = { false }
         state.setScreenShared(true)
         XCTAssertNil(state.automaticMute, "setting off")
         state.muteWhileSharing = true
@@ -342,5 +343,17 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertEqual(state.status.title, "Muted while sharing")
         state.setScreenShared(false)
         XCTAssertNil(state.automaticMute)
+    }
+
+    /// Capture already going when the setting is turned on (a recording, or
+    /// a screenshot tool) mutes right away. This used to depend on whether
+    /// the Mac was being captured while the tests ran.
+    func testTurningSharingMuteOnDuringACaptureMutes() {
+        let defaults = UserDefaults(suiteName: "AutoMute.sharing.\(UUID().uuidString)")!
+        let state = AppState(defaults: defaults)
+        state.isScreenCaptured = { true }
+        state.setScreenShared(true)
+        state.muteWhileSharing = true
+        XCTAssertEqual(state.automaticMute, .screenShared)
     }
 }
