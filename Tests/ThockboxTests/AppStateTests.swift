@@ -77,6 +77,7 @@ final class AppStateTests: XCTestCase {
 
         state.resumeIfDue(now: now.addingTimeInterval(1800))
         XCTAssertFalse(state.enabled, "not yet")
+        XCTAssertNotNil(state.offUntil, "still waiting after an early check")
         XCTAssertEqual(AppState(defaults: defaults).offUntil, now.addingTimeInterval(3600), "kept across a relaunch")
 
         state.resumeIfDue(now: now.addingTimeInterval(3600))

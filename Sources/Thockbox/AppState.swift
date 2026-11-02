@@ -47,10 +47,16 @@ final class AppState: ObservableObject {
         resumeTimer = timer
     }
 
-    /// Internal so tests can pass a time.
+    /// Internal so tests can pass a time. Also run on wake and whenever the
+    /// menu or Settings opens: the timer runs on elapsed time, so after the
+    /// clock is set back or a sleep it can fire early or be missed.
     func resumeIfDue(now: Date = Date()) {
-        guard let offUntil, now >= offUntil else { return }
-        enabled = true
+        guard let offUntil else { return }
+        if now >= offUntil {
+            enabled = true
+        } else if resumeTimer?.isValid != true {
+            setOffUntil(offUntil) // fired early: wait again
+        }
     }
     @Published var volume: Float {
         didSet {
@@ -167,6 +173,10 @@ final class AppState: ObservableObject {
         // The health-check copy (launch_check.sh) mustn't take the key from
         // the real app.
         guard !isRecordingShortcut, !CommandLine.arguments.contains("--health-check") else { return }
+        // A shortcut saved before the stricter rule (⌥K, ⌘⇧S) stays with the
+        // key monitor, which only listens: as a system hotkey it would stop
+        // reaching every app.
+        guard Shortcut.isAllowed(toggleShortcut.flags) else { return }
         hotKey = GlobalHotKey(toggleShortcut) { [weak self] in
             guard let self else { return }
             enabled.toggle()
@@ -336,6 +346,11 @@ final class AppState: ObservableObject {
             forName: .NSCalendarDayChanged, object: nil, queue: .main
         ) { [weak self] _ in
             self?.stats.rollOver()
+        }
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.resumeIfDue()
         }
         klog.notice("startup: trusted=\(self.accessibilityTrusted, privacy: .public) packs=\(self.packs.count, privacy: .public) device=\(self.outputDeviceUID ?? "default", privacy: .public)")
 
@@ -566,6 +581,7 @@ final class AppState: ObservableObject {
     func refreshOnOpen() {
         refreshAccessibilityStatus()
         refreshPacks()
+        resumeIfDue()
     }
 
     func refreshAccessibilityStatus() {
@@ -705,7 +721,9 @@ final class AppState: ObservableObject {
         let picked = devices.first { $0.uid == outputDeviceUID }
         // A picked device that was unplugged and comes back gets the sound
         // again; one that just left hands it to the default right away.
-        if Self.needsReapply(picked: outputDeviceUID, available: picked?.id, applied: appliedOutputDevice) {
+        if Self.needsReapply(picked: outputDeviceUID,
+                             target: picked?.id ?? AudioDevices.defaultOutputDevice(),
+                             applied: appliedOutputDevice) {
             applyOutputDevice()
         }
         let current = picked ?? devices.first { $0.id == AudioDevices.defaultOutputDevice() }
@@ -740,18 +758,22 @@ final class AppState: ObservableObject {
             return
         }
         outputChangedWhileDisabled = false
-        appliedOutputDevice = AudioDevices.id(forUID: outputDeviceUID, in: AudioDevices.outputDevices())
-        engine.setOutputDevice(appliedOutputDevice)
+        let picked = AudioDevices.id(forUID: outputDeviceUID, in: AudioDevices.outputDevices())
+        // setOutputDevice(nil) pins the engine to the default as it is now,
+        // so remember that device, not "default".
+        appliedOutputDevice = picked ?? AudioDevices.defaultOutputDevice()
+        engine.setOutputDevice(picked)
     }
 
-    /// The device last handed to the engine; nil means the system default.
+    /// The device the engine was last pointed at.
     private var appliedOutputDevice: AudioDeviceID?
 
-    /// Whether the engine should be pointed again after the device list
-    /// changes: only with a device picked, and only if where it can play
-    /// now differs from where it was sent.
-    static func needsReapply(picked uid: String?, available: AudioDeviceID?, applied: AudioDeviceID?) -> Bool {
-        uid != nil && available != applied
+    /// Whether the engine should be pointed again after the device list or
+    /// default changes: only with a device picked, and only if where it
+    /// should play now (the picked device, or the default while it's
+    /// unplugged) differs from where it was sent.
+    static func needsReapply(picked uid: String?, target: AudioDeviceID, applied: AudioDeviceID?) -> Bool {
+        uid != nil && target != applied
     }
 
 
