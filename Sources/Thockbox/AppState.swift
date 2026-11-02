@@ -309,6 +309,8 @@ final class AppState: ObservableObject {
     private var screenLocked = false
     private var screenShared = false
     private var screenShareTimer: Timer?
+    /// Whether something captures the screen right now; tests replace it.
+    var isScreenCaptured: () -> Bool = { ScreenCapture.isActive }
     private var microphoneMonitor: AudioActivityMonitor?
     private var mediaMonitor: AudioActivityMonitor?
     private var calendarMonitor: CalendarMonitor?
@@ -754,9 +756,10 @@ final class AppState: ObservableObject {
             setScreenShared(false)
             return
         }
-        setScreenShared(ScreenCapture.isActive)
+        setScreenShared(isScreenCaptured())
         let timer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in
-            self?.setScreenShared(ScreenCapture.isActive)
+            guard let self else { return }
+            setScreenShared(isScreenCaptured())
         }
         timer.tolerance = 0.5
         RunLoop.main.add(timer, forMode: .common)
@@ -764,8 +767,9 @@ final class AppState: ObservableObject {
     }
 
     /// Internal so tests can set it.
+    /// Always re-checks the mute, even when the value didn't change: turning
+    /// the setting on while something is already capturing must mute.
     func setScreenShared(_ shared: Bool) {
-        guard shared != screenShared else { return }
         screenShared = shared
         updateAutomaticMute()
     }
