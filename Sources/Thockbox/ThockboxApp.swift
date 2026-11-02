@@ -76,8 +76,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ sender: NSApplication, delegateHandlesKey key: String) -> Bool {
-        ["soundsEnabled", "soundPack", "soundVolume", "muteDuringCalls", "headphonesOnly",
-         "muteWhenLocked", "automaticallyMuted", "muteReason", "offUntil", "keystrokesToday",
+        ["soundsEnabled", "soundPack", "soundVolume", "muteDuringCalls", "muteDuringMeetings", "headphonesOnly",
+         "muteWhenLocked", "muteWhileSharing", "automaticallyMuted", "muteReason", "offUntil", "keystrokesToday",
          "keystrokesTotal"].contains(key)
     }
 
@@ -107,9 +107,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         set { AppState.shared.muteDuringCalls = newValue }
     }
 
+    @objc var muteDuringMeetings: Bool {
+        get { AppState.shared.muteDuringMeetings }
+        set { AppState.shared.muteDuringMeetings = newValue }
+    }
+
     @objc var headphonesOnly: Bool {
         get { AppState.shared.headphonesOnly }
         set { AppState.shared.headphonesOnly = newValue }
+    }
+
+    @objc var muteWhileSharing: Bool {
+        get { AppState.shared.muteWhileSharing }
+        set { AppState.shared.muteWhileSharing = newValue }
     }
 
     @objc var muteWhenLocked: Bool {
@@ -119,7 +129,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc var automaticallyMuted: Bool { AppState.shared.isAutomaticallyMuted }
 
-    @objc var offUntil: Date? { AppState.shared.offUntil }
+    /// Setting a future date turns sounds off until then, like Turn Off for
+    /// an Hour; missing value (or a time that has passed) turns them on.
+    @objc var offUntil: Date? {
+        get { AppState.shared.offUntil }
+        set {
+            if let newValue, newValue > Date() {
+                AppState.shared.turnOff(for: newValue.timeIntervalSinceNow)
+            } else {
+                AppState.shared.enabled = true
+            }
+        }
+    }
 
     @objc var muteReason: String { AppState.shared.automaticMute?.message ?? "" }
 
