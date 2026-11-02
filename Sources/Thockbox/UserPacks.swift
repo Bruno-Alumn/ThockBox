@@ -27,8 +27,10 @@ enum UserPacks {
     static func importPack(from sources: [URL], into directory: URL = directory) throws -> String {
         let fm = FileManager.default
         if sources.count == 1 {
-            // A dropped config.json stands for its folder.
-            let source = sources[0].lastPathComponent == "config.json" ? sources[0].deletingLastPathComponent() : sources[0]
+            // A dropped config.json or pack.json stands for its folder.
+            let name = sources[0].lastPathComponent
+            let source = name == "config.json" || name == "pack.json" ? sources[0].deletingLastPathComponent() : sources[0]
+            if isThockBoxPack(source) { return try importThockBoxPack(from: source, into: directory) }
             if MechvibesPack.isPack(source) { return try MechvibesPack.importPack(from: source, into: directory) }
         }
         let files = sources.flatMap { source -> [URL] in
@@ -63,6 +65,51 @@ enum UserPacks {
             try? fm.removeItem(at: folder)
             throw error
         }
+    }
+
+    /// A folder with a pack.json: a set exported from ThockBox, or one made
+    /// by hand as described in the README.
+    static func isThockBoxPack(_ folder: URL) -> Bool {
+        FileManager.default.fileExists(atPath: folder.appendingPathComponent("pack.json").path)
+    }
+
+    /// Copies a ThockBox set as it is, under an id of its own so it never
+    /// replaces a set you already have.
+    private static func importThockBoxPack(from source: URL, into directory: URL) throws -> String {
+        let data = try Data(contentsOf: source.appendingPathComponent("pack.json"))
+        guard var manifest = try? JSONDecoder().decode(SoundPackManifest.self, from: data),
+              manifest.keys[KeyClass.default.rawValue]?.down.isEmpty == false else {
+            throw ImportError(errorDescription: "This folder's pack.json isn't a valid ThockBox switch set.")
+        }
+        let (id, folder) = try makeFolder(named: manifest.name, in: directory)
+        do {
+            let fm = FileManager.default
+            for item in try fm.contentsOfDirectory(at: source, includingPropertiesForKeys: nil)
+            where item.lastPathComponent != "pack.json" {
+                try fm.copyItem(at: item, to: folder.appendingPathComponent(item.lastPathComponent))
+            }
+            manifest.id = id
+            try write(manifest, to: folder)
+            return id
+        } catch {
+            try? FileManager.default.removeItem(at: folder)
+            throw error
+        }
+    }
+
+    /// Copies a set into `destination` as a folder named after it, ready
+    /// to share and to add again with Add Your Own. Returns the folder.
+    @discardableResult
+    static func export(_ pack: SoundPack, to destination: URL) throws -> URL {
+        let fm = FileManager.default
+        var target = destination.appendingPathComponent(pack.name)
+        var suffix = 2
+        while fm.fileExists(atPath: target.path) {
+            target = destination.appendingPathComponent("\(pack.name) \(suffix)")
+            suffix += 1
+        }
+        try fm.copyItem(at: pack.url, to: target)
+        return target
     }
 
     /// A new, empty pack folder with an id made from `name` ("My Board" →
