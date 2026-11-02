@@ -229,13 +229,18 @@ private struct SoundPage: View {
 
 private struct KeysPage: View {
     @ObservedObject var state: AppState
+    @State private var shortcutRejected = false
 
     var body: some View {
         Form {
-            Section("Shortcut") {
+            Section {
                 LabeledContent("Turn sounds on or off") {
-                    ShortcutRecorder(state: state)
+                    ShortcutRecorder(state: state, rejected: $shortcutRejected)
                 }
+            } header: {
+                Text("Shortcut")
+            } footer: {
+                if shortcutRejected { formFooter(Shortcut.requirement) }
             }
 
             Section {

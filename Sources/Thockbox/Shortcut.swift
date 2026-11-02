@@ -17,13 +17,22 @@ struct Shortcut: Codable, Equatable {
         self.key = key
     }
 
-    /// A recorded key press. nil without ⌘, ⌃ or ⌥: a plain or shifted key
-    /// would fire while typing.
+    /// A recorded key press, or nil if it would get in the way.
     init?(event: NSEvent) {
         let flags = event.modifierFlags.intersection(Self.relevant)
-        guard !flags.intersection([.command, .control, .option]).isEmpty else { return nil }
+        guard Self.isAllowed(flags) else { return nil }
         self.init(keyCode: event.keyCode, flags: flags, key: Self.name(for: event))
     }
+
+    /// The shortcut is watched system-wide and still reaches the app in
+    /// front, so it needs ⌃, or ⌘ with ⌥. Plain or ⇧ keys fire while
+    /// typing, ⌥ alone types characters (⌥E, ⌥G), and ⌘ or ⌘⇧ alone are
+    /// app commands (⌘C, ⌘Q, ⌘⇧S) that would toggle sounds as well.
+    static func isAllowed(_ flags: NSEvent.ModifierFlags) -> Bool {
+        flags.contains(.control) || flags.isSuperset(of: [.command, .option])
+    }
+
+    static let requirement = "Use ⌃, or ⌘ with ⌥, so it doesn't clash with typing or app commands."
 
     var flags: NSEvent.ModifierFlags { NSEvent.ModifierFlags(rawValue: modifiers) }
 
