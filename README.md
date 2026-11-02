@@ -182,6 +182,16 @@ Settings › Muting.
 </details>
 
 <details>
+<summary><strong>It goes quiet when I don't expect it</strong></summary>
+
+The menu bar menu's first line names the reason, for example "Muted during a
+meeting" or "Muted while media plays". Each one is a switch in
+Settings › Muting: calls, calendar events, other apps playing sound, games,
+screen sharing, a locked screen, speakers, chosen apps and idle time. A Focus
+filter can also turn sounds off while that Focus is on.
+</details>
+
+<details>
 <summary><strong>Sound arrives late</strong></summary>
 
 Bluetooth headphones add about 100 to 250 ms that no app can remove. When the
