@@ -1,14 +1,10 @@
 import AppKit
 import SwiftUI
 
-/// Colors from the ThockBox logo (art/logo-source.png).
+/// The coral of the logo's center key and sound waves (#FF7952), from
+/// art/logo-source.png. Everything else uses system colors.
 extension Color {
-    /// Tile background, #00676D.
-    static let thockTeal = Color(red: 0, green: 0.404, blue: 0.427)
-    /// Center key and sound waves, #FF7952. Used as the app's accent.
     static let thockCoral = Color(red: 1, green: 0.475, blue: 0.322)
-    /// Side keys, #FDF5EA.
-    static let thockCream = Color(red: 0.992, green: 0.961, blue: 0.918)
 }
 
 /// The menu bar icon: the logo's three keycaps on a diagonal with sound
