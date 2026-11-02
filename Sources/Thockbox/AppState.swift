@@ -27,6 +27,25 @@ final class AppState: ObservableObject {
     @Published private(set) var offUntil: Date?
     private var resumeTimer: Timer?
 
+    /// What the Focus filter changed from, to put back when the Focus ends.
+    private var beforeFocus: (enabled: Bool, packID: String)?
+
+    /// Applies a Focus filter. Default values (sounds on, no set) mean the
+    /// Focus ended: put back what was there before it started.
+    func applyFocusFilter(soundsOn: Bool, packID: String?) {
+        guard !soundsOn || packID != nil else {
+            if let before = beforeFocus {
+                beforeFocus = nil
+                selectedPackID = before.packID
+                enabled = before.enabled
+            }
+            return
+        }
+        if beforeFocus == nil { beforeFocus = (enabled, selectedPackID) }
+        if let packID { selectedPackID = packID }
+        enabled = soundsOn
+    }
+
     /// Turns sounds off and back on by themselves after `duration`, even
     /// across a relaunch. Turning them on sooner cancels it.
     func turnOff(for duration: TimeInterval, now: Date = Date()) {

@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Focus filter:** turn sounds off, or pick a switch set, while a Focus is on
+  (System Settings › Focus › Focus Filters). It goes back when the Focus ends.
 - **Clicking the menu bar icon opens the menu again.** In 1.1.2 a plain
   click often showed nothing and only a Control-click opened it.
 
