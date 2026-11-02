@@ -6,13 +6,14 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 ## Unreleased
 
 - **Share your switch sets.** Settings → Sound → Your Sets → Export… saves a
-  set you added as a folder. Anyone can add it with Add Your Own, with its
-  key mapping intact.
+  set you added as a folder, named in a standard save panel. Anyone can add
+  it with Add Your Own, with its key mapping intact.
 - **"Why Is Sound Paused?"** in the menu explains when another app's secure
   input is blocking key presses, and what to do about it.
 - **VoiceOver** reads the settings properly: brightness and pitch as
   "30% brighter" or "20% lower", volume as a percentage, the shortcut as
-  "Control Command K", and labels on the muted-app buttons.
+  "Control Command K", labels on the muted-app buttons, and each bar of the
+  week chart as "Monday, 1,234 keystrokes".
 - **AppleScript** can turn "headphones only" and "mute when locked" on and
   off.
 - **Sets removed in Finder** drop out of the menu the next time it opens,
@@ -21,7 +22,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   your ThockBox and macOS versions filled in, and nothing else.
 - **Adding a shared set** whose sound files are missing or broken now says
   which file is the problem, instead of adding a set that plays nothing.
-  Recordings with the same name from several folders are all kept.
+  Recordings with the same name from several folders are all kept. Error
+  alerts have a short title, with the reason underneath.
 - **Mechvibes packs** that name a sound file they don't include now import,
   with those keys using the pack's other sounds. Before, the whole import
   failed with a message blaming the audio format.
