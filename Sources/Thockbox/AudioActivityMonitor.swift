@@ -2,14 +2,22 @@ import CoreAudio
 import Foundation
 
 /// Reports whether another app is recording from a microphone, as during a
-/// call. Event-driven: CoreAudio calls back when recording starts or stops,
-/// so nothing polls. Only reads CoreAudio state; it never opens an input
-/// itself, so it doesn't trigger the microphone indicator.
+/// call, or playing audio, as with music or a video. Event-driven: CoreAudio
+/// calls back when a process starts or stops, so nothing polls. Only reads
+/// CoreAudio state; it never opens an input itself, so it doesn't trigger
+/// the microphone indicator.
 ///
-/// Needs macOS 14.2, which reports input per process. Older versions only
-/// say whether the microphone is running at all, and "Hey Siri" keeps it
-/// running, so there the monitor always reports false.
-final class MicrophoneMonitor {
+/// Needs macOS 14.2, which reports input and output per process. Older
+/// versions only say whether a device is running at all, which ThockBox's
+/// own sound (and "Hey Siri") would trip, so there it always reports false.
+final class AudioActivityMonitor {
+    enum Activity {
+        /// Another app records from a microphone: a call or a recording.
+        case recording
+        /// Another app plays sound: music, a video, a game.
+        case playing
+    }
+
     static var isSupported: Bool {
         if #available(macOS 14.2, *) { return true }
         return false
@@ -22,6 +30,14 @@ final class MicrophoneMonitor {
         "com.apple.VoiceControl", "com.apple.speech.VoiceControl",
     ]
 
+    /// System services that play short sounds or speech on their own
+    /// (alerts, the power chime, VoiceOver). They aren't media.
+    static let systemSounds: Set<String> = [
+        "systemsoundserverd", "com.apple.PowerChime", "com.apple.VoiceOver",
+        "com.apple.speech.speechsynthesisd", "com.apple.accessibility.heard",
+    ]
+
+    let activity: Activity
     private(set) var inUse = false
     private let onChange: (Bool) -> Void
     private var watched: [(AudioObjectID, AudioObjectPropertyAddress)] = []
@@ -29,7 +45,8 @@ final class MicrophoneMonitor {
         self?.rewatch()
     }
 
-    init(onChange: @escaping (Bool) -> Void) {
+    init(_ activity: Activity, onChange: @escaping (Bool) -> Void) {
+        self.activity = activity
         self.onChange = onChange
         rewatch()
     }
@@ -44,14 +61,14 @@ final class MicrophoneMonitor {
         unwatchAll()
         if #available(macOS 14.2, *) {
             // Any process starting or stopping audio changes this list; each
-            // process then reports its own input state.
+            // process then reports its own input or output state.
             let system = AudioObjectID(kAudioObjectSystemObject)
             watch(system, kAudioHardwarePropertyProcessObjectList)
             for process in Self.objects(system, kAudioHardwarePropertyProcessObjectList) {
-                watch(process, kAudioProcessPropertyIsRunningInput)
+                watch(process, Self.selector(activity))
             }
         }
-        let now = Self.someoneElseIsRecording()
+        let now = Self.someoneElseIs(activity)
         guard now != inUse else { return }
         inUse = now
         onChange(now)
@@ -73,15 +90,29 @@ final class MicrophoneMonitor {
         watched.removeAll()
     }
 
-    static func someoneElseIsRecording() -> Bool {
+    @available(macOS 14.2, *)
+    private static func selector(_ activity: Activity) -> AudioObjectPropertySelector {
+        switch activity {
+        case .recording: kAudioProcessPropertyIsRunningInput
+        case .playing: kAudioProcessPropertyIsRunningOutput
+        }
+    }
+
+    static func someoneElseIs(_ activity: Activity) -> Bool {
         guard #available(macOS 14.2, *) else { return false }
         let me = getpid()
         return objects(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyProcessObjectList)
             .contains { process in
-                let recording: UInt32 = value(process, kAudioProcessPropertyIsRunningInput) ?? 0
+                let running: UInt32 = value(process, selector(activity)) ?? 0
                 let pid: pid_t = value(process, kAudioProcessPropertyPID) ?? me
-                return countsAsCall(recording: recording != 0, pid: pid, ownPID: me,
-                                    bundleID: bundleID(process))
+                switch activity {
+                case .recording:
+                    return countsAsCall(recording: running != 0, pid: pid, ownPID: me,
+                                        bundleID: bundleID(process))
+                case .playing:
+                    return countsAsMedia(playing: running != 0, pid: pid, ownPID: me,
+                                         bundleID: bundleID(process))
+                }
             }
     }
 
@@ -91,6 +122,13 @@ final class MicrophoneMonitor {
     static func countsAsCall(recording: Bool, pid: pid_t, ownPID: pid_t,
                              bundleID: @autoclosure () -> String?) -> Bool {
         recording && pid != ownPID && !alwaysListening.contains(bundleID() ?? "")
+    }
+
+    /// Whether one audio process means media is playing: it's sending
+    /// sound out, it isn't ThockBox, and it isn't a system alert or voice.
+    static func countsAsMedia(playing: Bool, pid: pid_t, ownPID: pid_t,
+                              bundleID: @autoclosure () -> String?) -> Bool {
+        playing && pid != ownPID && !systemSounds.contains(bundleID() ?? "")
     }
 
     @available(macOS 14.2, *)

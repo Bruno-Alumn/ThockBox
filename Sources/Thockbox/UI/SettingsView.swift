@@ -285,8 +285,9 @@ private struct MutingPage: View {
     var body: some View {
         Form {
             Section {
-                if MicrophoneMonitor.isSupported {
+                if AudioActivityMonitor.isSupported {
                     Toggle("During calls and recordings", isOn: $state.muteDuringCalls)
+                    Toggle("While other apps play sound", isOn: $state.muteWhileMedia)
                 }
                 Toggle("During calendar events", isOn: $state.muteDuringMeetings)
                 if state.muteDuringMeetings && state.calendarAccess == .denied {
@@ -310,8 +311,8 @@ private struct MutingPage: View {
             } header: {
                 Text("Mute Automatically")
             } footer: {
-                formFooter((MicrophoneMonitor.isSupported
-                      ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. "
+                formFooter((AudioActivityMonitor.isSupported
+                      ? "Calls and recordings means any app using the microphone. \"Hey Siri\" doesn't count. Other apps playing sound includes music, videos and games, but not alerts. "
                       : "")
                      + "Calendar events don't count when they last all day, are marked free, or you declined them. Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
             }
