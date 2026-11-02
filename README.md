@@ -122,7 +122,8 @@ loudness-matched like the built-in ones, and survive updates.
   the screen is shared or recorded, on
   speakers only (“headphones only”), in chosen apps, and after 1 to 60
   minutes without typing.
-- **Activity:** keystrokes today, in total, and over the last week.
+- **Activity:** keystrokes today, in total, and over the last week, and a
+  CSV export of the last 30 days.
 - **General:** login, the menu bar icon (dimmed while sounds are off, if you
   like, and today's keystrokes beside it), updates and help.
 
