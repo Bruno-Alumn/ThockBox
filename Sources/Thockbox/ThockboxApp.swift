@@ -21,10 +21,31 @@ struct ThockboxApp: App {
         )) {
             MenuView(state: state)
         } label: {
-            Image(nsImage: state.status.isPlaying ? MenuBarIcon.on
-                  : state.dimIconWhenOff ? MenuBarIcon.offDimmed : MenuBarIcon.off)
+            MenuBarLabel(state: state, stats: state.stats)
         }
         .menuBarExtraStyle(.menu)
+    }
+}
+
+/// The menu bar icon, with today's keystrokes beside it if chosen. Only
+/// this label watches the counts, so typing doesn't re-lay out the menu.
+private struct MenuBarLabel: View {
+    @ObservedObject var state: AppState
+    @ObservedObject var stats: StatsStore
+
+    var body: some View {
+        let icon = Image(nsImage: state.status.isPlaying ? MenuBarIcon.on
+                         : state.dimIconWhenOff ? MenuBarIcon.offDimmed : MenuBarIcon.off)
+        if state.showKeystrokesInMenuBar {
+            Label {
+                Text(stats.shown.today, format: .number.notation(.compactName))
+            } icon: {
+                icon
+            }
+            .labelStyle(.titleAndIcon)
+        } else {
+            icon
+        }
     }
 }
 
@@ -56,8 +77,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ sender: NSApplication, delegateHandlesKey key: String) -> Bool {
-        ["soundsEnabled", "soundPack", "soundVolume", "muteDuringCalls", "headphonesOnly",
-         "muteWhenLocked", "automaticallyMuted", "muteReason", "offUntil", "keystrokesToday",
+        ["soundsEnabled", "soundPack", "soundVolume", "muteDuringCalls", "muteDuringMeetings", "headphonesOnly",
+         "muteWhenLocked", "muteWhileSharing", "automaticallyMuted", "muteReason", "offUntil", "keystrokesToday",
          "keystrokesTotal"].contains(key)
     }
 
@@ -87,9 +108,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         set { AppState.shared.muteDuringCalls = newValue }
     }
 
+    @objc var muteDuringMeetings: Bool {
+        get { AppState.shared.muteDuringMeetings }
+        set { AppState.shared.muteDuringMeetings = newValue }
+    }
+
     @objc var headphonesOnly: Bool {
         get { AppState.shared.headphonesOnly }
         set { AppState.shared.headphonesOnly = newValue }
+    }
+
+    @objc var muteWhileSharing: Bool {
+        get { AppState.shared.muteWhileSharing }
+        set { AppState.shared.muteWhileSharing = newValue }
     }
 
     @objc var muteWhenLocked: Bool {
@@ -99,7 +130,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc var automaticallyMuted: Bool { AppState.shared.isAutomaticallyMuted }
 
-    @objc var offUntil: Date? { AppState.shared.offUntil }
+    /// Setting a future date turns sounds off until then, like Turn Off for
+    /// an Hour; missing value (or a time that has passed) turns them on.
+    @objc var offUntil: Date? {
+        get { AppState.shared.offUntil }
+        set {
+            if let newValue, newValue > Date() {
+                AppState.shared.turnOff(for: newValue.timeIntervalSinceNow)
+            } else {
+                AppState.shared.enabled = true
+            }
+        }
+    }
 
     @objc var muteReason: String { AppState.shared.automaticMute?.message ?? "" }
 
