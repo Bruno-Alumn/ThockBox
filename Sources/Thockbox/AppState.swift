@@ -114,11 +114,36 @@ final class AppState: ObservableObject {
         }
     }
     @Published var toggleShortcut: Shortcut {
-        didSet { defaults.set(try? JSONEncoder().encode(toggleShortcut), forKey: "toggleShortcut") }
+        didSet {
+            defaults.set(try? JSONEncoder().encode(toggleShortcut), forKey: "toggleShortcut")
+            registerHotKey()
+        }
     }
     /// Set while Settings records a new shortcut, so pressing the current
     /// one there doesn't also toggle sounds.
-    var isRecordingShortcut = false
+    var isRecordingShortcut = false {
+        didSet { registerHotKey() }
+    }
+    /// The shortcut as a system hotkey. While it's nil (recording, or macOS
+    /// refused the combination), the key monitor matches it instead.
+    private var hotKey: GlobalHotKey?
+    /// Set by startUp; tests that never start the app use the key monitor.
+    private var registersHotKeys = false
+
+    private func registerHotKey() {
+        hotKey = nil
+        guard registersHotKeys else { return }
+        // The health-check copy (launch_check.sh) mustn't take the key from
+        // the real app.
+        guard !isRecordingShortcut, !CommandLine.arguments.contains("--health-check") else { return }
+        hotKey = GlobalHotKey(toggleShortcut) { [weak self] in
+            guard let self else { return }
+            enabled.toggle()
+            // The key-up still reaches the monitors; don't let it play.
+            suppressNextKeyUp = toggleShortcut.keyCode
+        }
+        if hotKey == nil { klog.error("couldn't register \(self.toggleShortcut.display, privacy: .public) as a hotkey") }
+    }
     /// Stay quiet unless the sound goes into headphones, for offices and
     /// shared rooms.
     @Published var headphonesOnly: Bool {
@@ -231,6 +256,8 @@ final class AppState: ObservableObject {
         engine.setTone(x: toneX, y: toneY)
         applyPack(notify: false)
         engine.loadExtras(from: Self.soundsDirectory().appendingPathComponent("_extras"))
+        registersHotKeys = true
+        registerHotKey()
         if let session = CGSessionCopyCurrentDictionary() as NSDictionary? {
             screenLocked = session["CGSSessionScreenIsLocked"] as? Bool ?? false
         }
@@ -439,7 +466,8 @@ final class AppState: ObservableObject {
             // The shortcut (⌃⌘K by default) toggles, even while disabled.
             // Swallow the matching key-up too, or enabling would emit an
             // orphan release.
-            if !isRepeat, !isRecordingShortcut, toggleShortcut.matches(keyCode: keycode, flags: flags) {
+            if hotKey == nil, !isRepeat, !isRecordingShortcut,
+               toggleShortcut.matches(keyCode: keycode, flags: flags) {
                 enabled.toggle()
                 suppressNextKeyUp = keycode
                 return

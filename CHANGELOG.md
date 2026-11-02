@@ -45,6 +45,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - **The on/off shortcut** can't be set to something that clashes any more:
   it needs ⌃, or ⌘ with ⌥. ⌘C or ⌥E used to toggle sounds on every copy or
   accent as well, and Settings now says what works instead of just beeping.
+  The shortcut is now a system hotkey, so the app in front no longer gets
+  the key press as well.
 
 ## 1.1.1
 
