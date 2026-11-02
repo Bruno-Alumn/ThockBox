@@ -2,6 +2,44 @@ import SwiftUI
 
 /// Controls used in the settings window that SwiftUI doesn't provide as is.
 
+/// Section footer text in the standard footnote style, leading-aligned as
+/// in System Settings. A Form sized to its content (as each settings tab
+/// is) drops the default footer styling and alignment, so it's set here.
+func formFooter(_ text: String) -> some View {
+    Text(text)
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
+}
+
+/// The switch set pop-up. Choosing one plays a sample of it.
+struct SwitchSetPicker: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        Picker("Switch set", selection: Binding(
+            get: { state.currentPack?.id ?? "" },
+            set: { state.selectedPackID = $0 }
+        )) {
+            ForEach(state.packs) { pack in
+                Text(pack.name).tag(pack.id)
+            }
+        }
+    }
+}
+
+/// A text field to type in and hear the current switch set. Keys typed in
+/// ThockBox's own windows play without Accessibility access, so this works
+/// before access is granted. What's typed isn't kept.
+struct TryItField: View {
+    @State private var text = ""
+
+    var body: some View {
+        TextField("Try it", text: $text, prompt: Text("Type here to hear it"))
+    }
+}
+
 struct OutputDevicePicker: View {
     @ObservedObject var state: AppState
     // Cached: enumerating CoreAudio devices inside body is slow, and body
