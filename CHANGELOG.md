@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Mute while other apps play sound** (Settings → Muting): music, videos
+  and games quiet the keys; alerts don't. Needs macOS 14.2 or later.
 - **Focus filter:** turn sounds off, or pick a switch set, while a Focus is on
   (System Settings › Focus › Focus Filters). It goes back when the Focus ends.
 - The ThockBox icon in the Welcome window presses like a key.

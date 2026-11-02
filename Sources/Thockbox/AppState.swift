@@ -157,6 +157,13 @@ final class AppState: ObservableObject {
             updateLoginItem()
         }
     }
+    /// Quiet while another app plays sound: music, a video, a game.
+    @Published var muteWhileMedia: Bool {
+        didSet {
+            defaults.set(muteWhileMedia, forKey: "muteWhileMedia")
+            updateMediaMonitor()
+        }
+    }
     /// Quiet while the screen is shared or recorded (a call, QuickTime).
     @Published var muteWhileSharing: Bool {
         didSet {
@@ -282,6 +289,8 @@ final class AppState: ObservableObject {
     var isAutomaticallyMuted: Bool { automaticMute != nil }
     /// Another app is recording (only tracked while muteDuringCalls is on).
     @Published private(set) var microphoneInUse = false
+    /// Another app is playing sound (only tracked while muteWhileMedia is on).
+    @Published private(set) var mediaPlaying = false
     /// A calendar event is on (only tracked while muteDuringMeetings is on).
     @Published private(set) var inCalendarEvent = false
     /// Whether ThockBox may read calendars, once it has asked.
@@ -295,7 +304,8 @@ final class AppState: ObservableObject {
     private var screenShareTimer: Timer?
     /// Whether something captures the screen right now; tests replace it.
     var isScreenCaptured: () -> Bool = { ScreenCapture.isActive }
-    private var microphoneMonitor: MicrophoneMonitor?
+    private var microphoneMonitor: AudioActivityMonitor?
+    private var mediaMonitor: AudioActivityMonitor?
     private var calendarMonitor: CalendarMonitor?
     /// Tests turn this off: reading calendars asks the user for access.
     var readsCalendars = true
@@ -323,6 +333,7 @@ final class AppState: ObservableObject {
             "hapticFeedback": false,
             "launchAtLogin": false, "showMenuBarIcon": true, "dimIconWhenOff": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
             "muteDuringMeetings": false,
+            "muteWhileMedia": false,
             "idleTimeoutMinutes": 0,
         ])
         enabled = defaults.bool(forKey: "enabled")
@@ -343,6 +354,7 @@ final class AppState: ObservableObject {
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteWhileSharing = defaults.bool(forKey: "muteWhileSharing")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")
+        muteWhileMedia = defaults.bool(forKey: "muteWhileMedia")
         muteDuringMeetings = defaults.bool(forKey: "muteDuringMeetings")
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
@@ -374,6 +386,7 @@ final class AppState: ObservableObject {
             screenLocked = session["CGSSessionScreenIsLocked"] as? Bool ?? false
         }
         updateMicrophoneMonitor()
+        updateMediaMonitor()
         updateScreenShareWatch()
         outputRouteChanged()
         outputListeners = SystemAudioListener.outputRoute { [weak self] in self?.outputRouteChanged() }
@@ -790,9 +803,27 @@ final class AppState: ObservableObject {
             return
         }
         guard microphoneMonitor == nil else { return }
-        let monitor = MicrophoneMonitor { [weak self] inUse in self?.setMicrophoneInUse(inUse) }
+        let monitor = AudioActivityMonitor(.recording) { [weak self] inUse in self?.setMicrophoneInUse(inUse) }
         microphoneMonitor = monitor
         microphoneInUse = monitor.inUse
+    }
+
+    private func updateMediaMonitor() {
+        guard muteWhileMedia else {
+            mediaMonitor = nil
+            setMediaPlaying(false)
+            return
+        }
+        guard mediaMonitor == nil else { return }
+        let monitor = AudioActivityMonitor(.playing) { [weak self] playing in self?.setMediaPlaying(playing) }
+        mediaMonitor = monitor
+        setMediaPlaying(monitor.inUse)
+    }
+
+    /// Called by the media monitor (and by tests).
+    func setMediaPlaying(_ playing: Bool) {
+        mediaPlaying = playing
+        updateAutomaticMute()
     }
 
     private func updateCalendarMonitor() {
@@ -824,6 +855,8 @@ final class AppState: ObservableObject {
             reason = .screenLocked
         } else if muteWhileSharing && screenShared {
             reason = .screenShared
+        } else if muteWhileMedia && mediaPlaying {
+            reason = .media
         } else if headphonesOnly && outputIsSpeaker {
             reason = .speakers
         } else if let frontApp, mutedApps.contains(frontApp.id) {
