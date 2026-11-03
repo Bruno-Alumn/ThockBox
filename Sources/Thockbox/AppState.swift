@@ -211,6 +211,10 @@ final class AppState: ObservableObject {
     @Published var showKeystrokesInMenuBar: Bool {
         didSet { defaults.set(showKeystrokesInMenuBar, forKey: "showKeystrokesInMenuBar") }
     }
+    /// Today's typing speed next to the menu bar icon, once there is one.
+    @Published var showSpeedInMenuBar: Bool {
+        didSet { defaults.set(showSpeedInMenuBar, forKey: "showSpeedInMenuBar") }
+    }
     @Published var dockIconStyle: DockIconStyle {
         didSet { defaults.set(dockIconStyle.rawValue, forKey: "dockIconStyle") }
     }
@@ -461,6 +465,7 @@ final class AppState: ObservableObject {
         dockIconStyle = defaults.string(forKey: "dockIconStyle").flatMap(DockIconStyle.init) ?? .color
         dimIconWhenOff = defaults.bool(forKey: "dimIconWhenOff")
         showKeystrokesInMenuBar = defaults.bool(forKey: "showKeystrokesInMenuBar")
+        showSpeedInMenuBar = defaults.bool(forKey: "showSpeedInMenuBar")
         muteWhenLocked = defaults.bool(forKey: "muteWhenLocked")
         muteWhileSharing = defaults.bool(forKey: "muteWhileSharing")
         muteDuringCalls = defaults.bool(forKey: "muteDuringCalls")

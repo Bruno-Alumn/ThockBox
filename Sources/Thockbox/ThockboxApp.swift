@@ -36,8 +36,9 @@ private struct MenuBarLabel: View {
     var body: some View {
         let icon = Image(nsImage: state.status.isPlaying ? MenuBarIcon.on
                          : state.dimIconWhenOff ? MenuBarIcon.offDimmed : MenuBarIcon.off)
-        if state.showKeystrokesInMenuBar {
-            KeystrokeLabel(stats: stats, icon: icon)
+        if state.showKeystrokesInMenuBar || state.showSpeedInMenuBar {
+            KeystrokeLabel(stats: stats, icon: icon,
+                           count: state.showKeystrokesInMenuBar, speed: state.showSpeedInMenuBar)
         } else {
             icon
         }
@@ -49,14 +50,27 @@ private struct MenuBarLabel: View {
 private struct KeystrokeLabel: View {
     @ObservedObject var stats: StatsStore
     let icon: Image
+    let count: Bool
+    let speed: Bool
 
     var body: some View {
         Label {
-            Text(stats.shown.today, format: .number.notation(.compactName))
+            Text(MenuBarText.text(today: count ? stats.shown.today : nil,
+                                  wordsPerMinute: speed ? stats.shown.wordsPerMinute : nil))
         } icon: {
             icon
         }
         .labelStyle(.titleAndIcon)
+    }
+}
+
+/// What sits beside the menu bar icon: "1.2K", "62 wpm", or "1.2K · 62 wpm".
+enum MenuBarText {
+    static func text(today: Int?, wordsPerMinute: Int?) -> String {
+        var parts: [String] = []
+        if let today { parts.append(today.formatted(.number.notation(.compactName))) }
+        if let wordsPerMinute { parts.append("\(wordsPerMinute) wpm") }
+        return parts.joined(separator: " · ")
     }
 }
 

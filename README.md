@@ -132,7 +132,7 @@ loudness-matched like the built-in ones, and survive updates.
   typing speed, and a
   CSV export of the last 30 days.
 - **General:** login, the menu bar icon (dimmed while sounds are off, if you
-  like, and today's keystrokes beside it), the app icon (Color or Graphite),
+  like, and today's keystrokes or typing speed beside it), the app icon (Color or Graphite),
   a notification when an automation changes the switch set, updates, and
   help, including the Welcome and What's New windows.
 
