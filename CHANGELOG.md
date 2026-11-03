@@ -5,6 +5,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Export and import settings** (Settings › General › Help): bring your
+  setup to another Mac. Keystroke counts and things tied to this Mac
+  (output devices, calendars) stay put.
 - **A different set each day** (Settings › Sound, off by default): moves to
   the next switch set each new day.
 - **Best day and daily average** in Settings › Activity, over the last 30
