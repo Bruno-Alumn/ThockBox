@@ -3,6 +3,11 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- **What's New covers skipped versions:** updating from 1.2.0 straight to a
+  later version shows what every version in between added.
+
 ## 1.2.2
 
 - **Spatial audio follows your head** with AirPods (Settings › Sound › Follow
