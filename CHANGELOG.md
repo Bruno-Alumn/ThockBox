@@ -3,6 +3,12 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## 1.2.4
+
+- Fixed: head tracking now starts when AirPods connect after spatial audio
+  is on, and faces ahead again when they disconnect.
+- Fixed: an app whose name can't be read can be unchecked under Playing now.
+
 ## 1.2.3
 
 - The menu names the app when one app's sound mutes ThockBox ("Muted while
