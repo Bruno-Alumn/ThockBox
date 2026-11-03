@@ -56,6 +56,31 @@ final class AppStateTests: XCTestCase {
         XCTAssertTrue(state.selectPackFromElsewhere("cream"))
     }
 
+    /// An app with its own set plays it while in front; others play the
+    /// selected set, and the choice is saved.
+    func testAppSetsFollowTheFrontApp() {
+        let state = AppState(defaults: defaults)
+        state.reloadPacks()
+        let sets = state.packs.map(\.id)
+        guard sets.count >= 2 else { return XCTFail("needs two bundled sets, found \(sets)") }
+        state.selectedPackID = sets[0]
+        state.appPacks = ["com.apple.Terminal": sets[1]]
+        state.setFrontApp(id: "com.apple.Terminal", name: "Terminal")
+        XCTAssertEqual(state.playingPack?.id, sets[1])
+        state.setFrontApp(id: "com.apple.TextEdit", name: "TextEdit")
+        XCTAssertEqual(state.playingPack?.id, sets[0])
+        XCTAssertEqual(AppState(defaults: defaults).appPacks, ["com.apple.Terminal": sets[1]])
+    }
+
+    /// A set that's gone (removed in Finder) falls back to the selected one.
+    func testAMissingAppSetFallsBack() {
+        let state = AppState(defaults: defaults)
+        state.reloadPacks()
+        state.appPacks = ["com.apple.Terminal": "no-such-set"]
+        state.setFrontApp(id: "com.apple.Terminal", name: "Terminal")
+        XCTAssertEqual(state.playingPack?.id, state.currentPack?.id)
+    }
+
     func testStoredValuesAreClampedOnLoad() {
         defaults.set(5.0, forKey: "volume")
         defaults.set(-9.0, forKey: "toneX")

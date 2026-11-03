@@ -115,6 +115,14 @@ private struct SoundPage: View {
             }
 
             Section {
+                AppPacksList(state: state)
+            } header: {
+                Text("Sets for Specific Apps")
+            } footer: {
+                formFooter("These apps play their own set while they're in front, say a quieter one in Terminal. Every other app plays the set above.")
+            }
+
+            Section {
                 Slider(value: $state.volume, in: 0...1) {
                     Text("Volume")
                 } minimumValueLabel: {

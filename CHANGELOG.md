@@ -3,6 +3,12 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- **Sets for specific apps** (Settings › Sound): give an app its own switch
+  set, say a quieter one in Terminal. It plays while that app is in front;
+  every other app plays your usual set.
+
 ## 1.2.4
 
 - Fixed: head tracking now starts when AirPods connect after spatial audio
