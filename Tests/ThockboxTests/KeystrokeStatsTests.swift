@@ -28,6 +28,31 @@ final class KeystrokeStatsTests: XCTestCase {
         XCTAssertEqual(stats.csv(), "date,keystrokes\n2026-11-01,3\n2026-11-03,2\n")
     }
 
+    /// 300 keys over a minute of steady typing is 60 words a minute; a
+    /// long pause in the middle doesn't drag it down.
+    func testWordsPerMinuteLeavesOutPauses() {
+        var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
+        let start = day("2026-11-01")
+        for i in 0..<150 { stats.record(now: start.addingTimeInterval(Double(i) * 0.2)) }
+        let later = start.addingTimeInterval(600)   // a ten-minute break
+        for i in 0..<150 { stats.record(now: later.addingTimeInterval(Double(i) * 0.2)) }
+        XCTAssertEqual(stats.wordsPerMinute ?? 0, 60, accuracy: 1)
+    }
+
+    func testNoSpeedUntilThereIsEnoughTyping() {
+        var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
+        for i in 0..<20 { stats.record(now: day("2026-11-01").addingTimeInterval(Double(i) * 0.2)) }
+        XCTAssertNil(stats.wordsPerMinute)
+    }
+
+    func testTypingTimeResetsWithTheDay() {
+        var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
+        for i in 0..<300 { stats.record(now: day("2026-11-01").addingTimeInterval(Double(i) * 0.2)) }
+        XCTAssertNotNil(stats.wordsPerMinute)
+        stats.record(now: day("2026-11-02"))
+        XCTAssertEqual(stats.typingSeconds, 0)
+    }
+
     func testCountsTodayAndTotal() {
         var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
         for _ in 0..<3 { stats.record(now: day("2026-11-01")) }

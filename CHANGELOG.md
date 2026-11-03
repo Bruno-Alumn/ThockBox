@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Typing speed** in Settings › Activity: today's words per minute, at five
+  keystrokes a word, leaving out pauses.
 - **Sets for specific apps** (Settings › Sound): give an app its own switch
   set, say a quieter one in Terminal. It plays while that app is in front;
   every other app plays your usual set.
