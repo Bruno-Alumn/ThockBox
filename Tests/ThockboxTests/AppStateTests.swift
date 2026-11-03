@@ -288,13 +288,16 @@ final class AutoMuteTests: XCTestCase {
     func testIgnoredMediaAppsDontMute() {
         let state = AppState(defaults: defaults)
         state.muteWhileMedia = true
-        state.setPlayingApps(["us.zoom.xos"])
-        XCTAssertEqual(state.automaticMute, .media)
-        state.ignoredMediaApps = ["us.zoom.xos"]
+        state.setPlayingApps(["com.example.callapp"])
+        XCTAssertEqual(state.automaticMute, .media("com.example.callapp"), "named (by bundle ID when not installed)")
+        state.ignoredMediaApps = ["com.example.callapp"]
         XCTAssertNil(state.automaticMute, "only an ignored app is playing")
-        state.setPlayingApps(["us.zoom.xos", "com.spotify.client"])
-        XCTAssertEqual(state.automaticMute, .media, "another app still counts")
-        XCTAssertEqual(AppState(defaults: defaults).ignoredMediaApps, ["us.zoom.xos"], "saved")
+        state.setPlayingApps(["com.example.callapp", "com.example.music"])
+        XCTAssertEqual(state.automaticMute, .media("com.example.music"), "another app still counts")
+        XCTAssertEqual(AppState(defaults: defaults).ignoredMediaApps, ["com.example.callapp"], "saved")
+        state.ignoredMediaApps = []
+        XCTAssertEqual(state.automaticMute, .media(nil), "two apps: not named")
+        XCTAssertEqual(PlaybackStatus.muted(.media("Spotify")).title, "Muted while Spotify plays")
     }
 
     func testMediaMutesOnlyWhenEnabledAndUntilItStops() {
@@ -304,7 +307,7 @@ final class AutoMuteTests: XCTestCase {
 
         state.muteWhileMedia = true
         state.setMediaPlaying(true)
-        XCTAssertEqual(state.automaticMute, .media)
+        XCTAssertEqual(state.automaticMute, .media("com.example.player"))
         state.setMediaPlaying(false)
         XCTAssertFalse(state.isAutomaticallyMuted)
     }

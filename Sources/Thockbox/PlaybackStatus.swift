@@ -22,7 +22,8 @@ enum AutomaticMute: Equatable {
     case call
     case meeting
     case screenLocked
-    case media
+    /// The app's name when exactly one app is playing.
+    case media(String?)
     case screenShared
     case speakers
     case app(String)
@@ -34,6 +35,7 @@ enum AutomaticMute: Equatable {
         case .call: "Muted while another app uses the microphone."
         case .meeting: "Muted during a calendar event."
         case .screenLocked: "Muted while the screen is locked."
+        case .media(let app?): "Muted while \(app) plays sound."
         case .media: "Muted while another app plays sound."
         case .screenShared: "Muted while your screen is shared or recorded."
         case .speakers: "Muted on speakers. Plays through headphones only."
@@ -86,6 +88,7 @@ enum PlaybackStatus: Equatable {
         case .muted(.call): "Muted during a call"
         case .muted(.meeting): "Muted during a meeting"
         case .muted(.screenLocked): "Muted while locked"
+        case .muted(.media(let app?)): "Muted while \(app) plays"
         case .muted(.media): "Muted while media plays"
         case .muted(.screenShared): "Muted while sharing"
         case .muted(.speakers): "Muted on speakers"
