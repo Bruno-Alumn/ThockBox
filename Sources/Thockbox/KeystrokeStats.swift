@@ -6,6 +6,11 @@ struct KeystrokeStats {
     private(set) var today: Int
     private(set) var total: Int
     private var stamp: String
+    /// Time spent typing today: the gaps between key presses, leaving out
+    /// pauses (anything over `pauseSeconds`), for words per minute.
+    private(set) var typingSeconds: Double
+    private var lastPress: Date?
+    static let pauseSeconds = 2.0
     /// Finished days, "yyyy-MM-dd" → count. Kept for 30 days.
     private var history: [String: Int]
     private let defaults: UserDefaults
@@ -15,6 +20,7 @@ struct KeystrokeStats {
         today = defaults.integer(forKey: "statsToday")
         total = defaults.integer(forKey: "statsTotal")
         stamp = defaults.string(forKey: "statsTodayStamp") ?? ""
+        typingSeconds = defaults.double(forKey: "statsTypingSeconds")
         history = defaults.dictionary(forKey: "statsHistory") as? [String: Int] ?? [:]
         rollOver(now: now)
     }
@@ -32,6 +38,9 @@ struct KeystrokeStats {
         }
         stamp = day
         today = 0
+        typingSeconds = 0
+        lastPress = nil
+        defaults.set(0.0, forKey: "statsTypingSeconds")
         defaults.set(day, forKey: "statsTodayStamp")
         defaults.set(0, forKey: "statsToday")
     }
@@ -40,6 +49,11 @@ struct KeystrokeStats {
         rollOver(now: now)
         today += 1
         total += 1
+        if let lastPress {
+            let gap = now.timeIntervalSince(lastPress)
+            if gap > 0, gap <= Self.pauseSeconds { typingSeconds += gap }
+        }
+        lastPress = now
         // UserDefaults writes hit an in-memory cache; persist every N strokes
         // to avoid two change notifications per keypress. flush() covers the
         // remainder at quit.
@@ -48,7 +62,15 @@ struct KeystrokeStats {
         }
     }
 
+    /// Today's typing speed at five keystrokes a word, once there's been
+    /// half a minute of typing to go on.
+    var wordsPerMinute: Int? {
+        guard typingSeconds >= 30 else { return nil }
+        return Int((Double(today) / 5 / (typingSeconds / 60)).rounded())
+    }
+
     func flush() {
+        defaults.set(typingSeconds, forKey: "statsTypingSeconds")
         defaults.set(today, forKey: "statsToday")
         defaults.set(total, forKey: "statsTotal")
     }

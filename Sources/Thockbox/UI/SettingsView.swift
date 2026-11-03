@@ -390,9 +390,20 @@ private struct ActivityPage: View {
 
     var body: some View {
         Form {
-            Section("Keystrokes") {
+            Section {
                 LabeledContent("Today", value: store.shown.today.formatted())
                 LabeledContent("All time", value: store.shown.total.formatted())
+                LabeledContent("Typing speed today") {
+                    if let wpm = store.shown.wordsPerMinute {
+                        Text("\(wpm) words per minute")
+                    } else {
+                        Text("Keep typing").foregroundStyle(.secondary)
+                    }
+                }
+            } header: {
+                Text("Keystrokes")
+            } footer: {
+                formFooter("Typing speed counts five keystrokes as a word and leaves out pauses longer than two seconds.")
             }
 
             Section("Last 7 Days") {
