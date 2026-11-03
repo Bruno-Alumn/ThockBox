@@ -289,6 +289,25 @@ final class AppState: ObservableObject {
     }
     private var nextSetHotKey: GlobalHotKey?
 
+    /// A different set each day: the next one in the list on the first
+    /// launch or wake of a new day.
+    @Published var newSetEachDay: Bool {
+        didSet {
+            defaults.set(newSetEachDay, forKey: "newSetEachDay")
+            // Starting now counts as today's set; the change comes tomorrow.
+            if newSetEachDay { defaults.set(KeystrokeStats.dayStamp(Date()), forKey: "setDay") }
+        }
+    }
+
+    /// Internal so tests can pass a time.
+    func rotateSetIfNewDay(now: Date = Date()) {
+        guard newSetEachDay else { return }
+        let today = KeystrokeStats.dayStamp(now)
+        guard defaults.string(forKey: "setDay") != today else { return }
+        defaults.set(today, forKey: "setDay")
+        switchToNextSet()
+    }
+
     /// The set after the selected one, wrapping around, as the shortcut picks.
     func switchToNextSet() {
         guard let index = packs.firstIndex(where: { $0.id == currentPack?.id }), packs.count > 1 else { return }
@@ -501,6 +520,7 @@ final class AppState: ObservableObject {
         ignoredCalendarIDs = Set(defaults.stringArray(forKey: "ignoredCalendars") ?? [])
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
+        newSetEachDay = defaults.bool(forKey: "newSetEachDay")
         nextSetShortcut = defaults.data(forKey: "nextSetShortcut").flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) }
         toggleShortcut = defaults.data(forKey: "toggleShortcut")
             .flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) } ?? .standard
@@ -520,6 +540,7 @@ final class AppState: ObservableObject {
 
     func startUp() {
         reloadPacks()
+        rotateSetIfNewDay()
         engine.volume = volume
         engine.pitchVariationCents = pitchVariation
         engine.setTone(x: toneX, y: toneY)
@@ -575,6 +596,7 @@ final class AppState: ObservableObject {
             forName: .NSCalendarDayChanged, object: nil, queue: .main
         ) { [weak self] _ in
             self?.stats.rollOver()
+            self?.rotateSetIfNewDay()
         }
         for (name, active) in [(NSApplication.didBecomeActiveNotification, true),
                                (NSApplication.didResignActiveNotification, false)] {
@@ -586,6 +608,7 @@ final class AppState: ObservableObject {
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { [weak self] _ in
             self?.resumeIfDue()
+            self?.rotateSetIfNewDay()
         }
         klog.notice("startup: trusted=\(self.accessibilityTrusted, privacy: .public) packs=\(self.packs.count, privacy: .public) device=\(self.outputDeviceUID ?? "default", privacy: .public)")
 

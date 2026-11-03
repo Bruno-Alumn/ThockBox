@@ -47,7 +47,8 @@ or endorsed by Klack or its developer.
   in most sets for releasing a key.
 - Subtle pitch variation and stereo position, so typing never sounds looped.
 - Brightness and pitch controls to tune any set to your taste.
-- A different set for particular apps, say a quieter one in Terminal.
+- A different set for particular apps, say a quieter one in Terminal, or a
+  new set each day.
 - Spatial audio on headphones places each key around you, and with AirPods
   the keys stay put as you turn your head.
 
