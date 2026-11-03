@@ -197,7 +197,9 @@ The menu bar menu's first line names the reason, for example "Muted during a
 meeting" or "Muted while media plays". Each one is a switch in
 Settings › Muting: calls, calendar events, other apps playing sound, games,
 screen sharing, a locked screen, speakers, chosen apps and idle time. A Focus
-filter can also turn sounds off while that Focus is on.
+filter can also turn sounds off while that Focus is on. If it says "Muted while
+… plays" and nothing is playing, uncheck that app under Settings › Muting ›
+Playing now: some apps keep their sound open while silent.
 </details>
 
 <details>
