@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.2.3
 
 - The menu names the app when one app's sound mutes ThockBox ("Muted while
   Spotify plays"), so you know what to uncheck under Playing now.
