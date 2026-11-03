@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **A different set each day** (Settings › Sound, off by default): moves to
+  the next switch set each new day.
 - **Best day and daily average** in Settings › Activity, over the last 30
   days.
 

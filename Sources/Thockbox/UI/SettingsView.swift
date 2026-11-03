@@ -94,6 +94,7 @@ private struct SoundPage: View {
 
             Section {
                 SwitchSetPicker(state: state)
+                Toggle("A different set each day", isOn: $state.newSetEachDay)
                 TryItField()
                 HStack {
                     Button("Add Your Own…", action: addSwitchSet)

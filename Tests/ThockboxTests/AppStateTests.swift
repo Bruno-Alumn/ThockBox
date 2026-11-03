@@ -94,6 +94,28 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(state.selectedPackID, sets.first, "wraps to the first")
     }
 
+    /// With a set each day, the first check on a new day moves to the next
+    /// set; more checks that day, or the option off, change nothing.
+    func testANewSetEachDay() {
+        let state = AppState(defaults: defaults)
+        state.postsNotifications = false
+        state.reloadPacks()
+        let sets = state.packs.map(\.id)
+        state.selectedPackID = sets[0]
+        // Noon, so an hour later is still the same day whenever this runs.
+        let today = Calendar.current.startOfDay(for: Date()).addingTimeInterval(12 * 3600)
+        state.rotateSetIfNewDay(now: today.addingTimeInterval(86_400))
+        XCTAssertEqual(state.selectedPackID, sets[0], "off by default")
+
+        state.newSetEachDay = true
+        state.rotateSetIfNewDay(now: today)
+        XCTAssertEqual(state.selectedPackID, sets[0], "turning it on keeps today's set")
+        state.rotateSetIfNewDay(now: today.addingTimeInterval(86_400))
+        XCTAssertEqual(state.selectedPackID, sets[1], "next day, next set")
+        state.rotateSetIfNewDay(now: today.addingTimeInterval(86_400 + 3600))
+        XCTAssertEqual(state.selectedPackID, sets[1], "once a day")
+    }
+
     func testNextSetShortcutIsSavedAndOffByDefault() {
         let state = AppState(defaults: defaults)
         XCTAssertNil(state.nextSetShortcut)
