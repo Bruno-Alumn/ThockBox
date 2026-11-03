@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Turn Off For** in the menu: 15 minutes, 1 hour, 4 hours or until
+  tomorrow morning (8 am), instead of only an hour.
 - **Quiet hours** (Settings › Muting): mute every day between two times,
   10 pm to 8 am unless you pick others.
 - **Export and import settings** (Settings › General › Help): bring your

@@ -24,7 +24,7 @@ final class AppState: ObservableObject {
             updateHeadTracking()
         }
     }
-    /// When sounds come back after Turn Off for an Hour; nil otherwise.
+    /// When sounds come back after Turn Off For; nil otherwise.
     @Published private(set) var offUntil: Date?
     private var resumeTimer: Timer?
 
@@ -77,6 +77,13 @@ final class AppState: ObservableObject {
     func turnOff(for duration: TimeInterval, now: Date = Date()) {
         enabled = false
         setOffUntil(now.addingTimeInterval(duration))
+    }
+
+    /// Seconds until the next 8 am, for Turn Off For › Until Tomorrow Morning.
+    static func untilMorning(from now: Date = Date(), calendar: Calendar = .current) -> TimeInterval {
+        let morning = calendar.nextDate(after: now, matching: DateComponents(hour: 8, minute: 0),
+                                        matchingPolicy: .nextTime) ?? now.addingTimeInterval(12 * 3600)
+        return morning.timeIntervalSince(now)
     }
 
     private func setOffUntil(_ date: Date?) {

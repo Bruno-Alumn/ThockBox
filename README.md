@@ -57,7 +57,8 @@ or endorsed by Klack or its developer.
 - Mutes itself during calls, meetings and games, while other apps play
   sound or you share your screen, when the screen locks, on speakers, or in
   apps you choose.
-- Turn it off for an hour with one click; it comes back by itself.
+- Turn it off for 15 minutes, an hour, four hours or until morning; it comes
+  back by itself.
 - Or make a click on the menu bar icon turn sounds on or off.
 - Toggle anywhere with <kbd>⌃</kbd><kbd>⌘</kbd><kbd>K</kbd>, Shortcuts or AppleScript.
 
@@ -99,7 +100,7 @@ brew install --cask bruno-alumn/thockbox/thockbox
 |:--|:--|
 | <kbd>⌃</kbd><kbd>⌘</kbd><kbd>K</kbd> | Turn sounds on or off (change it in Settings › Keys) |
 | <kbd>⌥</kbd>-click the menu bar icon | Turn sounds on or off |
-| Click the menu bar icon | Switch set, volume, mute in this app, turn off for an hour |
+| Click the menu bar icon | Switch set, volume, mute in this app, turn off for a while |
 | <kbd>⌘</kbd><kbd>,</kbd> in the menu | Open Settings |
 
 The first line of the menu always says what ThockBox is doing: playing, off,
