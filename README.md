@@ -126,7 +126,7 @@ loudness-matched like the built-in ones, and survive updates.
   Return ding, and a trackpad tap with each key.
 - **Muting:** during calls and while other apps play sound (both macOS 14.2
   or later), during calendar events (from the calendars you pick), in games,
-  while the screen is shared or recorded; when the screen is locked, on
+  while the screen is shared or recorded; during quiet hours, when the screen is locked, on
   speakers only (“headphones only”), and after 1 to 60 minutes without typing;
   and in apps you choose.
 - **Activity:** keystrokes today, in total, over the last week, your best day

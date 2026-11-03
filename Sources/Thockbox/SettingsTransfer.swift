@@ -11,7 +11,7 @@ enum SettingsTransfer {
         "followHeadMovement", "toggleShortcut", "nextSetShortcut", "muteModifiers", "functionKeysAudible",
         "mouseClicks", "scrollSounds", "returnDing", "hapticFeedback", "muteDuringCalls", "muteDuringMeetings",
         "muteWhileMedia", "ignoredMediaApps", "muteWhileGaming", "muteWhileSharing", "muteWhenLocked",
-        "headphonesOnly", "idleTimeoutMinutes", "mutedApps", "showMenuBarIcon", "dimIconWhenOff",
+        "headphonesOnly", "idleTimeoutMinutes", "quietHours", "quietStart", "quietEnd", "mutedApps", "showMenuBarIcon", "dimIconWhenOff",
         "showKeystrokesInMenuBar", "showSpeedInMenuBar", "dockIconStyle", "iconClickAction",
         "notifySetChanges", "checkForUpdates",
     ]

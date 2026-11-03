@@ -326,6 +326,13 @@ private struct CalendarChoice: View {
 private struct MutingPage: View {
     @ObservedObject var state: AppState
 
+    /// Minutes after midnight as a time of day for a DatePicker.
+    static func time(_ minutes: Binding<Int>) -> Binding<Date> {
+        Binding(
+            get: { Calendar.current.startOfDay(for: Date()).addingTimeInterval(Double(minutes.wrappedValue) * 60) },
+            set: { minutes.wrappedValue = AppState.minuteOfDay($0) })
+    }
+
     var body: some View {
         Form {
             Section {
@@ -362,6 +369,18 @@ private struct MutingPage: View {
 
             Section {
                 Toggle("The screen is locked", isOn: $state.muteWhenLocked)
+                Toggle("Quiet hours", isOn: $state.quietHours)
+                if state.quietHours {
+                    LabeledContent("From") {
+                        HStack {
+                            DatePicker("From", selection: Self.time($state.quietStart), displayedComponents: .hourAndMinute)
+                            Text("to")
+                            DatePicker("To", selection: Self.time($state.quietEnd), displayedComponents: .hourAndMinute)
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                    }
+                }
                 Toggle("Playing on speakers (headphones only)", isOn: $state.headphonesOnly)
                 Picker("No typing for", selection: $state.idleTimeoutMinutes) {
                     Text("Never").tag(0)
