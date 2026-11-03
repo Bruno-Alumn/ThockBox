@@ -276,6 +276,21 @@ final class AppState: ObservableObject {
             registerHotKey()
         }
     }
+    /// Switches to the next switch set from anywhere; none by default.
+    @Published var nextSetShortcut: Shortcut? {
+        didSet {
+            defaults.set(nextSetShortcut.flatMap { try? JSONEncoder().encode($0) }, forKey: "nextSetShortcut")
+            registerHotKey()
+        }
+    }
+    private var nextSetHotKey: GlobalHotKey?
+
+    /// The set after the selected one, wrapping around, as the shortcut picks.
+    func switchToNextSet() {
+        guard let index = packs.firstIndex(where: { $0.id == currentPack?.id }), packs.count > 1 else { return }
+        selectPackFromElsewhere(packs[(index + 1) % packs.count].id)
+    }
+
     /// Set while Settings records a new shortcut, so pressing the current
     /// one there doesn't also toggle sounds.
     var isRecordingShortcut = false {
@@ -297,6 +312,7 @@ final class AppState: ObservableObject {
 
     private func registerHotKey() {
         hotKey = nil
+        nextSetHotKey = nil
         guard registersHotKeys else { return }
         // The health-check copy (launch_check.sh) mustn't take the key from
         // the real app.
@@ -312,6 +328,15 @@ final class AppState: ObservableObject {
             suppressReleasesAfterShortcut()
         }
         if hotKey == nil { klog.error("couldn't register \(self.toggleShortcut.display, privacy: .public) as a hotkey") }
+        // The next-set shortcut is only ever a system hotkey (it's optional,
+        // and always meets the stricter rule, which the recorder enforces).
+        if let next = nextSetShortcut, next != toggleShortcut {
+            nextSetHotKey = GlobalHotKey(next, id: 2) { [weak self] in
+                guard let self else { return }
+                switchToNextSet()
+                suppressReleasesAfterShortcut(next)
+            }
+        }
     }
     /// Stay quiet unless the sound goes into headphones, for offices and
     /// shared rooms.
@@ -471,6 +496,7 @@ final class AppState: ObservableObject {
         ignoredCalendarIDs = Set(defaults.stringArray(forKey: "ignoredCalendars") ?? [])
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
+        nextSetShortcut = defaults.data(forKey: "nextSetShortcut").flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) }
         toggleShortcut = defaults.data(forKey: "toggleShortcut")
             .flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) } ?? .standard
         idleTimeoutMinutes = max(0, defaults.integer(forKey: "idleTimeoutMinutes"))
@@ -771,9 +797,9 @@ final class AppState: ObservableObject {
     /// come on. Cleared by the next key press.
     private(set) var suppressedKeyUps: Set<UInt16> = []
 
-    private func suppressReleasesAfterShortcut() {
+    private func suppressReleasesAfterShortcut(_ shortcut: Shortcut? = nil) {
         suppressedKeyUps = KeyMap.modifierKeycodes.subtracting([57]) // not Caps Lock
-        suppressedKeyUps.insert(toggleShortcut.keyCode)
+        suppressedKeyUps.insert((shortcut ?? toggleShortcut).keyCode)
     }
 
     private var loggedFirstEvent = false

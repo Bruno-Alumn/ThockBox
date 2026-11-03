@@ -81,6 +81,29 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(state.playingPack?.id, state.currentPack?.id)
     }
 
+    /// The next-set shortcut steps through the sets in order and wraps.
+    func testNextSetWrapsAround() {
+        let state = AppState(defaults: defaults)
+        state.postsNotifications = false
+        state.reloadPacks()
+        let sets = state.packs.map(\.id)
+        state.selectedPackID = sets[sets.count - 2]
+        state.switchToNextSet()
+        XCTAssertEqual(state.selectedPackID, sets.last)
+        state.switchToNextSet()
+        XCTAssertEqual(state.selectedPackID, sets.first, "wraps to the first")
+    }
+
+    func testNextSetShortcutIsSavedAndOffByDefault() {
+        let state = AppState(defaults: defaults)
+        XCTAssertNil(state.nextSetShortcut)
+        let shortcut = Shortcut(keyCode: 45, flags: [.control, .command], key: "N")
+        state.nextSetShortcut = shortcut
+        XCTAssertEqual(AppState(defaults: defaults).nextSetShortcut, shortcut)
+        state.nextSetShortcut = nil
+        XCTAssertNil(AppState(defaults: defaults).nextSetShortcut)
+    }
+
     func testStoredValuesAreClampedOnLoad() {
         defaults.set(5.0, forKey: "volume")
         defaults.set(-9.0, forKey: "toneX")

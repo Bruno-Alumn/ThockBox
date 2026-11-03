@@ -10,17 +10,27 @@ final class GlobalHotKey {
     private var handler: EventHandlerRef?
     private let action: () -> Void
 
+    private let id: UInt32
+
     /// nil if macOS refuses the combination (another app already owns it).
-    init?(_ shortcut: Shortcut, action: @escaping () -> Void) {
+    /// Each hotkey needs its own `id`: every handler sees every hotkey
+    /// press, and passes on the ones that aren't its own.
+    init?(_ shortcut: Shortcut, id: UInt32 = 1, action: @escaping () -> Void) {
         self.action = action
+        self.id = id
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         let me = Unmanaged.passUnretained(self).toOpaque()
-        let installed = InstallEventHandler(GetApplicationEventTarget(), { _, _, context in
-            guard let context else { return OSStatus(eventNotHandledErr) }
-            Unmanaged<GlobalHotKey>.fromOpaque(context).takeUnretainedValue().action()
+        let installed = InstallEventHandler(GetApplicationEventTarget(), { _, event, context in
+            guard let context, let event else { return OSStatus(eventNotHandledErr) }
+            let hotKey = Unmanaged<GlobalHotKey>.fromOpaque(context).takeUnretainedValue()
+            var pressed = EventHotKeyID()
+            let read = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                                         nil, MemoryLayout<EventHotKeyID>.size, nil, &pressed)
+            guard read == noErr, pressed.id == hotKey.id else { return OSStatus(eventNotHandledErr) }
+            hotKey.action()
             return noErr
         }, 1, &spec, me, &handler)
-        let id = EventHotKeyID(signature: OSType(0x54686B62), id: 1) // "Thkb"
+        let id = EventHotKeyID(signature: OSType(0x54686B62), id: id) // "Thkb"
         guard installed == noErr,
               RegisterEventHotKey(UInt32(shortcut.keyCode), Self.carbonModifiers(shortcut.flags), id,
                                   GetApplicationEventTarget(), 0, &ref) == noErr else {

@@ -3,6 +3,11 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- **A shortcut for the next switch set** (Settings › Keys, none by default),
+  and a Next ThockBox Switch Set action in Shortcuts.
+
 ## 1.3.0
 
 - **Typing speed** in Settings › Activity: today's words per minute, at five

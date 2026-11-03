@@ -121,7 +121,7 @@ loudness-matched like the built-in ones, and survive updates.
   specific apps, volume,
   output device, spatial audio on headphones (following your head with
   AirPods), and tone (brightness, pitch and variation).
-- **Keys:** the on/off shortcut, which keys play (and mouse clicks and scrolling), the
+- **Keys:** the on/off shortcut and one for the next switch set, which keys play (and mouse clicks and scrolling), the
   Return ding, and a trackpad tap with each key.
 - **Muting:** during calls and while other apps play sound (both macOS 14.2
   or later), during calendar events (from the calendars you pick), in games,
@@ -144,7 +144,7 @@ loudness-matched like the built-in ones, and survive updates.
 
 The Shortcuts app gets **Turn ThockBox Sounds On or Off**, **Toggle ThockBox
 Sounds**, **Turn Off ThockBox Sounds for a While**, **Set ThockBox Switch
-Set** and **Set ThockBox Volume**. Use them in an automation, or say
+Set**, **Next ThockBox Switch Set** and **Set ThockBox Volume**. Use them in an automation, or say
 “Toggle ThockBox sounds” to Siri. To see when one of them, or a Focus, picks a different switch set,
 turn on Settings › General › Notify when the switch set changes.
 

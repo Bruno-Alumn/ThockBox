@@ -52,6 +52,17 @@ struct TurnOffForIntent: AppIntent {
     }
 }
 
+struct NextSwitchSetIntent: AppIntent {
+    static let title: LocalizedStringResource = "Next ThockBox Switch Set"
+    static let description = IntentDescription("Switches ThockBox to the next switch set, wrapping around.")
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        AppState.shared.switchToNextSet()
+        return .result()
+    }
+}
+
 struct SetSwitchSetIntent: AppIntent {
     static let title: LocalizedStringResource = "Set ThockBox Switch Set"
     static let description = IntentDescription("Chooses which switch set ThockBox plays.")
@@ -155,5 +166,8 @@ struct ThockBoxShortcuts: AppShortcutsProvider {
         AppShortcut(intent: SetSwitchSetIntent(),
                     phrases: ["Set the \(.applicationName) switch set", "Change \(.applicationName) switches"],
                     shortTitle: "Set Switch Set", systemImageName: "slider.horizontal.3")
+        AppShortcut(intent: NextSwitchSetIntent(),
+                    phrases: ["Next \(.applicationName) switch set"],
+                    shortTitle: "Next Switch Set", systemImageName: "forward")
     }
 }
