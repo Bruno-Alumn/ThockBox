@@ -52,4 +52,39 @@ final class WhatsNewTests: XCTestCase {
         let notes = try XCTUnwrap(WhatsNew.parse(changelog: String(contentsOf: url, encoding: .utf8)))
         XCTAssertFalse(notes.items.isEmpty)
     }
+
+    private let threeReleases = """
+    ## Unreleased
+
+    - Not yet.
+
+    ## 1.2.2
+
+    - Head tracking.
+
+    ## 1.2.1
+
+    - Playing now.
+
+    ## 1.2.0
+
+    - Lots.
+    """
+
+    /// Skipping 1.2.1 still shows what it brought, newest first.
+    func testAnUpdateShowsEverySkippedVersion() {
+        let notes = WhatsNew.since(changelog: threeReleases, after: "1.2.0", upTo: "1.2.2")
+        XCTAssertEqual(notes, WhatsNew(version: "1.2.2", items: ["Head tracking.", "Playing now."]))
+        XCTAssertEqual(WhatsNew.since(changelog: threeReleases, after: "1.2.1", upTo: "1.2.2")?.items,
+                       ["Head tracking."])
+        XCTAssertEqual(WhatsNew.since(changelog: threeReleases, after: nil, upTo: "1.2.2")?.items,
+                       ["Head tracking."], "unknown last version: just this one")
+    }
+
+    func testVersionOrder() {
+        XCTAssertTrue(WhatsNew.isNewer("1.10.0", than: "1.9.2"))
+        XCTAssertTrue(WhatsNew.isNewer("1.2.1", than: "1.2"))
+        XCTAssertFalse(WhatsNew.isNewer("1.2.0", than: "1.2"))
+        XCTAssertFalse(WhatsNew.isNewer("Unreleased", than: "1.0"))
+    }
 }

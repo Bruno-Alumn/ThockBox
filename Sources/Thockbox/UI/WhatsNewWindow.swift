@@ -35,10 +35,41 @@ struct WhatsNew: Equatable {
         return WhatsNew(version: found, items: items)
     }
 
+    /// Everything new since `last`, up to and including `current`, newest
+    /// first, so skipping a version (1.2.0 straight to 1.2.2) still shows
+    /// what the skipped one brought. Just `current` when `last` is unknown.
+    static func since(changelog: String, after last: String?, upTo current: String) -> WhatsNew? {
+        guard let last else { return parse(changelog: changelog, version: current) }
+        let versions = changelog.components(separatedBy: .newlines)
+            .filter { $0.hasPrefix("## ") }
+            .map { String($0.dropFirst(3)).trimmingCharacters(in: .whitespaces) }
+            .filter { isNewer($0, than: last) && !isNewer($0, than: current) }
+        let items = versions.compactMap { parse(changelog: changelog, version: $0)?.items }.flatMap { $0 }
+        return items.isEmpty ? nil : WhatsNew(version: current, items: items)
+    }
+
+    /// Compares dotted version numbers ("1.10.0" is newer than "1.9.2").
+    /// Headings that aren't version numbers ("Unreleased") are never newer.
+    static func isNewer(_ a: String, than b: String) -> Bool {
+        func parts(_ v: String) -> [Int]? {
+            let parts = v.split(separator: ".").map { Int($0) }
+            return parts.contains(nil) || parts.isEmpty ? nil : parts.compactMap { $0 }
+        }
+        guard let x = parts(a), let y = parts(b) else { return false }
+        for i in 0..<max(x.count, y.count) {
+            let l = i < x.count ? x[i] : 0, r = i < y.count ? y[i] : 0
+            if l != r { return l > r }
+        }
+        return false
+    }
+
+    private static var bundledChangelog: String? {
+        Bundle.main.url(forResource: "CHANGELOG", withExtension: "md")
+            .flatMap { try? String(contentsOf: $0, encoding: .utf8) }
+    }
+
     static func bundled(version: String? = nil) -> WhatsNew? {
-        guard let url = Bundle.main.url(forResource: "CHANGELOG", withExtension: "md"),
-              let text = try? String(contentsOf: url, encoding: .utf8) else { return nil }
-        return parse(changelog: text, version: version)
+        bundledChangelog.flatMap { parse(changelog: $0, version: version) }
     }
 
     /// Only after an update: not on a new install, and not when the version
@@ -57,7 +88,7 @@ struct WhatsNew: Equatable {
         let last = defaults.string(forKey: lastVersionKey)
         defaults.set(current, forKey: lastVersionKey)
         guard isUpdate(lastVersion: last, current: current, usedBefore: usedBefore) else { return nil }
-        return bundled(version: current)
+        return bundledChangelog.flatMap { since(changelog: $0, after: last, upTo: current) }
     }
 }
 
