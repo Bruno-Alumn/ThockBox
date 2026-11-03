@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.2.2
 
 - **Spatial audio follows your head** with AirPods (Settings › Sound › Follow
   head movement): the keys stay in place when you turn your head. Needs
