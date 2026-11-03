@@ -402,6 +402,26 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertNil(state.automaticMute)
     }
 
+    func testQuietHoursSpanMidnight() {
+        XCTAssertTrue(AppState.isQuiet(minute: 23 * 60, start: 22 * 60, end: 8 * 60))
+        XCTAssertTrue(AppState.isQuiet(minute: 7 * 60 + 59, start: 22 * 60, end: 8 * 60))
+        XCTAssertFalse(AppState.isQuiet(minute: 8 * 60, start: 22 * 60, end: 8 * 60), "ends on the minute")
+        XCTAssertTrue(AppState.isQuiet(minute: 13 * 60, start: 12 * 60, end: 14 * 60))
+        XCTAssertFalse(AppState.isQuiet(minute: 15 * 60, start: 12 * 60, end: 14 * 60))
+        XCTAssertFalse(AppState.isQuiet(minute: 9 * 60, start: 9 * 60, end: 9 * 60), "an empty span is never quiet")
+    }
+
+    func testQuietHoursMute() {
+        let state = AppState(defaults: defaults)
+        let night = Calendar.current.startOfDay(for: Date()).addingTimeInterval(23 * 3600)
+        state.quietHours = true
+        state.updateAutomaticMute(now: night)
+        XCTAssertEqual(state.automaticMute, .quietHours)
+        state.updateAutomaticMute(now: night.addingTimeInterval(-12 * 3600))
+        XCTAssertNil(state.automaticMute, "11am")
+        XCTAssertEqual(AppState(defaults: defaults).quietStart, 22 * 60, "default 22:00 to 08:00")
+    }
+
     func testMutedAppMutesOnlyWhileInFront() {
         let state = AppState(defaults: defaults)
         state.setFrontApp(id: "com.example.game", name: "Game")
