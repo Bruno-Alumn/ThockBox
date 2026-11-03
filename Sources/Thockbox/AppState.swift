@@ -377,6 +377,49 @@ final class AppState: ObservableObject {
         idleTimeoutChoices.min { abs($0 - minutes) < abs($1 - minutes) } ?? 0
     }
 
+    /// Quiet every day between two times, in minutes after midnight; the
+    /// span can cross midnight (22:00 to 08:00).
+    @Published var quietHours: Bool {
+        didSet { defaults.set(quietHours, forKey: "quietHours"); updateQuietTimer() }
+    }
+    @Published var quietStart: Int {
+        didSet { defaults.set(quietStart, forKey: "quietStart"); updateQuietTimer() }
+    }
+    @Published var quietEnd: Int {
+        didSet { defaults.set(quietEnd, forKey: "quietEnd"); updateQuietTimer() }
+    }
+    private var quietTimer: Timer?
+
+    static func isQuiet(minute: Int, start: Int, end: Int) -> Bool {
+        if start == end { return false }
+        return start < end ? (minute >= start && minute < end) : (minute >= start || minute < end)
+    }
+
+    static func minuteOfDay(_ date: Date) -> Int {
+        let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
+    }
+
+    /// Re-checks at the next start or end, so the mute begins and ends on time.
+    private func updateQuietTimer(now: Date = Date()) {
+        quietTimer?.invalidate()
+        quietTimer = nil
+        updateAutomaticMute(now: now)
+        guard quietHours, quietStart != quietEnd else { return }
+        let calendar = Calendar.current
+        let next = [quietStart, quietEnd].compactMap { minute in
+            calendar.nextDate(after: now, matching: DateComponents(hour: minute / 60, minute: minute % 60),
+                              matchingPolicy: .nextTime)
+        }.min()
+        guard let next else { return }
+        let timer = Timer(fire: next.addingTimeInterval(1), interval: 0, repeats: false) { [weak self] _ in
+            self?.updateQuietTimer()
+        }
+        timer.tolerance = 5
+        RunLoop.main.add(timer, forMode: .common)
+        quietTimer = timer
+    }
+
     @Published var idleTimeoutMinutes: Int {
         didSet {
             defaults.set(idleTimeoutMinutes, forKey: "idleTimeoutMinutes")
@@ -525,6 +568,9 @@ final class AppState: ObservableObject {
         toggleShortcut = defaults.data(forKey: "toggleShortcut")
             .flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) } ?? .standard
         idleTimeoutMinutes = max(0, defaults.integer(forKey: "idleTimeoutMinutes"))
+        quietHours = defaults.bool(forKey: "quietHours")
+        quietStart = defaults.object(forKey: "quietStart") as? Int ?? 22 * 60
+        quietEnd = defaults.object(forKey: "quietEnd") as? Int ?? 8 * 60
         outputDeviceUID = defaults.string(forKey: "outputDeviceUID")
         volumeByDevice = defaults.dictionary(forKey: "volumeByDevice") as? [String: Float] ?? [:]
         stats = StatsStore(defaults: defaults)
@@ -541,6 +587,7 @@ final class AppState: ObservableObject {
     func startUp() {
         reloadPacks()
         rotateSetIfNewDay()
+        updateQuietTimer()
         engine.volume = volume
         engine.pitchVariationCents = pitchVariation
         engine.setTone(x: toneX, y: toneY)
@@ -609,6 +656,7 @@ final class AppState: ObservableObject {
         ) { [weak self] _ in
             self?.resumeIfDue()
             self?.rotateSetIfNewDay()
+            self?.updateQuietTimer()
         }
         klog.notice("startup: trusted=\(self.accessibilityTrusted, privacy: .public) packs=\(self.packs.count, privacy: .public) device=\(self.outputDeviceUID ?? "default", privacy: .public)")
 
@@ -1112,6 +1160,8 @@ final class AppState: ObservableObject {
             reason = .app(frontApp.name)
         } else if muteWhileGaming, let frontApp, frontApp.isGame {
             reason = .game(frontApp.name)
+        } else if quietHours && Self.isQuiet(minute: Self.minuteOfDay(now), start: quietStart, end: quietEnd) {
+            reason = .quietHours
         } else if idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes) {
             reason = .idle
         } else {
