@@ -93,6 +93,21 @@ struct KeystrokeStats {
         }
     }
 
+    /// The busiest kept day (today included) and its count; nil before any.
+    var bestDay: (date: String, count: Int)? {
+        var days = history
+        if !stamp.isEmpty, today > 0 { days[stamp] = today }
+        return days.max { ($0.value, $1.key) < ($1.value, $0.key) }.map { ($0.key, $0.value) }
+    }
+
+    /// Average keystrokes on the kept days you typed, not counting today
+    /// (it isn't over yet); nil until there's a finished day.
+    var dailyAverage: Int? {
+        let finished = history.values.filter { $0 > 0 }
+        guard !finished.isEmpty else { return nil }
+        return Int((Double(finished.reduce(0, +)) / Double(finished.count)).rounded())
+    }
+
     /// Every day kept (the last 30 plus today) as CSV, oldest first:
     /// "date,keystrokes" with ISO dates, for a spreadsheet.
     func csv() -> String {

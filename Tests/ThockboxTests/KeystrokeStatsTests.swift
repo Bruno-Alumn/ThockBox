@@ -53,6 +53,18 @@ final class KeystrokeStatsTests: XCTestCase {
         XCTAssertEqual(stats.typingSeconds, 0)
     }
 
+    func testBestDayAndDailyAverage() {
+        var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
+        XCTAssertNil(stats.bestDay)
+        XCTAssertNil(stats.dailyAverage)
+        for _ in 0..<100 { stats.record(now: day("2026-11-01")) }
+        for _ in 0..<300 { stats.record(now: day("2026-11-02")) }
+        for _ in 0..<50 { stats.record(now: day("2026-11-03")) }
+        XCTAssertEqual(stats.bestDay?.date, "2026-11-02")
+        XCTAssertEqual(stats.bestDay?.count, 300)
+        XCTAssertEqual(stats.dailyAverage, 200, "finished days only, not today's 50")
+    }
+
     func testCountsTodayAndTotal() {
         var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
         for _ in 0..<3 { stats.record(now: day("2026-11-01")) }
