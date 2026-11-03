@@ -136,7 +136,8 @@ loudness-matched like the built-in ones, and survive updates.
 - **General:** login, the menu bar icon (dimmed while sounds are off, if you
   like, and today's keystrokes or typing speed beside it), the app icon (Color or Graphite),
   a notification when an automation changes the switch set, updates, and
-  help, including the Welcome and What's New windows.
+  help, including the Welcome and What's New windows and exporting settings
+  to another Mac.
 
 </details>
 

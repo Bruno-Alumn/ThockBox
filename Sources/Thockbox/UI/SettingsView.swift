@@ -554,9 +554,41 @@ private struct GeneralPage: View {
                         Button("What's New…") { WhatsNewWindow.shared.show() }
                     }
                 }
+                LabeledContent("Settings") {
+                    HStack {
+                        Button("Export…", action: exportSettings)
+                        Button("Import…", action: importSettings)
+                    }
+                }
                 Link("Troubleshooting", destination: URL(string: "https://github.com/Bruno-Alumn/ThockBox#troubleshooting")!)
                 Link("Report a Problem…", destination: ProblemReport.url())
             }
+        }
+    }
+
+    /// Saves this Mac's settings to bring to another one.
+    private func exportSettings() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "ThockBox Settings.plist"
+        panel.allowedContentTypes = [.propertyList]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try SettingsTransfer.export(from: .standard).write(to: url)
+        } catch {
+            NSAlert(error: error).runModal()
+        }
+    }
+
+    /// Applies an exported file and restarts ThockBox to pick it all up.
+    private func importSettings() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.propertyList]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try SettingsTransfer.importSettings(Data(contentsOf: url), into: .standard)
+            SettingsTransfer.relaunch()
+        } catch {
+            NSAlert(error: error).runModal()
         }
     }
 }

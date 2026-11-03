@@ -7,6 +7,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 - **Quiet hours** (Settings › Muting): mute every day between two times,
   10 pm to 8 am unless you pick others.
+- **Export and import settings** (Settings › General › Help): bring your
+  setup to another Mac. Keystroke counts and things tied to this Mac
+  (output devices, calendars) stay put.
 - **A different set each day** (Settings › Sound, off by default): moves to
   the next switch set each new day.
 - **Best day and daily average** in Settings › Activity, over the last 30
