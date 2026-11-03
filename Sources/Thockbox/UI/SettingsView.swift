@@ -257,8 +257,12 @@ private struct KeysPage: View {
                 LabeledContent("Turn sounds on or off") {
                     ShortcutRecorder(state: state, rejected: $shortcutRejected)
                 }
+                LabeledContent("Next switch set") {
+                    ShortcutRecorder(state: state, rejected: $shortcutRejected,
+                                     shortcut: $state.nextSetShortcut, standard: nil)
+                }
             } header: {
-                Text("Shortcut")
+                Text("Shortcuts")
             } footer: {
                 if shortcutRejected {
                     formFooter(Shortcut.requirement)

@@ -234,18 +234,26 @@ struct ShortcutRecorder: View {
     @ObservedObject var state: AppState
     /// Set when a combination was refused, so the page can say what works.
     @Binding var rejected: Bool
+    /// Which shortcut this records; the on/off one unless given.
+    var shortcut: Binding<Shortcut?>? = nil
+    /// What Reset goes back to; nil means the shortcut can be cleared.
+    var standard: Shortcut? = .standard
     @State private var monitor: Any?
+
+    private var value: Binding<Shortcut?> {
+        shortcut ?? Binding(get: { state.toggleShortcut }, set: { if let new = $0 { state.toggleShortcut = new } })
+    }
 
     var body: some View {
         HStack {
-            Button(monitor == nil ? state.toggleShortcut.display : "Press keys…") {
+            Button(monitor == nil ? (value.wrappedValue?.display ?? "None") : "Press keys…") {
                 monitor == nil ? start() : stop()
             }
             .frame(minWidth: 90)
             .accessibilityLabel(monitor == nil ? "Shortcut" : "Recording shortcut")
-            .accessibilityValue(monitor == nil ? state.toggleShortcut.spoken : "Press the new keys")
-            if monitor == nil && state.toggleShortcut != .standard {
-                Button("Reset") { state.toggleShortcut = .standard }
+            .accessibilityValue(monitor == nil ? (value.wrappedValue?.spoken ?? "None") : "Press the new keys")
+            if monitor == nil && value.wrappedValue != standard {
+                Button(standard == nil ? "Clear" : "Reset") { value.wrappedValue = standard }
             }
         }
         .onDisappear(perform: stop)
@@ -262,8 +270,8 @@ struct ShortcutRecorder: View {
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             if event.keyCode == 53 { // Esc
                 stop()
-            } else if let shortcut = Shortcut(event: event) {
-                state.toggleShortcut = shortcut
+            } else if let recorded = Shortcut(event: event), !takenByTheOther(recorded) {
+                value.wrappedValue = recorded
                 stop()
             } else if !event.modifierFlags.intersection([.command, .control, .option]).isEmpty {
                 // A real attempt that would clash: say what works.
@@ -274,6 +282,11 @@ struct ShortcutRecorder: View {
             }
             return nil
         }
+    }
+
+    /// The on/off and next-set shortcuts can't be the same keys.
+    private func takenByTheOther(_ recorded: Shortcut) -> Bool {
+        shortcut == nil ? recorded == state.nextSetShortcut : recorded == state.toggleShortcut
     }
 
     private func stop() {

@@ -40,4 +40,29 @@ final class GlobalHotKeyTests: XCTestCase {
         state.isRecordingShortcut = false
         XCTAssertTrue(state.usesSystemHotKey)
     }
+
+    /// Each hotkey's handler sees every hotkey press; only the one whose ID
+    /// matches acts, so the next-set shortcut doesn't also toggle sounds.
+    func testOnlyTheMatchingHotKeyActs() throws {
+        var fired: [UInt32] = []
+        let first = GlobalHotKey(Shortcut(keyCode: 111, flags: [.control, .option, .shift, .command], key: "F12"), id: 1) {
+            fired.append(1)
+        }
+        let second = GlobalHotKey(Shortcut(keyCode: 103, flags: [.control, .option, .shift, .command], key: "F11"), id: 2) {
+            fired.append(2)
+        }
+        XCTAssertNotNil(first)
+        XCTAssertNotNil(second)
+        var event: EventRef?
+        XCTAssertEqual(CreateEvent(nil, OSType(kEventClassKeyboard), UInt32(kEventHotKeyPressed), 0, 0, &event), noErr)
+        // The first one's ID: handlers run newest first, so the second
+        // handler sees this press first and must pass it on.
+        var id = EventHotKeyID(signature: OSType(0x54686B62), id: 1)
+        XCTAssertEqual(SetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                                         MemoryLayout<EventHotKeyID>.size, &id), noErr)
+        SendEventToEventTarget(event, GetApplicationEventTarget())
+        ReleaseEvent(event)
+        XCTAssertEqual(fired, [1])
+        _ = (first, second)
+    }
 }

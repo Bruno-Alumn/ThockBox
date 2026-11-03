@@ -7,6 +7,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 - **Typing speed in the menu bar** (Settings › General): today's words per
   minute beside the icon, alone or after the keystroke count.
+- **A shortcut for the next switch set** (Settings › Keys, none by default),
+  and a Next ThockBox Switch Set action in Shortcuts.
 
 ## 1.3.0
 
