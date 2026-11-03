@@ -442,6 +442,7 @@ final class AppState: ObservableObject {
         enabled = defaults.bool(forKey: "enabled")
         volume = min(max(defaults.float(forKey: "volume"), 0), 1)
         selectedPackID = defaults.string(forKey: "pack") ?? "cream"
+        appPacks = defaults.dictionary(forKey: "appPacks") as? [String: String] ?? [:]
         notifySetChanges = defaults.bool(forKey: "notifySetChanges")
         toneX = min(max(defaults.float(forKey: "toneX"), -1), 1)
         toneY = min(max(defaults.float(forKey: "toneY"), -1), 1)
@@ -544,6 +545,12 @@ final class AppState: ObservableObject {
         ) { [weak self] _ in
             self?.stats.rollOver()
         }
+        for (name, active) in [(NSApplication.didBecomeActiveNotification, true),
+                               (NSApplication.didResignActiveNotification, false)] {
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                self?.ownAppActive = active
+            }
+        }
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { [weak self] _ in
@@ -621,6 +628,7 @@ final class AppState: ObservableObject {
     }
 
     func reloadPacks(bundled: URL = soundsDirectory(), added: URL = UserPacks.directory) {
+        engine.forgetDecodedSets()
         packs = Self.discoverPacks(bundled: bundled, added: added)
     }
 
@@ -639,9 +647,10 @@ final class AppState: ObservableObject {
         // change then makes SwiftUI rebuild the menu bar menu, which closes
         // it again (a plain click on the icon showed nothing).
         guard found.map(\.id) != packs.map(\.id) else { return }
-        let playing = currentPack?.id
+        let playing = playingPack?.id
+        engine.forgetDecodedSets()
         packs = found
-        if currentPack?.id != playing { applyPack(notify: false) }
+        if playingPack?.id != playing { applyPack(notify: false) }
     }
 
     /// Makes a switch set from the user's recordings and switches to it.
@@ -664,7 +673,7 @@ final class AppState: ObservableObject {
     var status: PlaybackStatus {
         .from(trusted: accessibilityTrusted, enabled: enabled, offUntil: offUntil,
               shortcut: toggleShortcut.display,
-              secureInputApp: secureInputApp, mute: automaticMute, pack: currentPack?.name ?? "")
+              secureInputApp: secureInputApp, mute: automaticMute, pack: playingPack?.name ?? "")
     }
 
     /// The selected set, or Cream (the default) if it's gone, e.g. a set of
@@ -672,6 +681,37 @@ final class AppState: ObservableObject {
     /// comes back if it's restored.
     var currentPack: SoundPack? {
         packs.first { $0.id == selectedPackID } ?? packs.first { $0.id == "cream" } ?? packs.first
+    }
+
+    /// What plays right now: the set chosen for the app in front, if it has
+    /// one (and it still exists), otherwise the selected set.
+    /// While ThockBox's own windows are in front (choosing a set, the Try it
+    /// field), it's always the selected set, so what you pick is what you hear.
+    var playingPack: SoundPack? {
+        if !ownAppActive, let app = frontApp, let id = appPacks[app.id],
+           let pack = packs.first(where: { $0.id == id }) {
+            return pack
+        }
+        return currentPack
+    }
+
+    /// Sets for particular apps: bundle ID to set ID.
+    @Published var appPacks: [String: String] {
+        didSet {
+            defaults.set(appPacks, forKey: "appPacks")
+            followFrontAppPack()
+        }
+    }
+
+    private var loadedPackID: String?
+    /// ThockBox's own window is active; set from NSApplication notifications.
+    private var ownAppActive = false {
+        didSet { if ownAppActive != oldValue { followFrontAppPack() } }
+    }
+
+    /// Loads the front app's set when it differs from what's loaded.
+    private func followFrontAppPack() {
+        if playingPack?.id != loadedPackID { applyPack(notify: false) }
     }
 
     /// Changes the set from outside ThockBox's own controls (a Focus,
@@ -688,11 +728,12 @@ final class AppState: ObservableObject {
     }
 
     private func applyPack(notify: Bool) {
-        guard let pack = currentPack else {
+        guard let pack = playingPack else {
             klog.error("no sound packs found")
             return
         }
         engine.load(pack: pack)
+        loadedPackID = pack.id
         klog.notice("loaded pack \(pack.id, privacy: .public)")
         if notify { playSwitchPreview() }
     }
@@ -933,6 +974,7 @@ final class AppState: ObservableObject {
         guard id != Bundle.main.bundleIdentifier else { return }
         frontApp = id.map { FrontApp(id: $0, name: name ?? $0, isGame: isGame) }
         updateAutomaticMute()
+        followFrontAppPack()
     }
 
     private func updateMicrophoneMonitor() {

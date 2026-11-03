@@ -77,6 +77,11 @@ final class SoundEngine {
 
     /// Decoded buffers keyed by "<packId>/<relativePath>".
     private(set) var buffers: [String: AVAudioPCMBuffer] = [:]
+    /// Recently used sets, decoded and leveled, so switching between apps
+    /// with their own sets is instant. Keyed by the set's folder.
+    private var decodedSets: [URL: [String: AVAudioPCMBuffer]] = [:]
+    private var decodedOrder: [URL] = []
+    private static let decodedSetLimit = 4
     private var currentPack: SoundPack?
     private var packGain: Float = 1
 
@@ -344,8 +349,22 @@ final class SoundEngine {
 
     // MARK: - Pack loading
 
+    /// Forgets decoded sets, after sets were added, removed or changed.
+    func forgetDecodedSets() {
+        decodedSets.removeAll()
+        decodedOrder.removeAll()
+    }
+
     func load(pack: SoundPack) {
         monoBuffers.removeAll()
+        if let cached = decodedSets[pack.url] {
+            buffers = cached
+            currentPack = pack
+            packGain = pow(10, (pack.manifest.gainDb ?? 0) / 20)
+            decodedOrder.removeAll { $0 == pack.url }
+            decodedOrder.append(pack.url)
+            return
+        }
         var newBuffers: [String: AVAudioPCMBuffer] = [:]
         var files = Set<String>()
         for entry in pack.manifest.keys.values {
@@ -370,6 +389,12 @@ final class SoundEngine {
             newBuffers.values.forEach { Self.scale($0, by: gain) }
         }
         buffers = newBuffers
+        decodedSets[pack.url] = newBuffers
+        decodedOrder.removeAll { $0 == pack.url }
+        decodedOrder.append(pack.url)
+        while decodedOrder.count > Self.decodedSetLimit {
+            decodedSets[decodedOrder.removeFirst()] = nil
+        }
         currentPack = pack
         packGain = pow(10, (pack.manifest.gainDb ?? 0) / 20)
         klog.notice("pack \(pack.id, privacy: .public): loudness gain \(20 * log10(gain), format: .fixed(precision: 1), privacy: .public) dB")
