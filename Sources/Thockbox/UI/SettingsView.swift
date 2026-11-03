@@ -392,6 +392,16 @@ private struct MutingPage: View {
 private struct ActivityPage: View {
     @ObservedObject var store: StatsStore
 
+    /// "Monday, Nov 2" for a "2026-11-02" stamp, or the stamp if it won't parse.
+    static func dayName(_ stamp: String) -> String {
+        let parser = DateFormatter()
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.dateFormat = "yyyy-MM-dd"
+        guard let date = parser.date(from: stamp) else { return stamp }
+        if Calendar.current.isDateInToday(date) { return "today" }
+        return date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
+    }
+
     var body: some View {
         Form {
             Section {
@@ -408,6 +418,17 @@ private struct ActivityPage: View {
                 Text("Keystrokes")
             } footer: {
                 formFooter("Typing speed counts five keystrokes as a word and leaves out pauses longer than two seconds.")
+            }
+
+            if let best = store.shown.bestDay {
+                Section("Last 30 Days") {
+                    LabeledContent("Best day") {
+                        Text("\(best.count.formatted()) on \(Self.dayName(best.date))")
+                    }
+                    if let average = store.shown.dailyAverage {
+                        LabeledContent("Daily average", value: average.formatted())
+                    }
+                }
             }
 
             Section("Last 7 Days") {

@@ -128,7 +128,8 @@ loudness-matched like the built-in ones, and survive updates.
   while the screen is shared or recorded; when the screen is locked, on
   speakers only (“headphones only”), and after 1 to 60 minutes without typing;
   and in apps you choose.
-- **Activity:** keystrokes today, in total, and over the last week, today's
+- **Activity:** keystrokes today, in total, over the last week, your best day
+  and daily average, today's
   typing speed, and a
   CSV export of the last 30 days.
 - **General:** login, the menu bar icon (dimmed while sounds are off, if you
