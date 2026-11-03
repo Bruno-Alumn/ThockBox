@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- The menu names the app when one app's sound mutes ThockBox ("Muted while
+  Spotify plays"), so you know what to uncheck under Playing now.
 - **What's New covers skipped versions:** updating from 1.2.0 straight to a
   later version shows what every version in between added.
 

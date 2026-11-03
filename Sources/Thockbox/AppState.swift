@@ -373,6 +373,8 @@ final class AppState: ObservableObject {
     /// The other apps holding sound output now (bundle IDs), while
     /// muteWhileMedia is on.
     @Published private(set) var playingApps: Set<String> = []
+    /// The playing app's name when it's the only one that counts.
+    private var mediaAppName: String?
     /// Apps whose sound doesn't count, for ones that keep audio open while
     /// silent (call apps, a browser after a video).
     @Published var ignoredMediaApps: Set<String> {
@@ -961,7 +963,10 @@ final class AppState: ObservableObject {
     /// app making it is ignored.
     func setPlayingApps(_ apps: Set<String>) {
         if playingApps != apps { playingApps = apps }
-        mediaPlaying = !apps.subtracting(ignoredMediaApps).isEmpty
+        let counting = apps.subtracting(ignoredMediaApps)
+        mediaPlaying = !counting.isEmpty
+        // Named here, not per key press: the lookup asks Launch Services.
+        mediaAppName = counting.count == 1 ? counting.first.map(MediaApps.name) : nil
         updateAutomaticMute()
     }
 
@@ -1004,7 +1009,7 @@ final class AppState: ObservableObject {
         } else if muteWhileSharing && screenShared {
             reason = .screenShared
         } else if muteWhileMedia && mediaPlaying {
-            reason = .media
+            reason = .media(mediaAppName)
         } else if headphonesOnly && outputIsSpeaker {
             reason = .speakers
         } else if let frontApp, mutedApps.contains(frontApp.id) {
