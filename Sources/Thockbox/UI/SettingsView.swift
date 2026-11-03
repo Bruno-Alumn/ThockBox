@@ -473,6 +473,7 @@ private struct GeneralPage: View {
                     Text("Shown in the Dock and ThockBox's windows.")
                 }
                 Toggle("Show today's keystrokes in the menu bar", isOn: $state.showKeystrokesInMenuBar)
+                Toggle("Show today's typing speed in the menu bar", isOn: $state.showSpeedInMenuBar)
                 Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)
                     .disabled(!state.showMenuBarIcon)
                 Toggle(isOn: $state.notifySetChanges) {
