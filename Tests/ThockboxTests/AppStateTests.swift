@@ -126,6 +126,14 @@ final class AppStateTests: XCTestCase {
         XCTAssertNil(AppState(defaults: defaults).nextSetShortcut)
     }
 
+    func testUntilMorningIsTheNextEightAM() {
+        let calendar = Calendar(identifier: .gregorian)
+        let evening = calendar.date(from: DateComponents(year: 2026, month: 11, day: 3, hour: 23))!
+        XCTAssertEqual(AppState.untilMorning(from: evening, calendar: calendar), 9 * 3600)
+        let earlyHours = calendar.date(from: DateComponents(year: 2026, month: 11, day: 4, hour: 2))!
+        XCTAssertEqual(AppState.untilMorning(from: earlyHours, calendar: calendar), 6 * 3600, "the same morning")
+    }
+
     func testStoredValuesAreClampedOnLoad() {
         defaults.set(5.0, forKey: "volume")
         defaults.set(-9.0, forKey: "toneX")
