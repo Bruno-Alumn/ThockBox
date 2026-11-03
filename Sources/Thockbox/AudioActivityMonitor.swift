@@ -38,8 +38,8 @@ final class AudioActivityMonitor {
     ]
 
     let activity: Activity
-    /// The other apps doing it now, by bundle ID ("" for a process without
-    /// one), so the user can see and ignore them.
+    /// The other apps doing it now, by bundle ID ("process:<name>" for a
+    /// process without one), so the user can see and ignore them.
     private(set) var apps: Set<String> = []
     var inUse: Bool { !apps.isEmpty }
     private let onChange: (Set<String>) -> Void
@@ -148,7 +148,8 @@ final class AudioActivityMonitor {
 
     static func processKey(_ pid: pid_t) -> String {
         var buffer = [CChar](repeating: 0, count: 256)
-        guard proc_name(pid, &buffer, UInt32(buffer.count)) > 0 else { return processPrefix }
+        // Without a readable name it's still listed (and can be ignored).
+        guard proc_name(pid, &buffer, UInt32(buffer.count)) > 0 else { return processPrefix + "process \(pid)" }
         return processPrefix + String(cString: buffer)
     }
 

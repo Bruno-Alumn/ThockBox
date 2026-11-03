@@ -39,7 +39,9 @@ struct WhatsNew: Equatable {
     /// first, so skipping a version (1.2.0 straight to 1.2.2) still shows
     /// what the skipped one brought. Just `current` when `last` is unknown.
     static func since(changelog: String, after last: String?, upTo current: String) -> WhatsNew? {
-        guard let last else { return parse(changelog: changelog, version: current) }
+        // An unknown or non-numeric last version (a beta, a dev build): just
+        // this version's notes.
+        guard let last, isNewer(last, than: "0") else { return parse(changelog: changelog, version: current) }
         let versions = changelog.components(separatedBy: .newlines)
             .filter { $0.hasPrefix("## ") }
             .map { String($0.dropFirst(3)).trimmingCharacters(in: .whitespaces) }

@@ -6,24 +6,34 @@ import Foundation
 /// head, like the system's own spatial audio. Where the head points when
 /// tracking starts counts as straight ahead.
 @available(macOS 14, *)
-final class HeadTracker {
+final class HeadTracker: NSObject, CMHeadphoneMotionManagerDelegate {
     private let manager = CMHeadphoneMotionManager()
     private var reference: CMAttitude?
+    private var wanted = false
     private let onTurn: (_ yaw: Float, _ pitch: Float) -> Void
 
     /// Called on the main queue with the listener's orientation in degrees.
     init(onTurn: @escaping (_ yaw: Float, _ pitch: Float) -> Void) {
         self.onTurn = onTurn
+        super.init()
+        // Headphones that connect later start tracking then; ones that
+        // disconnect put the listener back to facing ahead.
+        manager.delegate = self
     }
 
     deinit {
         manager.stopDeviceMotionUpdates()
     }
 
-    /// Starts following the head; the first reading becomes "ahead". Does
-    /// nothing when no connected headphones report motion.
+    /// Starts following the head; the first reading becomes "ahead". With
+    /// no headphones reporting motion yet, it starts when they connect.
     func start() {
-        guard manager.isDeviceMotionAvailable, !manager.isDeviceMotionActive else { return }
+        wanted = true
+        begin()
+    }
+
+    private func begin() {
+        guard wanted, manager.isDeviceMotionAvailable, !manager.isDeviceMotionActive else { return }
         reference = nil
         manager.startDeviceMotionUpdates(to: .main) { [weak self] motion, _ in
             guard let self, let attitude = motion?.attitude else { return }
@@ -37,7 +47,21 @@ final class HeadTracker {
         }
     }
 
+    func headphoneMotionManagerDidConnect(_ manager: CMHeadphoneMotionManager) {
+        DispatchQueue.main.async { [weak self] in self?.begin() }
+    }
+
+    func headphoneMotionManagerDidDisconnect(_ manager: CMHeadphoneMotionManager) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.manager.stopDeviceMotionUpdates()
+            reference = nil
+            onTurn(0, 0)
+        }
+    }
+
     func stop() {
+        wanted = false
         manager.stopDeviceMotionUpdates()
         reference = nil
     }

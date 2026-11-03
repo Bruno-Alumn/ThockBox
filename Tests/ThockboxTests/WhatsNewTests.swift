@@ -79,6 +79,8 @@ final class WhatsNewTests: XCTestCase {
                        ["Head tracking."])
         XCTAssertEqual(WhatsNew.since(changelog: threeReleases, after: nil, upTo: "1.2.2")?.items,
                        ["Head tracking."], "unknown last version: just this one")
+        XCTAssertEqual(WhatsNew.since(changelog: threeReleases, after: "1.3.0-beta1", upTo: "1.2.2")?.items,
+                       ["Head tracking."], "a non-numeric last version: just this one")
     }
 
     func testVersionOrder() {
