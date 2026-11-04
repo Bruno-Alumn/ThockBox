@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- The two cream keycaps: skirt, then the top face. -->
+  <g transform="translate(512 512) scale(1.04) translate(-520 -486)">
+    <g transform="translate(384 628) rotate(33)">
+      <rect x="-130" y="-90" width="260" height="180" rx="34" fill="#D6C6AF"/>
+      <rect x="-118" y="-82" width="212" height="140" rx="26" fill="#FDF4E6"/>
+    </g>
+    <g transform="translate(658 330) rotate(33)">
+      <rect x="-130" y="-90" width="260" height="180" rx="34" fill="#D6C6AF"/>
+      <rect x="-118" y="-82" width="212" height="140" rx="26" fill="#FDF4E6"/>
+    </g>
+  </g>
+</svg>
