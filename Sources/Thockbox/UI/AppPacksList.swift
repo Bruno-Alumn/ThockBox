@@ -19,11 +19,9 @@ struct AppPacksList: View {
                     Label {
                         Text(name(id))
                     } icon: {
-                        if let url {
-                            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                                .resizable()
-                                .frame(width: 16, height: 16)
-                        }
+                        Image(nsImage: url.map { NSWorkspace.shared.icon(forFile: $0.path) } ?? NSWorkspace.shared.icon(for: .applicationBundle))
+                            .resizable()
+                            .frame(width: 16, height: 16)
                     }
                     Spacer()
                     Picker("Set for \(name(id))", selection: Binding(
@@ -40,14 +38,18 @@ struct AppPacksList: View {
             .onDeleteCommand(perform: removeSelection)
             .overlay {
                 if state.appPacks.isEmpty {
-                    Text("No apps").foregroundStyle(.secondary)
+                    Text("No Apps").foregroundStyle(.secondary)
                 }
             }
             HStack(spacing: 4) {
-                Button(action: chooseApps) { Image(systemName: "plus") }
+                Button(action: chooseApps) {
+                    Image(systemName: "plus").frame(width: 20, height: 20).contentShape(Rectangle())
+                }
                     .help("Add apps")
                     .accessibilityLabel("Add Apps")
-                Button(action: removeSelection) { Image(systemName: "minus") }
+                Button(action: removeSelection) {
+                    Image(systemName: "minus").frame(width: 20, height: 20).contentShape(Rectangle())
+                }
                     .disabled(selection.isEmpty)
                     .help("Remove the selected apps")
                     .accessibilityLabel("Remove Selected Apps")

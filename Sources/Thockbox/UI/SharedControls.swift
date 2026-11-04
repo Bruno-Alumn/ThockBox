@@ -87,15 +87,15 @@ struct OutputDevicePicker: View {
                 // The picked device stays listed while it's unplugged; sound
                 // goes to the default until it's back.
                 if let uid = state.outputDeviceUID, !devices.contains(where: { $0.uid == uid }) {
-                    Text("\(state.outputDeviceName ?? "Picked Device") (Not Connected)").tag(uid)
+                    Text("\(state.outputDeviceName ?? "Unknown Device") (Not Connected)").tag(uid)
                 }
             }
             // Bluetooth headphones buffer ~100–250 ms on their own; say so,
             // since it reads as the app lagging.
             let latencyMs = Int((state.engine.outputLatency * 1000).rounded())
             if latencyMs >= 40 {
-                Text("This output delays sound by ~\(latencyMs) ms (typical for Bluetooth). Speakers or wired headphones respond instantly.")
-                    .font(.caption)
+                Text("This output delays sound by about \(latencyMs) ms, which is typical for Bluetooth. Speakers and wired headphones respond instantly.")
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -170,11 +170,9 @@ struct MutedAppsList: View {
                 Label {
                     Text(url.map(Self.appName) ?? id)
                 } icon: {
-                    if let url {
-                        Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                            .resizable()
-                            .frame(width: 16, height: 16)
-                    }
+                    Image(nsImage: url.map { NSWorkspace.shared.icon(forFile: $0.path) } ?? NSWorkspace.shared.icon(for: .applicationBundle))
+                        .resizable()
+                        .frame(width: 16, height: 16)
                 }
             }
             .listStyle(.bordered(alternatesRowBackgrounds: true))
@@ -182,15 +180,17 @@ struct MutedAppsList: View {
             .onDeleteCommand(perform: removeSelection)
             .overlay {
                 if state.mutedApps.isEmpty {
-                    Text("No apps").foregroundStyle(.secondary)
+                    Text("No Apps").foregroundStyle(.secondary)
                 }
             }
             HStack(spacing: 4) {
-                Button(action: chooseApps) { Image(systemName: "plus") }
+                Button(action: chooseApps) {
+                    Image(systemName: "plus").frame(width: 20, height: 20).contentShape(Rectangle())
+                }
                     .help("Add apps")
                     .accessibilityLabel("Add Apps")
                 Button(action: removeSelection) {
-                    Image(systemName: "minus")
+                    Image(systemName: "minus").frame(width: 20, height: 20).contentShape(Rectangle())
                 }
                 .disabled(selection.isEmpty)
                 .help("Remove the selected apps")
@@ -222,7 +222,7 @@ struct MutedAppsList: View {
         panel.allowedContentTypes = [.applicationBundle]
         panel.allowsMultipleSelection = true
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        panel.prompt = "Mute"
+        panel.prompt = state.playOnlyInListedApps ? "Add" : "Mute"
         guard panel.runModal() == .OK else { return }
         panel.urls.compactMap { Bundle(url: $0)?.bundleIdentifier }
             .forEach { state.setMuted(true, appID: $0) }
@@ -238,6 +238,8 @@ struct ShortcutRecorder: View {
     var shortcut: Binding<Shortcut?>? = nil
     /// What Reset goes back to; nil means the shortcut can be cleared.
     var standard: Shortcut? = .standard
+    /// What VoiceOver calls this recorder; matches its row title.
+    var title: String = "Turn sounds on or off"
     @State private var monitor: Any?
 
     private var value: Binding<Shortcut?> {
@@ -246,11 +248,13 @@ struct ShortcutRecorder: View {
 
     var body: some View {
         HStack {
-            Button(monitor == nil ? (value.wrappedValue?.display ?? "None") : "Press keys…") {
+            Button {
                 monitor == nil ? start() : stop()
+            } label: {
+                Text(monitor == nil ? (value.wrappedValue?.display ?? "None") : "Press keys…")
+                    .frame(minWidth: 76)
             }
-            .frame(minWidth: 90)
-            .accessibilityLabel(monitor == nil ? "Shortcut" : "Recording shortcut")
+            .accessibilityLabel(monitor == nil ? title : "Recording \(title)")
             .accessibilityValue(monitor == nil ? (value.wrappedValue?.spoken ?? "None") : "Press the new keys")
             if monitor == nil && value.wrappedValue != standard {
                 Button(standard == nil ? "Clear" : "Reset") { value.wrappedValue = standard }

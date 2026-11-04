@@ -211,7 +211,7 @@ final class AppStateTests: XCTestCase {
         state.turnOff(for: 3600, now: now)
         XCTAssertFalse(state.enabled)
         XCTAssertEqual(state.offUntil, now.addingTimeInterval(3600))
-        XCTAssertTrue(state.status.title.hasPrefix("Off until "))
+        XCTAssertTrue(state.status.title.hasPrefix("Sounds off until "))
 
         state.resumeIfDue(now: now.addingTimeInterval(1800))
         XCTAssertFalse(state.enabled, "not yet")

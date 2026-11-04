@@ -116,6 +116,7 @@ private struct SettingsSidebarHeader: View {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
                 .frame(width: 40, height: 40)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text("ThockBox")
                     .font(.headline)

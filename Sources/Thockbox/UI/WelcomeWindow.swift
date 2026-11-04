@@ -33,6 +33,7 @@ final class WelcomeWindow: NSObject, NSWindowDelegate {
         host.sizingOptions = .preferredContentSize
         let window = NSWindow(contentViewController: host)
         window.title = "Welcome to ThockBox"
+        window.titleVisibility = .hidden
         window.styleMask = [.titled, .closable]
         window.isReleasedWhenClosed = false
         window.delegate = self
@@ -60,18 +61,22 @@ struct WelcomeView: View {
                 Section {
                     LabeledContent {
                         if state.accessibilityTrusted {
-                            Label("Allowed", systemImage: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
+                            Label {
+                                Text("Allowed")
+                            } icon: {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                            }
                         } else {
-                            Button("Open System Settings…") { Permissions.openSystemSettings() }
+                            Button("Open System Settings") { Permissions.openSystemSettings() }
                         }
                     } label: {
-                        Label { Text("Keyboard access") } icon: {
+                        Label { Text("Accessibility access") } icon: {
                             SettingsIcon(symbol: "accessibility", color: .blue)
                         }
                     }
                 } header: {
-                    Text("1. Allow Keyboard Access")
+                    Text("1. Allow Accessibility Access")
                 } footer: {
                     formFooter("macOS needs your permission for ThockBox to hear key presses in other apps. Nothing you type is stored or sent anywhere.")
                 }

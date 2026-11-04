@@ -116,6 +116,7 @@ final class WhatsNewWindow: NSObject, NSWindowDelegate {
         host.sizingOptions = .preferredContentSize
         let window = NSWindow(contentViewController: host)
         window.title = "What's New in ThockBox"
+        window.titleVisibility = .hidden
         window.styleMask = [.titled, .closable]
         window.isReleasedWhenClosed = false
         window.delegate = self

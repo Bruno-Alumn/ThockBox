@@ -13,8 +13,7 @@ enum MediaApps {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
             return bundleID
         }
-        return FileManager.default.displayName(atPath: url.path)
-            .replacingOccurrences(of: ".app", with: "")
+        return MutedAppsList.appName(url)
     }
 
     /// What the menu's label says: the apps that count now, by name if one.

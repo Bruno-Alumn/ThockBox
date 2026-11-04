@@ -85,11 +85,11 @@ enum PlaybackStatus: Equatable {
     var title: String {
         switch self {
         case .needsAccess: "Needs Accessibility access"
-        case .off(_, let until?): "Off until \(until.formatted(date: .omitted, time: .shortened))"
-        case .off: "Off"
+        case .off(_, let until?): "Sounds off until \(until.formatted(date: .omitted, time: .shortened))"
+        case .off: "Sounds off"
         case .blocked(let app): "Paused by \(app)"
         case .muted(.call): "Muted during a call"
-        case .muted(.meeting): "Muted during a meeting"
+        case .muted(.meeting): "Muted during a calendar event"
         case .muted(.screenLocked): "Muted while locked"
         case .muted(.media(let app?)): "Muted while \(app) plays"
         case .muted(.media): "Muted while media plays"
@@ -98,7 +98,7 @@ enum PlaybackStatus: Equatable {
         case .muted(.app(let name)): "Muted in \(name)"
         case .muted(.game(let name)): "Muted while playing \(name)"
         case .muted(.idle): "Muted after inactivity"
-        case .muted(.quietHours): "Muted for quiet hours"
+        case .muted(.quietHours): "Muted during quiet hours"
         case .playing(let pack): "Playing \(pack)"
         }
     }
