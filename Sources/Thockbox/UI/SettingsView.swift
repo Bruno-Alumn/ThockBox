@@ -77,11 +77,27 @@ private struct AttentionSection: View {
                         .foregroundStyle(.orange)
                 }
                 if status == .needsAccess {
-                    Button("Open System Settings") { Permissions.openSystemSettings() }
-                        .frame(maxWidth: .infinity, alignment: .trailing)
+                    HStack {
+                        Button("Reset…", action: confirmAccessibilityReset)
+                        Button("Open System Settings") { Permissions.openSystemSettings() }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
         }
+    }
+
+    /// Already switched on in System Settings but still not allowed: a stale
+    /// entry macOS won't match to this build. Clearing it brings the prompt
+    /// back.
+    private func confirmAccessibilityReset() {
+        let alert = NSAlert()
+        alert.messageText = "Reset Accessibility Access?"
+        alert.informativeText = "Use this when ThockBox is switched on in System Settings › Privacy & Security › Accessibility but still can't hear keys. ThockBox is removed from that list, then asks to be allowed again."
+        alert.addButton(withTitle: "Reset").hasDestructiveAction = true
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        Permissions.reset()
     }
 }
 
@@ -98,9 +114,9 @@ private struct SoundPage: View {
                 Toggle("Play keyboard sounds", isOn: $state.enabled)
             } footer: {
                 if let until = state.offUntil {
-                    formFooter("Off until \(until.formatted(date: .omitted, time: .shortened)), then back on by itself.")
+                    formFooter("Back on at \(until.formatted(date: .omitted, time: .shortened)).")
                 } else {
-                    formFooter("Turn sounds on or off anytime with \(state.toggleShortcut.display).")
+                    formFooter("Shortcut: \(state.toggleShortcut.display)")
                 }
             }
 
@@ -125,15 +141,7 @@ private struct SoundPage: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
             } footer: {
-                formFooter("Choosing a set plays a sample of it. Add a Mechvibes sound pack, a set exported from ThockBox or a folder of your own recordings. You can also drop one on this window.")
-            }
-
-            Section {
-                AppPacksList(state: state)
-            } header: {
-                Text("Sets for Specific Apps")
-            } footer: {
-                formFooter("These apps play their own set while they're in front, say a quieter one in Terminal. Every other app plays the set above.")
+                formFooter("Add a Mechvibes pack or a folder of recordings, or drop one on this window.")
             }
 
             Section {
@@ -152,11 +160,7 @@ private struct SoundPage: View {
                     Toggle("Follow head movement (AirPods)", isOn: $state.followHeadMovement)
                 }
             } footer: {
-                if #available(macOS 14, *), state.spatialAudio {
-                    formFooter("Each output device keeps its own volume. Spatial audio places each key around you in 3D. Following head movement keeps the keys in place as you turn your head.")
-                } else {
-                    formFooter("Each output device keeps its own volume. Spatial audio places each key around you in 3D.")
-                }
+                formFooter("Each output device keeps its own volume.")
             }
 
             Section {
@@ -196,7 +200,15 @@ private struct SoundPage: View {
             } header: {
                 Text("Tone")
             } footer: {
-                formFooter("Variation changes the pitch of each key a little, like a real keyboard.")
+                formFooter("Variation gives each key a slightly different pitch.")
+            }
+
+            Section {
+                AppPacksList(state: state)
+            } header: {
+                Text("Sets for Specific Apps")
+            } footer: {
+                formFooter("These apps play their own set while they're in front.")
             }
         }
         // Dropping a pack or a folder of recordings adds it, like the button.
@@ -306,22 +318,28 @@ private struct KeysPage: View {
                     set: { state.muteModifiers = !$0 }))
                 Toggle("Function keys", isOn: $state.functionKeysAudible)
                 Toggle("Key releases", isOn: $state.keyReleaseSounds)
-                Toggle("Keys typed by other apps", isOn: $state.generatedKeySounds)
+                Toggle(isOn: $state.generatedKeySounds) {
+                    Text("Keys typed by other apps")
+                    Text("From text expanders, password managers and remote control.")
+                }
                 Toggle("Mouse clicks", isOn: $state.mouseClicks)
                 Toggle("Scrolling", isOn: $state.scrollSounds)
             } header: {
                 Text("Also Play Sounds For")
             } footer: {
-                formFooter("Letters, numbers, Space, Return and the other typing keys always play. Keys typed by other apps come from text expanders, password managers and remote control, not your keyboard. Scrolling ticks softly, like a mouse wheel.")
+                formFooter("Letters, numbers and other typing keys always play.")
             }
 
             Section {
                 Toggle("Typewriter ding on Return", isOn: $state.returnDing)
-                Toggle("Trackpad tap with each key", isOn: $state.hapticFeedback)
+                Toggle(isOn: $state.hapticFeedback) {
+                    Text("Trackpad tap with each key")
+                    if state.hapticFeedback {
+                        Text("Needs a Force Touch trackpad.")
+                    }
+                }
             } header: {
                 Text("Extras")
-            } footer: {
-                formFooter("The trackpad tap needs a Force Touch trackpad. With scrolling sounds on, each scroll tick taps too.")
             }
         }
     }
@@ -361,6 +379,17 @@ private struct MutingPage: View {
             set: { minutes.wrappedValue = AppState.minuteOfDay($0) })
     }
 
+    /// One line for each Mute During option that's on, where it isn't obvious.
+    private var muteDuringNote: String? {
+        let notes = [
+            state.muteDuringMeetings ? "All-day, free and declined events don't count." : nil,
+            ScreenCapture.isAvailable && state.muteWhileSharing ? "Screen sharing includes mirroring and apps that watch the screen." : nil,
+            AudioActivityMonitor.isSupported && state.muteWhileMedia ? "If an app keeps its sound open while silent, uncheck it under Playing now." : nil,
+            state.muteWhileGaming ? "Games are apps filed under Games or installed by Steam." : nil,
+        ].compactMap { $0 }
+        return notes.isEmpty ? nil : notes.joined(separator: " ")
+    }
+
     var body: some View {
         Form {
             Section {
@@ -389,13 +418,9 @@ private struct MutingPage: View {
             } header: {
                 Text("Mute During")
             } footer: {
-                formFooter((AudioActivityMonitor.isSupported
-                      ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts. Some apps, like call apps or a browser just after a video, keep their sound open while silent. Uncheck them under Playing now. "
-                      : "")
-                     + "Calendar events don't count when they last all day, are marked free or you declined them. A game is an app filed under Games, or one installed by Steam."
-                     + (ScreenCapture.isAvailable
-                        ? " Screen sharing also counts screen mirroring and apps that watch the screen in the background."
-                        : ""))
+                if let note = muteDuringNote {
+                    formFooter(note)
+                }
             }
 
             Section {
@@ -424,7 +449,9 @@ private struct MutingPage: View {
             } header: {
                 Text("Mute When")
             } footer: {
-                formFooter("Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
+                if state.headphonesOnly {
+                    formFooter("Speakers include displays and AirPlay. Bluetooth, USB and wired audio still play.")
+                }
             }
 
             if PlaceMonitor.isAvailable {
@@ -445,7 +472,9 @@ private struct MutingPage: View {
                 } header: {
                     Text(state.muteByPlace && state.playOnlyAtPlaces ? "Play Only at These Places" : "Mute at These Places")
                 } footer: {
-                    formFooter("Add a place while you're there, like the office or a library. macOS watches your places and tells ThockBox only when you arrive or leave, so it uses very little battery. Your location stays on this Mac, except that adding a place asks Apple for its address to name it.")
+                    if state.muteByPlace {
+                        formFooter("Add a place while you're there. Your location stays on this Mac, except that adding a place asks Apple for its address to name it.")
+                    }
                 }
             }
 
@@ -458,9 +487,9 @@ private struct MutingPage: View {
             } header: {
                 Text(state.playOnlyInListedApps ? "Play Only in These Apps" : "Mute in These Apps")
             } footer: {
-                formFooter(state.playOnlyInListedApps
-                    ? "ThockBox plays only while one of these apps is in front, and stays quiet everywhere else. The menu bar menu can add the app you're in."
-                    : "ThockBox stays quiet while one of these apps is in front. The menu bar menu can also mute the app you're in.")
+                if state.playOnlyInListedApps {
+                    formFooter("Every other app stays quiet.")
+                }
             }
         }
     }
@@ -496,7 +525,7 @@ private struct ActivityPage: View {
             } header: {
                 Text("Keystrokes")
             } footer: {
-                formFooter("Typing speed counts five keystrokes as a word and leaves out pauses longer than two seconds.")
+                formFooter("Typing speed counts five keystrokes as a word and leaves out pauses over two seconds. Only counts are kept, never what you type.")
             }
 
             if store.shown.today > 0 {
@@ -507,7 +536,7 @@ private struct ActivityPage: View {
 
             Section("Last 7 Days") {
                 if store.shown.lastWeek().allSatisfy({ $0.count == 0 }) {
-                    Text("Nothing yet. Start typing and this fills in day by day.")
+                    Text("Nothing yet.")
                         .foregroundStyle(.secondary)
                 } else {
                     KeystrokeChart(store: store)
@@ -535,11 +564,9 @@ private struct ActivityPage: View {
             }
 
             Section {
-                LabeledContent("Daily counts") {
-                    Button("Export…") { exportCSV() }
+                LabeledContent("Last 30 days") {
+                    Button("Export as CSV…") { exportCSV() }
                 }
-            } footer: {
-                formFooter("A CSV of the last 30 days, for a spreadsheet. Only counts are kept, never what you typed.")
             }
         }
     }
@@ -578,7 +605,6 @@ private struct GeneralPage: View {
                     ForEach(DockIconStyle.allCases) { Text($0.title).tag($0) }
                 } label: {
                     Text("App icon")
-                    Text("Shown in the Dock and ThockBox's windows.")
                 }
                 Toggle(isOn: $state.notifySetChanges) {
                     Text("Notify when the switch set changes")
@@ -593,21 +619,19 @@ private struct GeneralPage: View {
                         Text("Open ThockBox from Applications or Spotlight to get back here.")
                     }
                 }
-                Picker(selection: $state.iconClickAction) {
-                    ForEach(IconClickAction.allCases) { Text($0.title).tag($0) }
-                } label: {
-                    Text("Clicking the icon")
-                    if state.iconClickAction == .toggleSounds {
-                        Text("Control-click opens the menu.")
+                if state.showMenuBarIcon {
+                    Picker(selection: $state.iconClickAction) {
+                        ForEach(IconClickAction.allCases) { Text($0.title).tag($0) }
+                    } label: {
+                        Text("Clicking the icon")
+                        if state.iconClickAction == .toggleSounds {
+                            Text("Control-click opens the menu.")
+                        }
                     }
+                    Toggle("Show today's keystrokes", isOn: $state.showKeystrokesInMenuBar)
+                    Toggle("Show today's typing speed", isOn: $state.showSpeedInMenuBar)
+                    Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)
                 }
-                .disabled(!state.showMenuBarIcon)
-                Toggle("Show today's keystrokes", isOn: $state.showKeystrokesInMenuBar)
-                    .disabled(!state.showMenuBarIcon)
-                Toggle("Show today's typing speed", isOn: $state.showSpeedInMenuBar)
-                    .disabled(!state.showMenuBarIcon)
-                Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)
-                    .disabled(!state.showMenuBarIcon)
             }
 
             Section {
@@ -628,21 +652,6 @@ private struct GeneralPage: View {
             }
 
             Section("Help") {
-                LabeledContent("Accessibility access") {
-                    if state.accessibilityTrusted {
-                        Label {
-                            Text("Allowed")
-                        } icon: {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                        }
-                    } else {
-                        HStack {
-                            Button("Open System Settings") { Permissions.openSystemSettings() }
-                            Button("Reset…", action: confirmAccessibilityReset)
-                        }
-                    }
-                }
                 LabeledContent("Getting started") {
                     HStack {
                         Button("Welcome") { WelcomeWindow.shared.show() }
@@ -659,19 +668,6 @@ private struct GeneralPage: View {
                 Link("Report a Problem…", destination: ProblemReport.url())
             }
         }
-    }
-
-    /// Already switched on in System Settings but still not allowed: a stale
-    /// entry macOS won't match to this build. Clearing it brings the prompt
-    /// back.
-    private func confirmAccessibilityReset() {
-        let alert = NSAlert()
-        alert.messageText = "Reset Accessibility Access?"
-        alert.informativeText = "Use this when ThockBox is switched on in System Settings › Privacy & Security › Accessibility but still can't hear keys. ThockBox is removed from that list, then asks to be allowed again."
-        alert.addButton(withTitle: "Reset").hasDestructiveAction = true
-        alert.addButton(withTitle: "Cancel")
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-        Permissions.reset()
     }
 
     /// Saves this Mac's settings to bring to another one.
