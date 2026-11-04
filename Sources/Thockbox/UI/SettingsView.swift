@@ -288,12 +288,13 @@ private struct KeysPage: View {
                     set: { state.muteModifiers = !$0 }))
                 Toggle("Function keys", isOn: $state.functionKeysAudible)
                 Toggle("Key releases", isOn: $state.keyReleaseSounds)
+                Toggle("Keys typed by other apps", isOn: $state.generatedKeySounds)
                 Toggle("Mouse clicks", isOn: $state.mouseClicks)
                 Toggle("Scrolling", isOn: $state.scrollSounds)
             } header: {
                 Text("Also Play Sounds For")
             } footer: {
-                formFooter("Letters, numbers, Space, Return and the other typing keys always play. Scrolling ticks softly, like a mouse wheel.")
+                formFooter("Letters, numbers, Space, Return and the other typing keys always play. Keys typed by other apps come from text expanders, password managers and remote control, not your keyboard. Scrolling ticks softly, like a mouse wheel.")
             }
 
             Section {

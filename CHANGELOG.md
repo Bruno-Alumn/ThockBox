@@ -7,6 +7,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 - **Today in the menu:** the menu bar menu shows today's keystrokes and
   typing speed under the status line.
+- **Keys typed by other apps** (text expanders, password managers, remote
+  control) can be left silent and uncounted: Settings › Keys.
 
 ## 1.8.1
 

@@ -170,6 +170,14 @@ final class AppState: ObservableObject {
     @Published var keyReleaseSounds: Bool {
         didSet { defaults.set(keyReleaseSounds, forKey: "keyReleaseSounds") }
     }
+    /// Keys another app types (text expanders, password managers, remote
+    /// control). Off drops them before they play or count.
+    @Published var generatedKeySounds: Bool {
+        didSet {
+            defaults.set(generatedKeySounds, forKey: "generatedKeySounds")
+            listener.ignoresGeneratedKeys = !generatedKeySounds
+        }
+    }
     @Published var mouseClicks: Bool {
         didSet {
             defaults.set(mouseClicks, forKey: "mouseClicks")
@@ -583,6 +591,7 @@ final class AppState: ObservableObject {
             "toneX": 0.0, "toneY": 0.0, "pitchVariation": 60.0,
             "muteModifiers": false, "functionKeysAudible": true,
             "returnDing": false, "mouseClicks": false, "keyReleaseSounds": true,
+            "generatedKeySounds": true,
             "hapticFeedback": false, "scrollSounds": false,
             "launchAtLogin": false, "showMenuBarIcon": true, "dimIconWhenOff": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
             "muteDuringMeetings": false,
@@ -603,6 +612,7 @@ final class AppState: ObservableObject {
         returnDing = defaults.bool(forKey: "returnDing")
         mouseClicks = defaults.bool(forKey: "mouseClicks")
         keyReleaseSounds = defaults.bool(forKey: "keyReleaseSounds")
+        generatedKeySounds = defaults.bool(forKey: "generatedKeySounds")
         hapticFeedback = defaults.bool(forKey: "hapticFeedback")
         scrollSounds = defaults.bool(forKey: "scrollSounds")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
@@ -704,6 +714,7 @@ final class AppState: ObservableObject {
         accessibilityTrusted = Permissions.requestIfNeeded()
         listener.listensToMouse = mouseClicks
         listener.listensToScroll = scrollSounds
+        listener.ignoresGeneratedKeys = !generatedKeySounds
         listener.start()
         reconcileLoginItem()
         NotificationCenter.default.addObserver(

@@ -24,6 +24,15 @@ final class KeyListenerTests: XCTestCase {
         listener.stop()
         XCTAssertTrue(listener.mouseMonitors.isEmpty, "stop removes them")
     }
+
+    func testKeysPostedByAProcessAreGenerated() {
+        let posted = CGEvent(keyboardEventSource: CGEventSource(stateID: .hidSystemState),
+                             virtualKey: 0, keyDown: true)!
+        XCTAssertTrue(KeyListener.isGenerated(posted), "carries this test's process ID")
+        posted.setIntegerValueField(.eventSourceUnixProcessID, value: 0)
+        XCTAssertFalse(KeyListener.isGenerated(posted), "no process: from a keyboard")
+        XCTAssertFalse(KeyListener.isGenerated(nil))
+    }
 }
 
 final class ModifierDirectionTests: XCTestCase {
