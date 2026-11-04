@@ -284,9 +284,9 @@ struct ShortcutRecorder: View {
         }
     }
 
-    /// The on/off and next-set shortcuts can't be the same keys.
+    /// Two shortcuts can't be the same keys.
     private func takenByTheOther(_ recorded: Shortcut) -> Bool {
-        shortcut == nil ? recorded == state.nextSetShortcut : recorded == state.toggleShortcut
+        recorded != value.wrappedValue && state.allShortcuts.contains(recorded)
     }
 
     private func stop() {
