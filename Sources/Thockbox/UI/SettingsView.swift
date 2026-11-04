@@ -125,7 +125,7 @@ private struct SoundPage: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
             } footer: {
-                formFooter("Choosing a set plays a sample of it. Add a Mechvibes sound pack, a set exported from ThockBox, or a folder of your own recordings. You can also drop one on this window.")
+                formFooter("Choosing a set plays a sample of it. Add a Mechvibes sound pack, a set exported from ThockBox or a folder of your own recordings. You can also drop one on this window.")
             }
 
             Section {
@@ -392,7 +392,7 @@ private struct MutingPage: View {
                 formFooter((AudioActivityMonitor.isSupported
                       ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts. Some apps, like call apps or a browser just after a video, keep their sound open while silent. Uncheck them under Playing now. "
                       : "")
-                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam."
+                     + "Calendar events don't count when they last all day, are marked free or you declined them. A game is an app filed under Games, or one installed by Steam."
                      + (ScreenCapture.isAvailable
                         ? " Screen sharing also counts screen mirroring and apps that watch the screen in the background."
                         : ""))
@@ -445,7 +445,7 @@ private struct MutingPage: View {
                 } header: {
                     Text(state.muteByPlace && state.playOnlyAtPlaces ? "Play Only at These Places" : "Mute at These Places")
                 } footer: {
-                    formFooter("Add a place while you're there, like the office or a library. macOS watches your places and tells ThockBox only when you arrive or leave, so it uses very little battery. Your location stays on this Mac. Adding a place looks up its address with Apple to name it.")
+                    formFooter("Add a place while you're there, like the office or a library. macOS watches your places and tells ThockBox only when you arrive or leave, so it uses very little battery. Your location stays on this Mac, except that adding a place asks Apple for its address to name it.")
                 }
             }
 
@@ -630,7 +630,12 @@ private struct GeneralPage: View {
             Section("Help") {
                 LabeledContent("Accessibility access") {
                     if state.accessibilityTrusted {
-                        Text("Allowed")
+                        Label {
+                            Text("Allowed")
+                        } icon: {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                        }
                     } else {
                         HStack {
                             Button("Open System Settings") { Permissions.openSystemSettings() }

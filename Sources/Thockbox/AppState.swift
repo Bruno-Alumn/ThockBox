@@ -1299,7 +1299,7 @@ final class AppState: ObservableObject {
             guard let location else {
                 return done(self.locationAccess == .denied
                     ? "ThockBox can't use your location. Allow it in System Settings › Privacy & Security › Location Services."
-                    : "Couldn't find where this Mac is. Check that Wi-Fi is on, then try again.")
+                    : "Couldn't find your location. Check that Wi-Fi is on, then try again.")
             }
             CLGeocoder().reverseGeocodeLocation(location) { [weak self] placemarks, _ in
                 DispatchQueue.main.async {
