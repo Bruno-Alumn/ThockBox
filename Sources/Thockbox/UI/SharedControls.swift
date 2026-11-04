@@ -249,7 +249,20 @@ struct ShortcutRecorder: View {
     }
 
     var body: some View {
-        HStack {
+        HStack(spacing: 6) {
+            // Before the recorder, so every recorder on the page stays in one
+            // column whether or not it has something to clear.
+            if monitor == nil && value.wrappedValue != standard {
+                Button {
+                    value.wrappedValue = standard
+                } label: {
+                    Image(systemName: standard == nil ? "xmark.circle.fill" : "arrow.counterclockwise.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.borderless)
+                .help(standard == nil ? "Clear" : "Reset to \(standard?.display ?? "")")
+                .accessibilityLabel(standard == nil ? "Clear \(title)" : "Reset \(title)")
+            }
             Button {
                 monitor == nil ? start() : stop()
             } label: {
@@ -258,9 +271,6 @@ struct ShortcutRecorder: View {
             }
             .accessibilityLabel(monitor == nil ? title : "Recording \(title)")
             .accessibilityValue(monitor == nil ? (value.wrappedValue?.spoken ?? "None") : "Press the new keys")
-            if monitor == nil && value.wrappedValue != standard {
-                Button(standard == nil ? "Clear" : "Reset") { value.wrappedValue = standard }
-            }
         }
         .onDisappear(perform: stop)
         // Recording turns the shortcut off; don't leave it off while the
