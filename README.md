@@ -57,7 +57,7 @@ or endorsed by Klack or its developer.
 - Mutes itself during calls, meetings and games, while other apps play
   sound or you share your screen, when the screen locks, on speakers, or in
   apps you choose.
-- Turn it off for 15 minutes, an hour, four hours or until morning; it comes
+- Turn it off for 15 minutes, an hour, four hours or until 8 am; it comes
   back by itself.
 - Or make a click on the menu bar icon turn sounds on or off.
 - Toggle anywhere with <kbd>⌃</kbd><kbd>⌘</kbd><kbd>K</kbd>, Shortcuts or AppleScript.

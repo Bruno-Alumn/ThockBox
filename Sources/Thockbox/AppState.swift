@@ -79,7 +79,7 @@ final class AppState: ObservableObject {
         setOffUntil(now.addingTimeInterval(duration))
     }
 
-    /// Seconds until the next 8 am, for Turn Off For › Until Tomorrow Morning.
+    /// Seconds until the next 8 am, for Turn Off For › Until 8 AM.
     static func untilMorning(from now: Date = Date(), calendar: Calendar = .current) -> TimeInterval {
         let morning = calendar.nextDate(after: now, matching: DateComponents(hour: 8, minute: 0),
                                         matchingPolicy: .nextTime) ?? now.addingTimeInterval(12 * 3600)
@@ -709,6 +709,12 @@ final class AppState: ObservableObject {
             self?.stats.rollOver()
             self?.rotateSetIfNewDay()
         }
+        // Quiet hours are wall-clock times: follow time zone and clock changes.
+        for name in [Notification.Name.NSSystemTimeZoneDidChange, .NSSystemClockDidChange] {
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                self?.updateQuietTimer()
+            }
+        }
         for (name, active) in [(NSApplication.didBecomeActiveNotification, true),
                                (NSApplication.didResignActiveNotification, false)] {
             NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
@@ -718,6 +724,10 @@ final class AppState: ObservableObject {
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { [weak self] _ in
+            // A sleep can span a whole quiet night or a day change: start
+            // fresh rather than carry an override or yesterday's counts over.
+            self?.overriddenMute = nil
+            self?.stats.rollOver()
             self?.resumeIfDue()
             self?.rotateSetIfNewDay()
             self?.updateQuietTimer()
@@ -1219,34 +1229,24 @@ final class AppState: ObservableObject {
 
     /// `now` is a parameter so tests can check the idle timeout without waiting.
     func updateAutomaticMute(now: Date = Date()) {
-        var reason: AutomaticMute?
-        if muteDuringCalls && microphoneInUse {
-            reason = .call
-        } else if muteDuringMeetings && inCalendarEvent {
-            reason = .meeting
-        } else if muteWhenLocked && screenLocked {
-            reason = .screenLocked
-        } else if muteWhileSharing && screenShared {
-            reason = .screenShared
-        } else if muteWhileMedia && mediaPlaying {
-            reason = .media(mediaAppName)
-        } else if headphonesOnly && outputIsSpeaker {
-            reason = .speakers
-        } else if let frontApp, listMutes(frontApp.id) {
-            reason = .app(frontApp.name)
-        } else if muteWhileGaming, let frontApp, frontApp.isGame {
-            reason = .game(frontApp.name)
-        } else if quietHours && Self.isQuiet(minute: Self.minuteOfDay(now), start: quietStart, end: quietEnd) {
-            reason = .quietHours
-        } else if idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes) {
-            reason = .idle
-        } else {
-            reason = nil
+        // Every reason that applies now, most important first.
+        var reasons: [AutomaticMute] = []
+        if muteDuringCalls && microphoneInUse { reasons.append(.call) }
+        if muteDuringMeetings && inCalendarEvent { reasons.append(.meeting) }
+        if muteWhenLocked && screenLocked { reasons.append(.screenLocked) }
+        if muteWhileSharing && screenShared { reasons.append(.screenShared) }
+        if muteWhileMedia && mediaPlaying { reasons.append(.media(mediaAppName)) }
+        if headphonesOnly && outputIsSpeaker { reasons.append(.speakers) }
+        if let frontApp, listMutes(frontApp.id) { reasons.append(.app(frontApp.name)) }
+        if muteWhileGaming, let frontApp, frontApp.isGame { reasons.append(.game(frontApp.name)) }
+        if quietHours && Self.isQuiet(minute: Self.minuteOfDay(now), start: quietStart, end: quietEnd) {
+            reasons.append(.quietHours)
         }
-        // Play Anyway holds while the same reason lasts; any change ends it.
-        if let overridden = overriddenMute {
-            if reason == overridden { reason = nil } else { overriddenMute = nil }
-        }
+        if idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes) { reasons.append(.idle) }
+        // Play Anyway sets aside one reason while it lasts; the others still
+        // count (going idle still mutes), and once it's gone, so is the override.
+        if let overridden = overriddenMute, !reasons.contains(overridden) { overriddenMute = nil }
+        let reason = reasons.first { $0 != overriddenMute }
         guard reason != automaticMute else { return }
         let wasMuted = isAutomaticallyMuted
         automaticMute = reason

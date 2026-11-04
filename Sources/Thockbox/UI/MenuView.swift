@@ -27,7 +27,7 @@ struct MenuView: View {
                 Button("15 Minutes") { state.turnOff(for: 15 * 60) }
                 Button("1 Hour") { state.turnOff(for: 3600) }
                 Button("4 Hours") { state.turnOff(for: 4 * 3600) }
-                Button("Until Tomorrow Morning") { state.turnOff(for: AppState.untilMorning()) }
+                Button("Until 8 AM") { state.turnOff(for: AppState.untilMorning()) }
             }
         }
         Picker("Switch", selection: Binding(

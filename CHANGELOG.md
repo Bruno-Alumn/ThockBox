@@ -3,6 +3,16 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- Fixed: Play Anyway no longer switches off other mutes (going idle still
+  mutes), and a sleep doesn't carry it into the next night.
+- Fixed: quiet hours follow time zone and clock changes, and the streak
+  counts yesterday right after waking past midnight.
+- Fixed: imported settings only bring shortcuts that meet the usual rule, and
+  importing a set each day keeps the imported set for today.
+- The menu's Turn Off For › Until Tomorrow Morning is now Until 8 AM.
+
 ## 1.8.0
 
 - **Today by hour** in Settings › Activity: a chart of when you typed today.
@@ -24,8 +34,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## 1.5.0
 
-- **Turn Off For** in the menu: 15 minutes, 1 hour, 4 hours or until
-  tomorrow morning (8 am), instead of only an hour.
+- **Turn Off For** in the menu: 15 minutes, 1 hour, 4 hours or until 8 am,
+  instead of only an hour.
 - **Quiet hours** (Settings › Muting): mute every day between two times,
   10 pm to 8 am unless you pick others.
 - **Export and import settings** (Settings › General › Help): bring your
