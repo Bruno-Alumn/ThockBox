@@ -9,6 +9,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   redrawn as layers that pick up the system's glass, tinted and clear
   styles. macOS 13 to 15 keep the current icon.
 
+- The Welcome and What's New windows match the new Settings window:
+  colored icons beside each setting and each note, and a centered header.
+
 - **A new Settings window**, laid out like System Settings: a sidebar of
   pages with colored icons and ThockBox's status at the top, in a wider,
   shorter window you can resize.

@@ -53,23 +53,21 @@ struct WelcomeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 6) {
-                TappableAppIcon(state: state)
-                Text("Welcome to ThockBox")
-                    .font(.title2.bold())
-                Text("Mechanical keyboard sounds for every key you type.")
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.top, 20)
+            WindowHeader(state: state, title: "Welcome to ThockBox",
+                         subtitle: "Mechanical keyboard sounds for every key you type.")
 
             Form {
                 Section {
-                    LabeledContent("Keyboard access") {
+                    LabeledContent {
                         if state.accessibilityTrusted {
                             Label("Allowed", systemImage: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
                         } else {
                             Button("Open System Settings…") { Permissions.openSystemSettings() }
+                        }
+                    } label: {
+                        Label { Text("Keyboard access") } icon: {
+                            SettingsIcon(symbol: "accessibility", color: .blue)
                         }
                     }
                 } header: {
@@ -79,8 +77,22 @@ struct WelcomeView: View {
                 }
 
                 Section {
-                    SwitchSetPicker(state: state)
-                    TryItField()
+                    LabeledContent {
+                        SwitchSetPicker(state: state)
+                            .labelsHidden()
+                    } label: {
+                        Label { Text("Switch set") } icon: {
+                            SettingsIcon(symbol: SettingsPage.sound.sidebarSymbol, color: SettingsPage.sound.color)
+                        }
+                    }
+                    LabeledContent {
+                        TryItField()
+                            .labelsHidden()
+                    } label: {
+                        Label { Text("Try it") } icon: {
+                            SettingsIcon(symbol: SettingsPage.keys.sidebarSymbol, color: SettingsPage.keys.color)
+                        }
+                    }
                 } header: {
                     Text("2. Pick a Sound")
                 } footer: {
@@ -102,5 +114,31 @@ struct WelcomeView: View {
         }
         .frame(width: 460)
         .onAppear { state.refreshOnOpen() }
+    }
+}
+
+/// The top of the Welcome and What's New windows: the app icon (pressable
+/// like a key) over a title and a line under it, centered, as in Apple's
+/// own first-run and what's-new screens.
+struct WindowHeader: View {
+    @ObservedObject var state: AppState
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        VStack(spacing: 10) {
+            TappableAppIcon(state: state)
+            VStack(spacing: 4) {
+                Text(title)
+                    .font(.title2.bold())
+                Text(subtitle)
+                    .foregroundStyle(.secondary)
+            }
+            .multilineTextAlignment(.center)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
+        }
+        .padding(.top, 24)
+        .padding(.horizontal, 20)
     }
 }
