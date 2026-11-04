@@ -9,6 +9,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   turned on, sets for specific apps at the bottom of the Sound page, and
   menu bar options shown only while the menu bar icon is.
 
+- What's New marks every fix with the wrench icon, including the bold
+  "Fixed on macOS 27" note.
+
 ## 1.11.1
 
 - The Welcome and What's New windows open fully on screen instead of

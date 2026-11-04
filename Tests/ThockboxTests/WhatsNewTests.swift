@@ -92,6 +92,7 @@ final class WhatsNewTests: XCTestCase {
 
     func testFixesAreToldApartFromNewThings() {
         XCTAssertTrue(WhatsNew.isFix("Fixed: quiet hours follow time zone changes."))
+        XCTAssertTrue(WhatsNew.isFix("**Fixed on macOS 27:** the volume slider works again."))
         XCTAssertFalse(WhatsNew.isFix("**Today by hour** in Settings › Activity."))
         XCTAssertFalse(WhatsNew.isFix("The menu's Until Tomorrow Morning is now Until 8 AM."))
     }
