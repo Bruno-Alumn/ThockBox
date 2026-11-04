@@ -127,16 +127,17 @@ loudness-matched like the built-in ones, and survive updates.
   Return ding, and a trackpad tap with each key.
 - **Muting:** during calls and while other apps play sound (both macOS 14.2
   or later), during calendar events (from the calendars you pick), in games,
-  while the screen is shared or recorded; during quiet hours, when the screen is locked, on
-  speakers only (“headphones only”), and after 1 to 60 minutes without typing;
-  in apps you choose (or everywhere but them); and at places you save (or
-  everywhere but them), which macOS watches without using extra battery.
+  while the screen is shared or recorded; during quiet hours, when the screen
+  is locked, when playing on speakers, and after 1 to 60 minutes without
+  typing; in apps you choose (or everywhere but them); and at places you save
+  (or everywhere but them), which macOS watches using very little battery.
 - **Activity:** keystrokes today (and by hour), in total, over the last week, your best day,
   daily average and streak, today's
   typing speed, and a
   CSV export of the last 30 days.
 - **General:** login, the menu bar icon (dimmed while sounds are off, if you
-  like, and today's keystrokes or typing speed beside it), the app icon (Color or Graphite),
+  like, and today's keystrokes or typing speed beside it), the app icon
+  (Color, Graphite or Graphite while sounds are off),
   a notification when an automation changes the switch set, updates, and
   help, including the Welcome and What's New windows and exporting settings
   to another Mac.
@@ -208,10 +209,11 @@ Settings › Muting.
 <summary><strong>It goes quiet when I don't expect it</strong></summary>
 
 The menu bar menu's first line names the reason, for example "Muted during a
-meeting" or "Muted while media plays". Each one is a switch in
+calendar event" or "Muted while media plays". Each one is a switch in
 Settings › Muting: calls, calendar events, other apps playing sound, games,
-screen sharing, a locked screen, speakers, chosen apps, places and idle time. A Focus
-filter can also turn sounds off while that Focus is on. If it says "Muted while
+screen sharing, a locked screen, quiet hours, speakers, chosen apps, places
+and idle time. A Focus filter can also turn sounds off while that Focus is
+on. If it says "Muted while
 … plays" and nothing is playing, uncheck that app under Settings › Muting ›
 Playing now: some apps keep their sound open while silent. Play Anyway in
 the menu plays through a mute until its reason ends.

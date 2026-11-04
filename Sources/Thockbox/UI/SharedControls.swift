@@ -259,7 +259,7 @@ struct ShortcutRecorder: View {
                 }
                 .buttonStyle(.borderless)
                 .help(standard == nil ? "Clear" : "Reset to \(standard?.display ?? "")")
-                .accessibilityLabel(standard == nil ? "Clear \(title)" : "Reset \(title)")
+                .accessibilityLabel(standard == nil ? "Clear Shortcut for \(title)" : "Reset Shortcut for \(title)")
             }
             Button {
                 monitor == nil ? start() : stop()

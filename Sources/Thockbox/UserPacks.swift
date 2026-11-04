@@ -43,7 +43,7 @@ enum UserPacks {
         .filter { audioExtensions.contains($0.pathExtension.lowercased()) }
         .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
         guard !files.isEmpty else {
-            throw ImportError(errorDescription: "No audio files found. Use WAV, MP3, CAF, AIFF or M4A, or a Mechvibes pack folder.")
+            throw ImportError(errorDescription: "No audio files found. Use WAV, MP3, CAF, AIFF or M4A files, or a Mechvibes pack folder.")
         }
 
         // Named after the chosen folder, or the folder the files are in.

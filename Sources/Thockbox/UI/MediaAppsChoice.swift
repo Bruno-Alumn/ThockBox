@@ -40,7 +40,7 @@ struct MediaAppsChoice: View {
             Menu(MediaApps.summary(playing: state.playingApps, ignored: state.ignoredMediaApps,
                                    name: MediaApps.name)) {
                 if apps.isEmpty {
-                    Text("No apps are playing sound")
+                    Text("No Apps Playing Sound")
                 }
                 ForEach(apps, id: \.self) { id in
                     Toggle(MediaApps.name(id), isOn: Binding(
