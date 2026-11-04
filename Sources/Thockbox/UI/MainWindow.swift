@@ -93,8 +93,10 @@ struct SettingsWindowView: View {
                         .tag(Optional(page))
                 }
             }
-            .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 260)
+            // After hidingSidebarToggle: its `if #available` wrapper hides an
+            // earlier column width, leaving the sidebar at 144pt.
             .hidingSidebarToggle()
+            .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 260)
         } detail: {
             SettingsPageView(page: navigation.page, state: state)
                 .id(navigation.page)
