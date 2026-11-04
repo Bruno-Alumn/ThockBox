@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.7.0
 
 - **Play only in chosen apps** (Settings › Muting): turn the app list around
   so ThockBox plays only in those apps and stays quiet everywhere else.
