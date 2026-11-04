@@ -24,6 +24,15 @@ final class WelcomeWindow: NSObject, NSWindowDelegate {
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        // macOS's Accessibility prompt, after the window: asked any earlier,
+        // the window opens over it and hides its buttons. The prompt only
+        // comes forward once ThockBox steps back from the front.
+        if !Permissions.isTrusted {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                _ = Permissions.requestIfNeeded()
+                NSApp.deactivate()
+            }
+        }
     }
 
     private func makeWindow() -> NSWindow {

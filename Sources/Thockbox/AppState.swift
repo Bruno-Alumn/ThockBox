@@ -711,7 +711,10 @@ final class AppState: ObservableObject {
         listener.handler = { [weak self] event in
             self?.handle(event)
         }
-        accessibilityTrusted = Permissions.requestIfNeeded()
+        // A new install sees the welcome window first; it asks once it's up,
+        // so macOS's prompt lands on top of it instead of behind it.
+        accessibilityTrusted = WelcomeWindow.isNeeded(defaults: defaults)
+            ? Permissions.isTrusted : Permissions.requestIfNeeded()
         listener.listensToMouse = mouseClicks
         listener.listensToScroll = scrollSounds
         listener.ignoresGeneratedKeys = !generatedKeySounds
