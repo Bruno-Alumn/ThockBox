@@ -465,7 +465,7 @@ private struct ActivityPage: View {
                     if let wpm = store.shown.wordsPerMinute {
                         Text("\(wpm) words per minute").monospacedDigit()
                     } else {
-                        Text("Keep typing").foregroundStyle(.secondary)
+                        Text("Not enough typing yet").foregroundStyle(.secondary)
                     }
                 }
             } header: {
