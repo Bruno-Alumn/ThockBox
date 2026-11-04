@@ -36,18 +36,15 @@ final class MenuVolumeItem: NSObject {
         item.view = view
 
         let center = NotificationCenter.default
-        center.addObserver(forName: NSMenu.didBeginTrackingNotification, object: nil, queue: .main) { [weak self] note in
-            let menu = note.object as? NSMenu
-            MainActor.assumeIsolated { self?.opened(menu) }
-        }
+        MenuOpening.observe { [weak self] menu in self?.opened(menu) }
         center.addObserver(forName: NSMenu.didEndTrackingNotification, object: nil, queue: .main) { [weak self] note in
             let menu = note.object as? NSMenu
             MainActor.assumeIsolated { self?.closed(menu) }
         }
     }
 
-    private func opened(_ menu: NSMenu?) {
-        guard let menu, let state,
+    private func opened(_ menu: NSMenu) {
+        guard let state,
               let heading = menu.items.firstIndex(where: { $0.title == Self.heading && $0 !== item })
         else { return }
         slider.floatValue = state.volume
