@@ -2,8 +2,8 @@
 # Bruno-Alumn/homebrew-thockbox (Casks/thockbox.rb); this copy is the source.
 # `make cask` sets the version and sha256 from the release disk image.
 cask "thockbox" do
-  version "1.7.0"
-  sha256 "64be0131355af9d196cdb701fdd55b0817856f0cd0d27b4a264732661832a46a"
+  version "1.8.0"
+  sha256 "142ab640c0fee916d85febcb9edd720e1d8c8b735a449ac7e7129405a8b9a915"
 
   url "https://github.com/Bruno-Alumn/ThockBox/releases/download/v#{version}/ThockBox-#{version}.dmg"
   name "ThockBox"
