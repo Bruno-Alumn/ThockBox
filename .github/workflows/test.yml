@@ -20,7 +20,10 @@ jobs:
 
   app:
     name: App bundle and launch check
-    runs-on: macos-15
+    # macOS 26 and Xcode 26: the first actool that compiles the Liquid Glass
+    # icon (Resources/AppIcon.icon) crashes on older macOS. The launch check
+    # then also runs on the newest macOS.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
