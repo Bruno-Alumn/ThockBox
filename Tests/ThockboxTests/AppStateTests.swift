@@ -157,6 +157,12 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(AppState.untilMorning(from: earlyHours, calendar: calendar), 6 * 3600, "the same morning")
     }
 
+    func testKeyReleaseSoundsAreOnByDefaultAndSaved() {
+        XCTAssertTrue(AppState(defaults: defaults).keyReleaseSounds)
+        AppState(defaults: defaults).keyReleaseSounds = false
+        XCTAssertFalse(AppState(defaults: defaults).keyReleaseSounds)
+    }
+
     func testStoredValuesAreClampedOnLoad() {
         defaults.set(5.0, forKey: "volume")
         defaults.set(-9.0, forKey: "toneX")
