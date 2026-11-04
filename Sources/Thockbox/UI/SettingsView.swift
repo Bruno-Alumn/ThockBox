@@ -262,6 +262,14 @@ private struct KeysPage: View {
                     ShortcutRecorder(state: state, rejected: $shortcutRejected,
                                      shortcut: $state.nextSetShortcut, standard: nil)
                 }
+                LabeledContent("Volume up") {
+                    ShortcutRecorder(state: state, rejected: $shortcutRejected,
+                                     shortcut: $state.volumeUpShortcut, standard: nil)
+                }
+                LabeledContent("Volume down") {
+                    ShortcutRecorder(state: state, rejected: $shortcutRejected,
+                                     shortcut: $state.volumeDownShortcut, standard: nil)
+                }
             } header: {
                 Text("Shortcuts")
             } footer: {

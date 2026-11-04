@@ -116,6 +116,29 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(state.selectedPackID, sets[1], "once a day")
     }
 
+    /// Volume steps by 10%, lands on round values, and never goes silent.
+    func testVolumeSteps() {
+        let state = AppState(defaults: defaults)
+        state.volume = 0.55
+        state.stepVolume(by: 0.1)
+        XCTAssertEqual(state.volume, 0.65, accuracy: 0.001)
+        state.volume = 0.98
+        state.stepVolume(by: 0.1)
+        XCTAssertEqual(state.volume, 1)
+        state.volume = 0.1
+        state.stepVolume(by: -0.1)
+        XCTAssertEqual(state.volume, 0.05, accuracy: 0.001, "a step down never mutes")
+    }
+
+    func testVolumeShortcutsAreSaved() {
+        let state = AppState(defaults: defaults)
+        XCTAssertNil(state.volumeUpShortcut)
+        let up = Shortcut(keyCode: 126, flags: [.control, .command], key: "↑")
+        state.volumeUpShortcut = up
+        XCTAssertEqual(AppState(defaults: defaults).volumeUpShortcut, up)
+        XCTAssertTrue(state.allShortcuts.contains(up))
+    }
+
     func testNextSetShortcutIsSavedAndOffByDefault() {
         let state = AppState(defaults: defaults)
         XCTAssertNil(state.nextSetShortcut)

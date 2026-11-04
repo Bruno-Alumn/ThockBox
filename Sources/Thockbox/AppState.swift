@@ -295,6 +295,31 @@ final class AppState: ObservableObject {
         }
     }
     private var nextSetHotKey: GlobalHotKey?
+    /// Turn the volume up or down a step from anywhere; none by default.
+    @Published var volumeUpShortcut: Shortcut? {
+        didSet {
+            defaults.set(volumeUpShortcut.flatMap { try? JSONEncoder().encode($0) }, forKey: "volumeUpShortcut")
+            registerHotKey()
+        }
+    }
+    @Published var volumeDownShortcut: Shortcut? {
+        didSet {
+            defaults.set(volumeDownShortcut.flatMap { try? JSONEncoder().encode($0) }, forKey: "volumeDownShortcut")
+            registerHotKey()
+        }
+    }
+    private var volumeHotKeys: [GlobalHotKey] = []
+
+    /// Every shortcut in use, so the recorder can refuse duplicates.
+    var allShortcuts: [Shortcut] {
+        [toggleShortcut] + [nextSetShortcut, volumeUpShortcut, volumeDownShortcut].compactMap { $0 }
+    }
+
+    /// One volume step, as the volume shortcuts take; stays within 5%–100%
+    /// so a press never silences it outright (the on/off shortcut does that).
+    func stepVolume(by step: Float) {
+        volume = min(1, max(0.05, ((volume + step) * 20).rounded() / 20))
+    }
 
     /// A different set each day: the next one in the list on the first
     /// launch or wake of a new day.
@@ -343,6 +368,7 @@ final class AppState: ObservableObject {
     private func registerHotKey() {
         hotKey = nil
         nextSetHotKey = nil
+        volumeHotKeys = []
         guard registersHotKeys else { return }
         // The health-check copy (launch_check.sh) mustn't take the key from
         // the real app.
@@ -358,8 +384,18 @@ final class AppState: ObservableObject {
             suppressReleasesAfterShortcut()
         }
         if hotKey == nil { klog.error("couldn't register \(self.toggleShortcut.display, privacy: .public) as a hotkey") }
-        // The next-set shortcut is only ever a system hotkey (it's optional,
-        // and always meets the stricter rule, which the recorder enforces).
+        // The optional shortcuts (volume, next set) are only ever system
+        // hotkeys: the recorder only accepts ones that meet the stricter rule.
+        for (id, shortcut, step) in [(UInt32(3), volumeUpShortcut, Float(0.1)), (UInt32(4), volumeDownShortcut, Float(-0.1))] {
+            guard let shortcut, shortcut != toggleShortcut else { continue }
+            if let key = GlobalHotKey(shortcut, id: id, action: { [weak self] in
+                guard let self else { return }
+                stepVolume(by: step)
+                suppressReleasesAfterShortcut(shortcut)
+            }) {
+                volumeHotKeys.append(key)
+            }
+        }
         if let next = nextSetShortcut, next != toggleShortcut {
             nextSetHotKey = GlobalHotKey(next, id: 2) { [weak self] in
                 guard let self else { return }
@@ -571,6 +607,8 @@ final class AppState: ObservableObject {
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
         newSetEachDay = defaults.bool(forKey: "newSetEachDay")
+        volumeUpShortcut = defaults.data(forKey: "volumeUpShortcut").flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) }
+        volumeDownShortcut = defaults.data(forKey: "volumeDownShortcut").flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) }
         nextSetShortcut = defaults.data(forKey: "nextSetShortcut").flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) }
         toggleShortcut = defaults.data(forKey: "toggleShortcut")
             .flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) } ?? .standard

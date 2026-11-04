@@ -8,7 +8,7 @@ import Foundation
 enum SettingsTransfer {
     static let keys: Set<String> = [
         "pack", "appPacks", "newSetEachDay", "volume", "toneX", "toneY", "pitchVariation", "spatialAudio",
-        "followHeadMovement", "toggleShortcut", "nextSetShortcut", "muteModifiers", "functionKeysAudible",
+        "followHeadMovement", "toggleShortcut", "nextSetShortcut", "volumeUpShortcut", "volumeDownShortcut", "muteModifiers", "functionKeysAudible",
         "mouseClicks", "scrollSounds", "returnDing", "hapticFeedback", "muteDuringCalls", "muteDuringMeetings",
         "muteWhileMedia", "ignoredMediaApps", "muteWhileGaming", "muteWhileSharing", "muteWhenLocked",
         "headphonesOnly", "idleTimeoutMinutes", "quietHours", "quietStart", "quietEnd", "mutedApps", "showMenuBarIcon", "dimIconWhenOff",
