@@ -11,6 +11,12 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   it asks for Location access only when you add a place. It works with the
   other mutes: a meeting still mutes, and Play Anyway plays through.
 
+- **Fixed on macOS 27:** the volume slider and today's typing count are
+  back in the menu bar menu.
+
+- The Settings window's title shows the page you're on instead of
+  "Untitled".
+
 - Polish across Settings, the menu and the welcome windows: clearer
   wording, shortcut buttons that line up, an icon for every listed app,
   Turn Off For dimmed rather than hidden while sounds are off, and better
