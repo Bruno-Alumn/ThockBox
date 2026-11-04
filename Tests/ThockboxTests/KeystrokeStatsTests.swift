@@ -65,6 +65,20 @@ final class KeystrokeStatsTests: XCTestCase {
         XCTAssertEqual(stats.dailyAverage, 200, "finished days only, not today's 50")
     }
 
+    func testStreakCountsDaysInARow() {
+        var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
+        for d in ["2026-11-01", "2026-11-02", "2026-11-03", "2026-11-05", "2026-11-06"] {
+            stats.record(now: day(d))
+        }
+        XCTAssertEqual(stats.streak(now: day("2026-11-06")), 2, "the gap on the 4th ends it")
+        stats.record(now: day("2026-11-07"))
+        XCTAssertEqual(stats.streak(now: day("2026-11-07")), 3)
+        stats.flush()   // as at quit
+        let nextMorning = KeystrokeStats(defaults: defaults, now: day("2026-11-08", hour: 7))
+        XCTAssertEqual(nextMorning.streak(now: day("2026-11-08", hour: 7)), 3, "not lost before typing today")
+        XCTAssertEqual(nextMorning.streak(now: day("2026-11-10")), 0, "a day missed")
+    }
+
     func testCountsTodayAndTotal() {
         var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
         for _ in 0..<3 { stats.record(now: day("2026-11-01")) }
