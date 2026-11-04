@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.11.1
 
 - **Simpler Settings:** shorter notes, shown only for the options you've
   turned on, sets for specific apps at the bottom of the Sound page, and
@@ -19,6 +19,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 - Settings › General shows a green check mark when Accessibility access is
   allowed, like the Welcome window.
+
+- The menu's volume slider no longer stays gray after sounds are turned
+  off and back on.
 
 ## 1.11.0
 

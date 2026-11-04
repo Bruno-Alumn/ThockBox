@@ -14,8 +14,11 @@ final class MenuVolumeItem: NSObject {
     /// The SwiftUI menu item the slider goes under.
     static let heading = "Volume"
 
-    private let item = NSMenuItem()
-    private let slider = NSSlider(value: 0.55, minValue: 0, maxValue: 1, target: nil, action: nil)
+    /// A new item and slider for each menu SwiftUI builds: one carried over
+    /// from a menu that was rebuilt (as turning sounds off and on does)
+    /// draws in its inactive gray until it's dragged.
+    private var item = NSMenuItem()
+    private var slider = NSSlider()
     private weak var state: AppState?
     private var unsaved: Float?
     /// Where the knob was, for a trackpad tap at each 10% (as in Settings).
@@ -23,17 +26,6 @@ final class MenuVolumeItem: NSObject {
 
     func install(state: AppState) {
         self.state = state
-        slider.target = self
-        slider.action = #selector(slid(_:))
-        slider.isContinuous = true
-        slider.controlSize = .small
-        slider.setAccessibilityLabel("Volume")
-        // The usual menu inset, so the slider lines up with the item titles.
-        let view = NSView(frame: NSRect(x: 0, y: 0, width: 220, height: 26))
-        slider.frame = NSRect(x: 18, y: 3, width: 184, height: 20)
-        slider.autoresizingMask = [.width]
-        view.addSubview(slider)
-        item.view = view
 
         let center = NotificationCenter.default
         MenuOpening.observe { [weak self] menu in self?.opened(menu) }
@@ -47,13 +39,28 @@ final class MenuVolumeItem: NSObject {
         guard let state,
               let heading = menu.items.firstIndex(where: { $0.title == Self.heading && $0 !== item })
         else { return }
+        if item.menu !== menu {
+            item.menu?.removeItem(item)
+            makeItem()
+            menu.insertItem(item, at: heading + 1)
+        }
         slider.floatValue = state.volume
         lastValue = slider.doubleValue
         slider.isEnabled = state.enabled
-        if item.menu !== menu {
-            item.menu?.removeItem(item)
-            menu.insertItem(item, at: heading + 1)
-        }
+    }
+
+    private func makeItem() {
+        slider = NSSlider(value: 0.55, minValue: 0, maxValue: 1, target: self, action: #selector(slid(_:)))
+        slider.isContinuous = true
+        slider.controlSize = .small
+        slider.setAccessibilityLabel("Volume")
+        // The usual menu inset, so the slider lines up with the item titles.
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 220, height: 26))
+        slider.frame = NSRect(x: 18, y: 3, width: 184, height: 20)
+        slider.autoresizingMask = [.width]
+        view.addSubview(slider)
+        item = NSMenuItem()
+        item.view = view
     }
 
     @objc private func slid(_ sender: NSSlider) {
