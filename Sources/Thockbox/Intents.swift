@@ -99,6 +99,45 @@ struct SetVolumeIntent: AppIntent {
     }
 }
 
+struct GetTypingStatIntent: AppIntent {
+    static let title: LocalizedStringResource = "Get ThockBox Typing Stats"
+    static let description = IntentDescription("Gets a number from ThockBox's typing stats: keystrokes today or in total, today's typing speed in words per minute, or the days in a row you've typed.")
+
+    @Parameter(title: "Stat", default: .keystrokesToday)
+    var stat: TypingStat
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Get ThockBox \(\.$stat)")
+    }
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ReturnsValue<Int> {
+        .result(value: stat.value(in: AppState.shared.stats.shown))
+    }
+}
+
+enum TypingStat: String, AppEnum {
+    case keystrokesToday, keystrokesTotal, wordsPerMinute, streak
+
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Stat"
+    static let caseDisplayRepresentations: [TypingStat: DisplayRepresentation] = [
+        .keystrokesToday: "Keystrokes Today",
+        .keystrokesTotal: "Keystrokes in Total",
+        .wordsPerMinute: "Typing Speed Today",
+        .streak: "Days in a Row",
+    ]
+
+    /// Typing speed is 0 until there's been half a minute of typing today.
+    func value(in stats: KeystrokeStats, now: Date = Date()) -> Int {
+        switch self {
+        case .keystrokesToday: return stats.today
+        case .keystrokesTotal: return stats.total
+        case .wordsPerMinute: return stats.wordsPerMinute ?? 0
+        case .streak: return stats.streak(now: now)
+        }
+    }
+}
+
 /// A Focus filter (System Settings › Focus › Focus Filters): sounds off, or
 /// a particular switch set, while that Focus is on. When the Focus ends,
 /// macOS runs the filter again with its default values, and ThockBox goes
@@ -169,5 +208,8 @@ struct ThockBoxShortcuts: AppShortcutsProvider {
         AppShortcut(intent: NextSwitchSetIntent(),
                     phrases: ["Next \(.applicationName) switch set"],
                     shortTitle: "Next Switch Set", systemImageName: "forward")
+        AppShortcut(intent: GetTypingStatIntent(),
+                    phrases: ["How much have I typed in \(.applicationName)", "\(.applicationName) typing stats"],
+                    shortTitle: "Typing Stats", systemImageName: "chart.bar")
     }
 }

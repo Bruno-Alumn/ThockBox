@@ -3,6 +3,11 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- **Get ThockBox Typing Stats** in Shortcuts: keystrokes today or in total,
+  today's typing speed, or days in a row, for automations and widgets.
+
 ## 1.9.0
 
 - **Today in the menu:** the menu bar menu shows today's keystrokes and
