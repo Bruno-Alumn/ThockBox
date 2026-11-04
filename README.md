@@ -116,7 +116,7 @@ with *up* or *release* play when a key is let go. Added sets are trimmed and
 loudness-matched like the built-in ones, and survive updates.
 
 <details>
-<summary><strong>Settings, tab by tab</strong></summary>
+<summary><strong>Settings, page by page</strong></summary>
 <br>
 
 - **Sound:** on and off, the switch set with a field to try it, sets for

@@ -1,7 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// The settings window's pages, one per toolbar tab (see MainWindow). Each is
+/// The settings window's pages, one per sidebar row (see MainWindow). Each is
 /// a grouped Form of standard controls.
 enum SettingsPage: String, CaseIterable, Identifiable {
     case sound, keys, muting, activity, general
@@ -18,13 +18,25 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         }
     }
 
-    var symbol: String {
+    var sidebarSymbol: String {
         switch self {
-        case .sound: "speaker.wave.2"
-        case .keys: "keyboard"
-        case .muting: "speaker.slash"
-        case .activity: "chart.bar"
-        case .general: "gearshape"
+        case .sound: "speaker.wave.2.fill"
+        case .keys: "keyboard.fill"
+        case .muting: "speaker.slash.fill"
+        case .activity: "chart.bar.fill"
+        case .general: "gearshape.fill"
+        }
+    }
+
+    /// The same families System Settings uses: red for sound, purple for
+    /// Focus-like quiet, blue for Screen Time-like stats, gray for the rest.
+    var color: Color {
+        switch self {
+        case .sound: .red
+        case .keys: .gray
+        case .muting: .indigo
+        case .activity: .blue
+        case .general: .gray
         }
     }
 }
@@ -44,8 +56,7 @@ struct SettingsPageView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 500)
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(minWidth: 440, maxWidth: .infinity, maxHeight: .infinity)
         .onAppear { state.refreshOnOpen() }
     }
 }

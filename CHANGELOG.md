@@ -5,6 +5,10 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **A new Settings window**, laid out like System Settings: a sidebar of
+  pages with colored icons and ThockBox's status at the top, in a wider,
+  shorter window you can resize.
+
 - **Get ThockBox Typing Stats** in Shortcuts: keystrokes today or in total,
   today's typing speed, or days in a row, for automations and widgets.
 
