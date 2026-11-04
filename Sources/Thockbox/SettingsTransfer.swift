@@ -10,7 +10,7 @@ enum SettingsTransfer {
         "pack", "appPacks", "newSetEachDay", "volume", "toneX", "toneY", "pitchVariation", "spatialAudio",
         "followHeadMovement", "toggleShortcut", "nextSetShortcut", "volumeUpShortcut", "volumeDownShortcut", "muteModifiers", "functionKeysAudible",
         "mouseClicks", "keyReleaseSounds", "generatedKeySounds", "scrollSounds", "returnDing", "hapticFeedback", "muteDuringCalls", "muteDuringMeetings",
-        "muteWhileMedia", "ignoredMediaApps", "muteWhileGaming", "muteWhileSharing", "muteWhenLocked",
+        "muteWhileMedia", "ignoredMediaApps", "muteWhileGaming", "muteByPlace", "playOnlyAtPlaces", "muteWhileSharing", "muteWhenLocked",
         "headphonesOnly", "idleTimeoutMinutes", "quietHours", "quietStart", "quietEnd", "mutedApps", "playOnlyInListedApps", "showMenuBarIcon", "dimIconWhenOff",
         "showKeystrokesInMenuBar", "showSpeedInMenuBar", "dockIconStyle", "iconClickAction",
         "notifySetChanges", "checkForUpdates",

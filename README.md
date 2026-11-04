@@ -129,7 +129,8 @@ loudness-matched like the built-in ones, and survive updates.
   or later), during calendar events (from the calendars you pick), in games,
   while the screen is shared or recorded; during quiet hours, when the screen is locked, on
   speakers only (“headphones only”), and after 1 to 60 minutes without typing;
-  and in apps you choose (or everywhere but them).
+  in apps you choose (or everywhere but them); and at places you save (or
+  everywhere but them), which macOS watches without using extra battery.
 - **Activity:** keystrokes today (and by hour), in total, over the last week, your best day,
   daily average and streak, today's
   typing speed, and a
@@ -209,7 +210,7 @@ Settings › Muting.
 The menu bar menu's first line names the reason, for example "Muted during a
 meeting" or "Muted while media plays". Each one is a switch in
 Settings › Muting: calls, calendar events, other apps playing sound, games,
-screen sharing, a locked screen, speakers, chosen apps and idle time. A Focus
+screen sharing, a locked screen, speakers, chosen apps, places and idle time. A Focus
 filter can also turn sounds off while that Focus is on. If it says "Muted while
 … plays" and nothing is playing, uncheck that app under Settings › Muting ›
 Playing now: some apps keep their sound open while silent. Play Anyway in
