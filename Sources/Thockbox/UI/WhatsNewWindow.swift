@@ -50,6 +50,12 @@ struct WhatsNew: Equatable {
         return items.isEmpty ? nil : WhatsNew(version: current, items: items)
     }
 
+    /// Whether a note is a fix ("Fixed: …") rather than something new; the
+    /// window marks the two with different icons.
+    static func isFix(_ item: String) -> Bool {
+        item.hasPrefix("Fixed")
+    }
+
     /// Compares dotted version numbers ("1.10.0" is newer than "1.9.2").
     /// Headings that aren't version numbers ("Unreleased") are never newer.
     static func isNewer(_ a: String, than b: String) -> Bool {
@@ -130,28 +136,25 @@ struct WhatsNewView: View {
     let done: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                TappableAppIcon(state: AppState.shared, size: 48)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("What's New")
-                        .font(.title2.bold())
-                    Text("ThockBox \(notes.version)")
-                        .foregroundStyle(.secondary)
-                }
-            }
+        VStack(spacing: 0) {
+            WindowHeader(state: AppState.shared, title: "What's New", subtitle: "ThockBox \(notes.version)")
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 14) {
                     ForEach(Array(notes.items.enumerated()), id: \.offset) { _, item in
-                        HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Text("•").foregroundStyle(.secondary)
+                        HStack(alignment: .top, spacing: 12) {
+                            let fix = WhatsNew.isFix(item)
+                            SettingsIcon(symbol: fix ? "wrench.and.screwdriver.fill" : "sparkles",
+                                         color: fix ? .gray : .orange, size: 22)
                             Text(LocalizedStringKey(item))
                                 .fixedSize(horizontal: false, vertical: true)
+                                // Lines the first line up with the icon's middle.
+                                .padding(.top, 3)
                         }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
             }
             .frame(maxHeight: 360)
             .fixedSize(horizontal: false, vertical: true)
@@ -162,8 +165,8 @@ struct WhatsNewView: View {
                 Button("Done", action: done)
                     .keyboardShortcut(.defaultAction)
             }
+            .padding([.horizontal, .bottom], 20)
         }
-        .padding(20)
         .frame(width: 460)
     }
 }
