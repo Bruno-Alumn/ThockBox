@@ -461,6 +461,18 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertEqual(state.automaticMute, .screenLocked, "a new lock mutes again")
     }
 
+    /// Turned around, the list is where sounds play; everywhere else is quiet.
+    func testPlayOnlyInListedApps() {
+        let state = AppState(defaults: defaults)
+        state.mutedApps = ["com.apple.TextEdit"]
+        state.playOnlyInListedApps = true
+        state.setFrontApp(id: "com.apple.Safari", name: "Safari")
+        XCTAssertEqual(state.automaticMute, .app("Safari"))
+        state.setFrontApp(id: "com.apple.TextEdit", name: "TextEdit")
+        XCTAssertNil(state.automaticMute)
+        XCTAssertTrue(AppState(defaults: defaults).playOnlyInListedApps, "saved")
+    }
+
     func testMutedAppMutesOnlyWhileInFront() {
         let state = AppState(defaults: defaults)
         state.setFrontApp(id: "com.example.game", name: "Game")

@@ -405,11 +405,17 @@ private struct MutingPage: View {
             }
 
             Section {
+                Picker("These apps", selection: $state.playOnlyInListedApps) {
+                    Text("Stay quiet in them").tag(false)
+                    Text("Are the only ones that play").tag(true)
+                }
                 MutedAppsList(state: state)
             } header: {
-                Text("Mute in These Apps")
+                Text(state.playOnlyInListedApps ? "Play Only in These Apps" : "Mute in These Apps")
             } footer: {
-                formFooter("ThockBox stays quiet while one of these apps is in front. The menu bar menu can also mute the app you're in.")
+                formFooter(state.playOnlyInListedApps
+                    ? "ThockBox plays only while one of these apps is in front, and stays quiet everywhere else. The menu bar menu can add the app you're in."
+                    : "ThockBox stays quiet while one of these apps is in front. The menu bar menu can also mute the app you're in.")
             }
         }
     }

@@ -43,9 +43,15 @@ struct MenuView: View {
         // the menu opens; see MenuVolumeItem.
         Text(MenuVolumeItem.heading)
         if let app = state.frontApp {
-            Toggle("Mute in \(app.name)", isOn: Binding(
-                get: { state.mutedApps.contains(app.id) },
-                set: { state.setMuted($0, appID: app.id) }))
+            if state.playOnlyInListedApps {
+                Toggle("Play in \(app.name)", isOn: Binding(
+                    get: { state.mutedApps.contains(app.id) },
+                    set: { state.setMuted($0, appID: app.id) }))
+            } else {
+                Toggle("Mute in \(app.name)", isOn: Binding(
+                    get: { state.mutedApps.contains(app.id) },
+                    set: { state.setMuted($0, appID: app.id) }))
+            }
         }
         Divider()
 

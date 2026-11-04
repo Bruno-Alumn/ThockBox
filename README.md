@@ -129,7 +129,7 @@ loudness-matched like the built-in ones, and survive updates.
   or later), during calendar events (from the calendars you pick), in games,
   while the screen is shared or recorded; during quiet hours, when the screen is locked, on
   speakers only (“headphones only”), and after 1 to 60 minutes without typing;
-  and in apps you choose.
+  and in apps you choose (or everywhere but them).
 - **Activity:** keystrokes today, in total, over the last week, your best day,
   daily average and streak, today's
   typing speed, and a
