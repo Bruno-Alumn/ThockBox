@@ -14,16 +14,12 @@ final class MenuStatsItem: NSObject {
     func install(state: AppState) {
         self.state = state
         item.isEnabled = false
-        NotificationCenter.default.addObserver(forName: NSMenu.didBeginTrackingNotification, object: nil,
-                                               queue: .main) { [weak self] note in
-            let menu = note.object as? NSMenu
-            MainActor.assumeIsolated { self?.opened(menu) }
-        }
+        MenuOpening.observe { [weak self] menu in self?.opened(menu) }
     }
 
-    private func opened(_ menu: NSMenu?) {
+    private func opened(_ menu: NSMenu) {
         // Only the menu bar menu: it's the one with the volume heading.
-        guard let menu, let state, menu.items.contains(where: { $0.title == MenuVolumeItem.heading }) else { return }
+        guard let state, menu.items.contains(where: { $0.title == MenuVolumeItem.heading }) else { return }
         item.title = Self.text(today: state.stats.shown.today, wordsPerMinute: state.stats.shown.wordsPerMinute)
         guard item.menu !== menu else { return }
         item.menu?.removeItem(item)
