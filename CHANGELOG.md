@@ -3,6 +3,11 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- The Welcome and What's New windows open fully on screen instead of
+  running under the Dock on shorter displays.
+
 ## 1.11.0
 
 - **Mute by place:** save places like the office or a library, and ThockBox
