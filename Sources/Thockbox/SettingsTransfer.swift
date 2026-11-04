@@ -16,6 +16,8 @@ enum SettingsTransfer {
         "notifySetChanges", "checkForUpdates",
     ]
 
+    static let shortcutKeys = ["toggleShortcut", "nextSetShortcut", "volumeUpShortcut", "volumeDownShortcut"]
+
     /// Marks a file as ThockBox settings, so another plist isn't taken for one.
     private static let marker = "ThockBoxSettings"
 
@@ -37,8 +39,25 @@ enum SettingsTransfer {
     static func importSettings(_ data: Data, into defaults: UserDefaults) throws -> Int {
         guard let values = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
               values[marker] != nil else { throw NotSettings() }
-        let applied = values.filter { keys.contains($0.key) }
+        var applied = values.filter { keys.contains($0.key) }
+        // Shortcuts become system hotkeys: only take ones the recorder would
+        // accept (a modifier rule, so a plain letter can't be taken from every
+        // app), each used once.
+        var seen: [Shortcut] = []
+        for key in shortcutKeys {
+            guard let data = applied[key] as? Data else { continue }
+            if let shortcut = try? JSONDecoder().decode(Shortcut.self, from: data),
+               Shortcut.isAllowed(shortcut.flags), !seen.contains(shortcut) {
+                seen.append(shortcut)
+            } else {
+                applied[key] = nil
+            }
+        }
         applied.forEach { defaults.set($0.value, forKey: $0.key) }
+        // Turning on a set each day starts with the imported set, not the next.
+        if applied["newSetEachDay"] as? Bool == true {
+            defaults.set(KeystrokeStats.dayStamp(Date()), forKey: "setDay")
+        }
         return applied.count
     }
 

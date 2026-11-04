@@ -56,4 +56,30 @@ final class SettingsTransferTests: XCTestCase {
         XCTAssertEqual(try SettingsTransfer.importSettings(file, into: defaults), 1)
         XCTAssertNil(stored(defaults, "updateFeedURL"))
     }
+
+    /// Imported shortcuts must meet the recorder's rule and not repeat, or a
+    /// file could take a plain letter from every app.
+    func testImportedShortcutsAreChecked() throws {
+        let (defaults, clean) = suite()
+        defer { clean() }
+        let letter = try JSONEncoder().encode(Shortcut(keyCode: 0, flags: [], key: "A"))
+        let good = try JSONEncoder().encode(Shortcut(keyCode: 126, flags: [.control, .command], key: "↑"))
+        let file = try PropertyListSerialization.data(fromPropertyList: [
+            "ThockBoxSettings": 1, "volumeUpShortcut": letter,
+            "volumeDownShortcut": good, "nextSetShortcut": good,
+        ], format: .xml, options: 0)
+        try SettingsTransfer.importSettings(file, into: defaults)
+        XCTAssertNil(stored(defaults, "volumeUpShortcut"), "a plain letter is refused")
+        XCTAssertNotNil(stored(defaults, "nextSetShortcut"))
+        XCTAssertNil(stored(defaults, "volumeDownShortcut"), "the same keys twice: only the first is kept")
+    }
+
+    func testImportingASetEachDayKeepsTheImportedSet() throws {
+        let (defaults, clean) = suite()
+        defer { clean() }
+        let file = try PropertyListSerialization.data(fromPropertyList: [
+            "ThockBoxSettings": 1, "newSetEachDay": true, "pack": "oreo"], format: .xml, options: 0)
+        try SettingsTransfer.importSettings(file, into: defaults)
+        XCTAssertEqual(stored(defaults, "setDay") as? String, KeystrokeStats.dayStamp(Date()))
+    }
 }

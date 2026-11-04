@@ -479,6 +479,20 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertTrue(AppState(defaults: defaults).playOnlyInListedApps, "saved")
     }
 
+    /// Playing through one reason doesn't switch off the others: going
+    /// idle still mutes.
+    func testPlayAnywayLeavesOtherReasonsAlone() {
+        let state = AppState(defaults: defaults)
+        state.muteWhenLocked = true
+        state.idleTimeoutMinutes = 1
+        let now = Date()
+        state.setScreenLocked(true)
+        state.playAnyway()
+        XCTAssertNil(state.automaticMute)
+        state.updateAutomaticMute(now: now.addingTimeInterval(120))
+        XCTAssertEqual(state.automaticMute, .idle, "idle still counts under Play Anyway")
+    }
+
     func testMutedAppMutesOnlyWhileInFront() {
         let state = AppState(defaults: defaults)
         state.setFrontApp(id: "com.example.game", name: "Game")
