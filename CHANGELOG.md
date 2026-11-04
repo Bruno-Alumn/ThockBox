@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.11.0
 
 - **Mute by place:** save places like the office or a library, and ThockBox
   stays quiet there, or plays only there. macOS watches the places and tells
