@@ -35,6 +35,8 @@ enum AutomaticMute: Equatable {
     case app(String)
     case game(String)
     case quietHours
+    /// The place's name, or nil when away from every place where sounds play.
+    case place(String?)
     case idle
 
     var message: String {
@@ -49,6 +51,8 @@ enum AutomaticMute: Equatable {
         case .app(let name): "Muted in \(name)."
         case .game(let name): "Muted while playing \(name)."
         case .quietHours: "Muted during quiet hours."
+        case .place(let name?): "Muted at \(name)."
+        case .place: "Muted away from your places."
         case .idle: "Muted after inactivity. Press any key to wake it."
         }
     }
@@ -64,6 +68,7 @@ enum AutomaticMute: Equatable {
         case .app: "speaker.slash.fill"
         case .game: "gamecontroller.fill"
         case .quietHours: "moon.fill"
+        case .place: "location.fill"
         case .idle: "moon.zzz.fill"
         }
     }
@@ -105,6 +110,8 @@ enum PlaybackStatus: Equatable {
         case .muted(.game(let name)): "Muted while playing \(name)"
         case .muted(.idle): "Muted after inactivity"
         case .muted(.quietHours): "Muted during quiet hours"
+        case .muted(.place(let name?)): "Muted at \(name)"
+        case .muted(.place): "Muted away from your places"
         case .playing(let pack): "Playing \(pack)"
         }
     }
