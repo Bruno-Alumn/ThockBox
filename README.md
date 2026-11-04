@@ -186,6 +186,11 @@ Open the menu bar menu. Its first line says if Accessibility access is
 missing, if ThockBox muted itself and why, or if another app’s secure input
 is blocking key presses. Also check that sounds are on
 (<kbd>⌃</kbd><kbd>⌘</kbd><kbd>K</kbd>) and the volume isn’t at zero.
+
+If ThockBox is switched on in System Settings › Privacy & Security ›
+Accessibility but the menu still says access is needed, click **Reset…**
+next to Accessibility access in Settings › General › Help, then allow it
+again when asked.
 </details>
 
 <details>
