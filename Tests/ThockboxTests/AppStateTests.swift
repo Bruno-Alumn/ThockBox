@@ -543,6 +543,12 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertNil(state.automaticMute)
     }
 
+    func testOnlyRegularAppsCountAsTheFrontApp() {
+        XCTAssertTrue(FrontApp.counts(.regular))
+        XCTAssertFalse(FrontApp.counts(.accessory), "a prompt from an agent like CoreLocationAgent")
+        XCTAssertFalse(FrontApp.counts(.prohibited))
+    }
+
     func testGamesAreRecognized() {
         XCTAssertTrue(FrontApp.isGame(category: "public.app-category.games", path: nil))
         XCTAssertTrue(FrontApp.isGame(category: "public.app-category.puzzle-games", path: nil))

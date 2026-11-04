@@ -31,8 +31,15 @@ final class MainWindow: NSObject, NSWindowDelegate {
         let window = NSWindow(contentViewController: host)
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
         // A unified toolbar lets the sidebar run up under the title bar and
-        // puts the page title beside it, as in System Settings.
-        window.toolbar = NSToolbar(identifier: "Settings")
+        // puts the page title beside it, as in System Settings. On macOS 14
+        // and later SwiftUI builds it, so its sections line up with the split
+        // view's columns (a toolbar added by hand leaves a seam above the
+        // sidebar's edge) and the page title reaches the window.
+        if #available(macOS 14, *) {
+            host.sceneBridgingOptions = [.toolbars, .title]
+        } else {
+            window.toolbar = NSToolbar(identifier: "Settings")
+        }
         window.toolbarStyle = .unified
         window.isReleasedWhenClosed = false
         window.delegate = self
@@ -129,7 +136,8 @@ private struct SettingsSidebarHeader: View {
                 Text(state.status.title)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(.vertical, 6)

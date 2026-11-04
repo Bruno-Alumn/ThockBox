@@ -17,6 +17,15 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - The Settings window's title shows the page you're on instead of
   "Untitled".
 
+- Fixes from testing on macOS 27: the menu no longer offers to mute a
+  system prompt (like "Mute in CoreLocationAgent") after one appears,
+  Settings footers show in full instead of ending in "…", the Tone sliders
+  line up, the sidebar shows ThockBox's whole status, and on first launch
+  macOS's Accessibility prompt opens in front of the welcome window
+  instead of hidden behind it. Shortcuts line up in one column, with a
+  small clear button beside a set one, and Settings › General groups the
+  menu bar options under their own heading.
+
 - Polish across Settings, the menu and the welcome windows: clearer
   wording, shortcut buttons that line up, an icon for every listed app,
   Turn Off For dimmed rather than hidden while sounds are off, and better

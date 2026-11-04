@@ -161,27 +161,27 @@ private struct SoundPage: View {
                 Slider(value: $state.toneX, in: -1...1) {
                     Text("Brightness")
                 } minimumValueLabel: {
-                    Text("Darker")
+                    Text("Darker").toneEnd(.trailing)
                 } maximumValueLabel: {
-                    Text("Brighter")
+                    Text("Brighter").toneEnd(.leading)
                 }
                 .accessibilityValue(SpokenValue.direction(state.toneX, up: "brighter", down: "darker"))
                 .sliderHaptics(state.toneX, in: -1...1, step: 1)
                 Slider(value: $state.toneY, in: -1...1) {
                     Text("Pitch")
                 } minimumValueLabel: {
-                    Text("Lower")
+                    Text("Lower").toneEnd(.trailing)
                 } maximumValueLabel: {
-                    Text("Higher")
+                    Text("Higher").toneEnd(.leading)
                 }
                 .accessibilityValue(SpokenValue.direction(state.toneY, up: "higher", down: "lower"))
                 .sliderHaptics(state.toneY, in: -1...1, step: 1)
                 Slider(value: $state.pitchVariation, in: 0...150) {
                     Text("Variation")
                 } minimumValueLabel: {
-                    Text("None")
+                    Text("None").toneEnd(.trailing)
                 } maximumValueLabel: {
-                    Text("More")
+                    Text("More").toneEnd(.leading)
                 }
                 .accessibilityValue(SpokenValue.percent(state.pitchVariation, of: 150))
                 Button("Reset Tone") {
@@ -487,7 +487,7 @@ private struct ActivityPage: View {
                     if let wpm = store.shown.wordsPerMinute {
                         Text("\(wpm) words per minute").monospacedDigit()
                     } else {
-                        Text("Keep typing").foregroundStyle(.secondary)
+                        Text("Not enough typing yet").foregroundStyle(.secondary)
                     }
                 }
             } header: {
@@ -562,6 +562,19 @@ private struct GeneralPage: View {
 
             Section {
                 Toggle("Open at login", isOn: $state.launchAtLogin)
+                Picker(selection: $state.dockIconStyle) {
+                    ForEach(DockIconStyle.allCases) { Text($0.title).tag($0) }
+                } label: {
+                    Text("App icon")
+                    Text("Shown in the Dock and ThockBox's windows.")
+                }
+                Toggle(isOn: $state.notifySetChanges) {
+                    Text("Notify when the switch set changes")
+                    Text("When a Focus, Shortcuts or AppleScript picks a different set.")
+                }
+            }
+
+            Section("Menu Bar") {
                 Toggle(isOn: $state.showMenuBarIcon) {
                     Text("Show in menu bar")
                     if !state.showMenuBarIcon {
@@ -578,22 +591,12 @@ private struct GeneralPage: View {
                         }
                     }
                 }
-                Picker(selection: $state.dockIconStyle) {
-                    ForEach(DockIconStyle.allCases) { Text($0.title).tag($0) }
-                } label: {
-                    Text("App icon")
-                    Text("Shown in the Dock and ThockBox's windows.")
-                }
-                Toggle("Show today's keystrokes in the menu bar", isOn: $state.showKeystrokesInMenuBar)
+                Toggle("Show today's keystrokes", isOn: $state.showKeystrokesInMenuBar)
                     .disabled(!state.showMenuBarIcon)
-                Toggle("Show today's typing speed in the menu bar", isOn: $state.showSpeedInMenuBar)
+                Toggle("Show today's typing speed", isOn: $state.showSpeedInMenuBar)
                     .disabled(!state.showMenuBarIcon)
                 Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)
                     .disabled(!state.showMenuBarIcon)
-                Toggle(isOn: $state.notifySetChanges) {
-                    Text("Notify when the switch set changes")
-                    Text("When a Focus, Shortcuts or AppleScript picks a different set.")
-                }
             }
 
             Section {
@@ -679,5 +682,13 @@ private struct GeneralPage: View {
         } catch {
             NSAlert(error: error).runModal()
         }
+    }
+}
+
+private extension View {
+    /// The words at each end of a Tone slider, in a fixed width so the three
+    /// sliders line up.
+    func toneEnd(_ alignment: Alignment) -> some View {
+        frame(width: 52, alignment: alignment)
     }
 }
