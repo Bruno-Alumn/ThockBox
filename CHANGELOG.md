@@ -13,6 +13,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   right as in System Settings, the Places list keeps names aligned and tells
   VoiceOver where you are, and clearer wording in a few places.
 
+- Settings › General shows a green check mark when Accessibility access is
+  allowed, like the Welcome window.
+
 ## 1.11.0
 
 - **Mute by place:** save places like the office or a library, and ThockBox
