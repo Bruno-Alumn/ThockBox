@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.5.0
 
 - **Turn Off For** in the menu: 15 minutes, 1 hour, 4 hours or until
   tomorrow morning (8 am), instead of only an hour.
