@@ -28,6 +28,10 @@ jobs:
       # CI runners don't have, so CI stops at building the signed app bundle.
       - name: Build app bundle
         run: make bundle
+        env:
+          # Fail if the Liquid Glass icon (Resources/AppIcon.icon) can't be
+          # compiled, rather than quietly shipping only AppIcon.icns.
+          REQUIRE_GLASS_ICON: 1
 
       # Launch the built app, interface and all, and fail on runaway CPU or
       # memory. The unit tests don't run the app's SwiftUI scene.

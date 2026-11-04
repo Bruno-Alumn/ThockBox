@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Sound waves on both sides of the keys, around a shared center. -->
+  <g transform="translate(512 512) scale(1.04) translate(-520 -486)" fill="none" stroke="#FD613F" stroke-width="38" stroke-linecap="round">
+    <path d="M221.6 517.4A300 300 0 0 1 499.1 186.7"/>
+    <path d="M308.1 456.2A214 214 0 0 1 446.8 284.9"/>
+    <path d="M818.4 454.6A300 300 0 0 1 540.9 785.3"/>
+    <path d="M731.9 515.8A214 214 0 0 1 593.2 687.1"/>
+  </g>
+</svg>

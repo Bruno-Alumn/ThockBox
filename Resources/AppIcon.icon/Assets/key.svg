@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- The orange keycap being pressed: skirt, then the top face. -->
+  <g transform="translate(512 512) scale(1.04) translate(-520 -486)">
+    <g transform="translate(521 479) rotate(33)">
+      <rect x="-130" y="-90" width="260" height="180" rx="34" fill="#D9412A"/>
+      <rect x="-118" y="-82" width="212" height="140" rx="26" fill="#FE7656"/>
+    </g>
+  </g>
+</svg>

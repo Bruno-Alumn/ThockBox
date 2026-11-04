@@ -1,0 +1,76 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "srgb:0.03137,0.43137,0.44706,1.00000",
+      "srgb:0.00000,0.32941,0.35294,1.00000"
+    ],
+    "orientation" : {
+      "start" : {
+        "x" : 0.5,
+        "y" : 0
+      },
+      "stop" : {
+        "x" : 0.5,
+        "y" : 0.7
+      }
+    }
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "key.svg",
+          "name" : "Pressed key"
+        }
+      ],
+      "name" : "Pressed key",
+      "shadow" : {
+        "kind" : "layer-color",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.2
+      }
+    },
+    {
+      "layers" : [
+        {
+          "image-name" : "keys.svg",
+          "name" : "Keys"
+        }
+      ],
+      "name" : "Keys",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.2
+      }
+    },
+    {
+      "layers" : [
+        {
+          "image-name" : "waves.svg",
+          "name" : "Waves"
+        }
+      ],
+      "name" : "Waves",
+      "shadow" : {
+        "kind" : "layer-color",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.4
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : [
+      "macOS"
+    ]
+  }
+}
