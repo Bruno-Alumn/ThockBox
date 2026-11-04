@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.8.1
 
 - Fixed: Play Anyway no longer switches off other mutes (going idle still
   mutes), and a sleep doesn't carry it into the next night.
