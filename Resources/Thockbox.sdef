@@ -8,7 +8,7 @@
             <property name="sounds enabled" code="Tben" type="boolean" access="rw" description="Whether keyboard sounds are enabled.">
                 <cocoa key="soundsEnabled"/>
             </property>
-            <property name="sound pack" code="Tbsp" type="text" access="rw" description="The selected sound pack ID or display name.">
+            <property name="sound pack" code="Tbsp" type="text" access="rw" description="The current switch set's ID. Set it to a switch set's ID or name.">
                 <cocoa key="soundPack"/>
             </property>
             <property name="sound volume" code="Tbvo" type="real" access="rw" description="Sound volume from 0.0 to 1.0.">
@@ -47,10 +47,10 @@
             <property name="mute after idle" code="Tbmi" type="integer" access="rw" description="Minutes without typing before sounds mute: 0 (never), 1, 5, 15, 30 or 60. Other values round to the nearest.">
                 <cocoa key="muteAfterIdle"/>
             </property>
-            <property name="automatically muted" code="Tbam" type="boolean" access="r" description="Whether sounds are muted right now by a call, the lock screen, a muted app or inactivity.">
+            <property name="automatically muted" code="Tbam" type="boolean" access="r" description="Whether something is muting sounds right now, such as a call, the lock screen, a muted app or inactivity.">
                 <cocoa key="automaticallyMuted"/>
             </property>
-            <property name="off until" code="Tbou" type="date" access="rw" description="When sounds turn back on by themselves after Turn Off for an Hour, or missing value. Set a date to turn sounds off until then; set missing value to turn them back on.">
+            <property name="off until" code="Tbou" type="date" access="rw" description="When sounds turn back on by themselves after Turn Off For, or missing value. Set a date to turn sounds off until then, or missing value to turn them back on.">
                 <cocoa key="offUntil"/>
             </property>
             <property name="mute reason" code="Tbmr" type="text" access="r" description="Why sounds are automatically muted, or empty text when they aren't.">

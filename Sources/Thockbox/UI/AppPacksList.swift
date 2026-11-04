@@ -45,14 +45,14 @@ struct AppPacksList: View {
                 Button(action: chooseApps) {
                     Image(systemName: "plus").frame(width: 20, height: 20).contentShape(Rectangle())
                 }
-                    .help("Add apps")
-                    .accessibilityLabel("Add Apps")
+                .help("Add apps")
+                .accessibilityLabel("Add Apps")
                 Button(action: removeSelection) {
                     Image(systemName: "minus").frame(width: 20, height: 20).contentShape(Rectangle())
                 }
-                    .disabled(selection.isEmpty)
-                    .help("Remove the selected apps")
-                    .accessibilityLabel("Remove Selected Apps")
+                .disabled(selection.isEmpty)
+                .help("Remove the selected apps")
+                .accessibilityLabel("Remove Selected Apps")
             }
             .buttonStyle(.borderless)
         }

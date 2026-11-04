@@ -77,29 +77,23 @@ struct OutputDevicePicker: View {
     @State private var deviceMonitor: AudioDeviceMonitor?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Picker("Play through", selection: Binding(
-                get: { state.outputDeviceUID ?? "" },
-                set: { state.outputDeviceUID = $0.isEmpty ? nil : $0 }
-            )) {
-                Text("System Default").tag("")
-                ForEach(devices) { device in
-                    Text(device.name).tag(device.uid)
-                }
-                // The picked device stays listed while it's unplugged; sound
-                // goes to the default until it's back.
-                if let uid = state.outputDeviceUID, !devices.contains(where: { $0.uid == uid }) {
-                    Text("\(state.outputDeviceName ?? "Unknown Device") (Not Connected)").tag(uid)
-                }
+        Picker(selection: Binding(
+            get: { state.outputDeviceUID ?? "" },
+            set: { state.outputDeviceUID = $0.isEmpty ? nil : $0 }
+        )) {
+            Text("System Default").tag("")
+            ForEach(devices) { device in
+                Text(device.name).tag(device.uid)
             }
-            // Bluetooth headphones buffer ~100–250 ms on their own; say so,
-            // since it reads as the app lagging.
-            let latencyMs = Int((state.engine.outputLatency * 1000).rounded())
+            // The picked device stays listed while it's unplugged; sound
+            // goes to the default until it's back.
+            if let uid = state.outputDeviceUID, !devices.contains(where: { $0.uid == uid }) {
+                Text("\(state.outputDeviceName ?? "Unknown Device") (Not Connected)").tag(uid)
+            }
+        } label: {
+            Text("Play through")
             if latencyMs >= 40 {
                 Text("This output delays sound by about \(latencyMs) ms, which is typical for Bluetooth. Speakers and wired headphones respond instantly.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .onAppear {
@@ -110,6 +104,10 @@ struct OutputDevicePicker: View {
         }
         .onDisappear { deviceMonitor = nil }
     }
+
+    // Bluetooth headphones buffer ~100–250 ms on their own; say so,
+    // since it reads as the app lagging.
+    private var latencyMs: Int { Int((state.engine.outputLatency * 1000).rounded()) }
 }
 
 /// The settings window's update row: current version, check status, and
@@ -189,8 +187,8 @@ struct MutedAppsList: View {
                 Button(action: chooseApps) {
                     Image(systemName: "plus").frame(width: 20, height: 20).contentShape(Rectangle())
                 }
-                    .help("Add apps")
-                    .accessibilityLabel("Add Apps")
+                .help("Add apps")
+                .accessibilityLabel("Add Apps")
                 Button(action: removeSelection) {
                     Image(systemName: "minus").frame(width: 20, height: 20).contentShape(Rectangle())
                 }

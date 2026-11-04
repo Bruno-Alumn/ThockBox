@@ -57,6 +57,7 @@ private struct KeystrokeLabel: View {
         Label {
             Text(MenuBarText.text(today: count ? stats.shown.today : nil,
                                   wordsPerMinute: speed ? stats.shown.wordsPerMinute : nil))
+                .monospacedDigit()
         } icon: {
             icon
         }
@@ -192,8 +193,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc var automaticallyMuted: Bool { AppState.shared.isAutomaticallyMuted }
 
-    /// Setting a future date turns sounds off until then, like Turn Off for
-    /// an Hour; missing value (or a time that has passed) turns them on.
+    /// Setting a future date turns sounds off until then, like Turn Off For;
+    /// missing value (or a time that has passed) turns them on.
     @objc var offUntil: Date? {
         get { AppState.shared.offUntil }
         set {

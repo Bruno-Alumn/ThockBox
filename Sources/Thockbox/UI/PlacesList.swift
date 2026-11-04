@@ -18,7 +18,10 @@ struct PlacesList: View {
                     } icon: {
                         Image(systemName: state.placesInside.contains(place.id) ? "location.fill" : "mappin")
                             .foregroundStyle(state.placesInside.contains(place.id) ? Color.accentColor : .secondary)
+                            .frame(width: 16)
                             .help(state.placesInside.contains(place.id) ? "You're here now" : "")
+                            .accessibilityLabel(state.placesInside.contains(place.id) ? "You're here now" : "")
+                            .accessibilityHidden(!state.placesInside.contains(place.id))
                     }
                     .tag(place.id)
                 }
@@ -46,12 +49,12 @@ struct PlacesList: View {
                 .accessibilityLabel("Remove Selected Places")
                 if adding {
                     ProgressView().controlSize(.small).padding(.leading, 4)
-                    Text("Finding this Mac…").foregroundStyle(.secondary)
+                    Text("Finding your location…").foregroundStyle(.secondary)
                 }
             }
             .buttonStyle(.borderless)
             if let problem {
-                Text(problem).font(.callout).foregroundStyle(.secondary)
+                Text(problem).font(.footnote).foregroundStyle(.secondary)
             }
         }
     }
