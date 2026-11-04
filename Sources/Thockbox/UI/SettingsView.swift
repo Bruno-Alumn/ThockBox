@@ -448,6 +448,10 @@ private struct ActivityPage: View {
                     if let average = store.shown.dailyAverage {
                         LabeledContent("Daily average", value: average.formatted())
                     }
+                    let streak = store.shown.streak()
+                    if streak >= 2 {
+                        LabeledContent("Streak", value: "\(streak) days in a row")
+                    }
                 }
             }
 

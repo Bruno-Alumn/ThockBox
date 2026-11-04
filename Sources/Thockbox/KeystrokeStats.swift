@@ -93,6 +93,23 @@ struct KeystrokeStats {
         }
     }
 
+    /// Days in a row with typing, up to today, or up to yesterday while
+    /// today has none yet (so the streak isn't lost first thing in the
+    /// morning). Limited by the 30 days kept.
+    func streak(now: Date = Date(), calendar: Calendar = .current) -> Int {
+        var day = calendar.startOfDay(for: now)
+        let typedToday = Self.dayStamp(day) == stamp && today > 0
+        if !typedToday { day = calendar.date(byAdding: .day, value: -1, to: day) ?? day }
+        var count = typedToday ? 1 : 0
+        if typedToday { day = calendar.date(byAdding: .day, value: -1, to: day) ?? day }
+        while (history[Self.dayStamp(day)] ?? 0) > 0 {
+            count += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: day) else { break }
+            day = previous
+        }
+        return count
+    }
+
     /// The busiest kept day (today included) and its count; nil before any.
     var bestDay: (date: String, count: Int)? {
         var days = history

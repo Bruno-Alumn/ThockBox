@@ -3,6 +3,10 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- **Streak** in Settings › Activity: how many days in a row you've typed.
+
 ## 1.5.0
 
 - **Turn Off For** in the menu: 15 minutes, 1 hour, 4 hours or until
