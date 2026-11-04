@@ -9,6 +9,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   typing speed under the status line.
 - **Keys typed by other apps** (text expanders, password managers, remote
   control) can be left silent and uncounted: Settings › Keys.
+- **Reset Accessibility access** from Settings › General › Help, for when
+  ThockBox is switched on in System Settings but still can't hear keys.
 
 ## 1.8.1
 

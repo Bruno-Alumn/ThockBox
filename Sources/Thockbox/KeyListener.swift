@@ -192,6 +192,24 @@ enum Permissions {
         return AXIsProcessTrustedWithOptions(options)
     }
 
+    /// tccutil's arguments to forget this app's Accessibility entry.
+    static func resetArguments(bundleID: String) -> [String] {
+        ["reset", "Accessibility", bundleID]
+    }
+
+    /// For when the switch in System Settings is on but macOS still doesn't
+    /// trust this build (often after an update signed differently): forget
+    /// the stale entry and ask again. AppState relaunches once it's allowed.
+    static func reset() {
+        guard let id = Bundle.main.bundleIdentifier else { return }
+        do {
+            try Updater.run("/usr/bin/tccutil", resetArguments(bundleID: id))
+        } catch {
+            klog.error("accessibility reset failed: \(error.localizedDescription, privacy: .public)")
+        }
+        requestIfNeeded()
+    }
+
     static func openSystemSettings() {
         let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
         NSWorkspace.shared.open(url)

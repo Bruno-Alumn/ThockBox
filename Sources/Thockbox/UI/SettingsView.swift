@@ -571,7 +571,10 @@ private struct GeneralPage: View {
                     if state.accessibilityTrusted {
                         Text("Allowed")
                     } else {
-                        Button("Open System Settings") { Permissions.openSystemSettings() }
+                        HStack {
+                            Button("Open System Settings") { Permissions.openSystemSettings() }
+                            Button("Reset…", action: confirmAccessibilityReset)
+                        }
                     }
                 }
                 LabeledContent("Getting started") {
@@ -590,6 +593,19 @@ private struct GeneralPage: View {
                 Link("Report a Problem…", destination: ProblemReport.url())
             }
         }
+    }
+
+    /// Already switched on in System Settings but still not allowed: a stale
+    /// entry macOS won't match to this build. Clearing it brings the prompt
+    /// back.
+    private func confirmAccessibilityReset() {
+        let alert = NSAlert()
+        alert.messageText = "Reset Accessibility access?"
+        alert.informativeText = "Use this when ThockBox is switched on in System Settings › Privacy & Security › Accessibility but still can't hear keys. ThockBox is removed from that list, then asks to be allowed again."
+        alert.addButton(withTitle: "Reset")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        Permissions.reset()
     }
 
     /// Saves this Mac's settings to bring to another one.

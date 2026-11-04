@@ -80,3 +80,11 @@ final class ModifierDirectionTests: XCTestCase {
         XCTAssertFalse(press(999, [], wasDown: true))
     }
 }
+
+final class PermissionsTests: XCTestCase {
+    func testResetClearsOnlyThisAppsAccessibilityEntry() {
+        XCTAssertEqual(Permissions.resetArguments(bundleID: "io.github.bruno-alumn.thockbox"),
+                       ["reset", "Accessibility", "io.github.bruno-alumn.thockbox"],
+                       "without a bundle ID tccutil would reset every app's access")
+    }
+}
