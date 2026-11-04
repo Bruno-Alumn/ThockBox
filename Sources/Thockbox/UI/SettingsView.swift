@@ -540,6 +540,19 @@ private struct GeneralPage: View {
 
             Section {
                 Toggle("Open at login", isOn: $state.launchAtLogin)
+                Picker(selection: $state.dockIconStyle) {
+                    ForEach(DockIconStyle.allCases) { Text($0.title).tag($0) }
+                } label: {
+                    Text("App icon")
+                    Text("Shown in the Dock and ThockBox's windows.")
+                }
+                Toggle(isOn: $state.notifySetChanges) {
+                    Text("Notify when the switch set changes")
+                    Text("When a Focus, Shortcuts or AppleScript picks a different set.")
+                }
+            }
+
+            Section("Menu Bar") {
                 Toggle(isOn: $state.showMenuBarIcon) {
                     Text("Show in menu bar")
                     if !state.showMenuBarIcon {
@@ -556,22 +569,12 @@ private struct GeneralPage: View {
                         }
                     }
                 }
-                Picker(selection: $state.dockIconStyle) {
-                    ForEach(DockIconStyle.allCases) { Text($0.title).tag($0) }
-                } label: {
-                    Text("App icon")
-                    Text("Shown in the Dock and ThockBox's windows.")
-                }
-                Toggle("Show today's keystrokes in the menu bar", isOn: $state.showKeystrokesInMenuBar)
+                Toggle("Show today's keystrokes", isOn: $state.showKeystrokesInMenuBar)
                     .disabled(!state.showMenuBarIcon)
-                Toggle("Show today's typing speed in the menu bar", isOn: $state.showSpeedInMenuBar)
+                Toggle("Show today's typing speed", isOn: $state.showSpeedInMenuBar)
                     .disabled(!state.showMenuBarIcon)
                 Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)
                     .disabled(!state.showMenuBarIcon)
-                Toggle(isOn: $state.notifySetChanges) {
-                    Text("Notify when the switch set changes")
-                    Text("When a Focus, Shortcuts or AppleScript picks a different set.")
-                }
             }
 
             Section {
