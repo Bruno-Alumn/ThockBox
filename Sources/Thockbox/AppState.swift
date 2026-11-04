@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import CoreLocation
 import CoreAudio
 import ServiceManagement
 
@@ -273,6 +274,29 @@ final class AppState: ObservableObject {
             updateCalendarMonitor()
         }
     }
+    /// Mute (or play only) at the places in `places`, using Location
+    /// Services. Off by default; nothing about location runs while it's off.
+    @Published var muteByPlace: Bool {
+        didSet {
+            defaults.set(muteByPlace, forKey: "muteByPlace")
+            updatePlaceMonitor()
+        }
+    }
+    @Published var places: [Place] {
+        didSet {
+            defaults.set(try? JSONEncoder().encode(places), forKey: "places")
+            placeMonitor?.watch(places)
+            updateAutomaticMute()
+        }
+    }
+    /// The places are the only ones where sounds play, instead of where
+    /// they're muted.
+    @Published var playOnlyAtPlaces: Bool {
+        didSet {
+            defaults.set(playOnlyAtPlaces, forKey: "playOnlyAtPlaces")
+            updateAutomaticMute()
+        }
+    }
     @Published var muteWhenLocked: Bool {
         didSet {
             defaults.set(muteWhenLocked, forKey: "muteWhenLocked")
@@ -544,6 +568,10 @@ final class AppState: ObservableObject {
     }
     /// A calendar event is on (only tracked while muteDuringMeetings is on).
     @Published private(set) var inCalendarEvent = false
+    /// The saved places the Mac is at, and whether macOS has said yet.
+    @Published private(set) var placesInside: Set<UUID> = []
+    @Published private(set) var placesKnown = false
+    @Published private(set) var locationAccess = PlaceMonitor.Access.unknown
     /// Whether ThockBox may read calendars, once it has asked.
     @Published private(set) var calendarAccess = CalendarMonitor.Access.unknown
     /// The Mac's calendars, once access is allowed, for choosing which count.
@@ -568,6 +596,9 @@ final class AppState: ObservableObject {
     private var microphoneMonitor: AudioActivityMonitor?
     private var mediaMonitor: AudioActivityMonitor?
     private var calendarMonitor: CalendarMonitor?
+    private var placeMonitor: PlaceMonitor?
+    /// Tests turn this off: watching places asks for Location access.
+    var watchesPlaces = true
     /// Tests turn this off: reading calendars asks the user for access.
     var readsCalendars = true
     /// Each output device keeps its own volume, as macOS does for system
@@ -597,6 +628,7 @@ final class AppState: ObservableObject {
             "muteDuringMeetings": false,
             "muteWhileMedia": false,
             "muteWhileGaming": false,
+            "muteByPlace": false, "playOnlyAtPlaces": false,
             "idleTimeoutMinutes": 0, "notifySetChanges": false,
         ])
         enabled = defaults.bool(forKey: "enabled")
@@ -631,6 +663,9 @@ final class AppState: ObservableObject {
         muteWhileMedia = defaults.bool(forKey: "muteWhileMedia")
         ignoredMediaApps = Set(defaults.stringArray(forKey: "ignoredMediaApps") ?? [])
         muteDuringMeetings = defaults.bool(forKey: "muteDuringMeetings")
+        muteByPlace = defaults.bool(forKey: "muteByPlace")
+        places = defaults.data(forKey: "places").flatMap { try? JSONDecoder().decode([Place].self, from: $0) } ?? []
+        playOnlyAtPlaces = defaults.bool(forKey: "playOnlyAtPlaces")
         ignoredCalendarIDs = Set(defaults.stringArray(forKey: "ignoredCalendars") ?? [])
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
@@ -674,6 +709,7 @@ final class AppState: ObservableObject {
         updateMicrophoneMonitor()
         updateMediaMonitor()
         updateCalendarMonitor()
+        updatePlaceMonitor()
         updateScreenShareWatch()
         outputRouteChanged()
         outputListeners = SystemAudioListener.outputRoute { [weak self] in self?.outputRouteChanged() }
@@ -1225,6 +1261,63 @@ final class AppState: ObservableObject {
             })
     }
 
+    private func updatePlaceMonitor() {
+        guard muteByPlace else {
+            placeMonitor = nil
+            setPlaces(inside: [], known: false)
+            return
+        }
+        guard placeMonitor == nil, watchesPlaces, PlaceMonitor.isAvailable else { return }
+        let monitor = PlaceMonitor(
+            onChange: { [weak self] inside, known in self?.setPlaces(inside: inside, known: known) },
+            onAccess: { [weak self] access in self?.locationAccess = access })
+        placeMonitor = monitor
+        locationAccess = monitor.access
+        monitor.watch(places)
+    }
+
+    /// Called by the place monitor (and by tests).
+    func setPlaces(inside: Set<UUID>, known: Bool) {
+        placesInside = inside
+        placesKnown = known
+        updateAutomaticMute()
+    }
+
+    /// Saves where the Mac is now as a place, named after the address.
+    /// Asks for Location access the first time. Calls back with an error
+    /// message when it can't.
+    func addCurrentPlace(_ done: @escaping (String?) -> Void) {
+        guard let monitor = placeMonitor else { return done("Location Services isn't available on this Mac.") }
+        monitor.currentLocation { [weak self] location in
+            guard let self else { return }
+            guard let location else {
+                return done(self.locationAccess == .denied
+                    ? "ThockBox can't use your location. Allow it in System Settings › Privacy & Security › Location Services."
+                    : "Couldn't find where this Mac is. Check that Wi-Fi is on, then try again.")
+            }
+            CLGeocoder().reverseGeocodeLocation(location) { [weak self] placemarks, _ in
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    let mark = placemarks?.first
+                    let name = mark?.name ?? mark?.locality ?? "Place \(self.places.count + 1)"
+                    self.places.append(Place(name: name, latitude: location.coordinate.latitude,
+                                             longitude: location.coordinate.longitude))
+                    done(nil)
+                }
+            }
+        }
+    }
+
+    /// The place reason that applies now, if any: the place the Mac is at,
+    /// or, when sounds play only at places, being away from all of them.
+    /// Nothing until macOS has reported, so it never mutes by guesswork.
+    var placeMute: AutomaticMute? {
+        guard muteByPlace, placesKnown, !places.isEmpty else { return nil }
+        let here = places.first { placesInside.contains($0.id) }
+        if playOnlyAtPlaces { return here == nil ? .place(nil) : nil }
+        return here.map { .place($0.name) }
+    }
+
     /// Called by the calendar monitor (and by tests).
     func setInCalendarEvent(_ inEvent: Bool) {
         inCalendarEvent = inEvent
@@ -1253,6 +1346,7 @@ final class AppState: ObservableObject {
         if headphonesOnly && outputIsSpeaker { reasons.append(.speakers) }
         if let frontApp, listMutes(frontApp.id) { reasons.append(.app(frontApp.name)) }
         if muteWhileGaming, let frontApp, frontApp.isGame { reasons.append(.game(frontApp.name)) }
+        if let placeMute { reasons.append(placeMute) }
         if quietHours && Self.isQuiet(minute: Self.minuteOfDay(now), start: quietStart, end: quietEnd) {
             reasons.append(.quietHours)
         }

@@ -5,6 +5,12 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Mute by place:** save places like the office or a library, and ThockBox
+  stays quiet there, or plays only there. macOS watches the places and tells
+  ThockBox only when you arrive or leave, so it uses no extra battery, and
+  it asks for Location access only when you add a place. It works with the
+  other mutes: a meeting still mutes, and Play Anyway plays through.
+
 - Polish across Settings, the menu and the welcome windows: clearer
   wording, shortcut buttons that line up, an icon for every listed app,
   Turn Off For dimmed rather than hidden while sounds are off, and better

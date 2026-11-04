@@ -424,6 +424,28 @@ private struct MutingPage: View {
                 formFooter("Speakers means the Mac's own speakers, a display or AirPlay. Bluetooth, USB and wired headphones play.")
             }
 
+            if PlaceMonitor.isAvailable {
+                Section {
+                    Toggle(isOn: $state.muteByPlace) {
+                        Text("Use your location")
+                        if state.muteByPlace && state.locationAccess == .denied {
+                            Text("ThockBox can't use your location. Allow it in System Settings › Privacy & Security › Location Services.")
+                        }
+                    }
+                    if state.muteByPlace {
+                        Picker("These places", selection: $state.playOnlyAtPlaces) {
+                            Text("Stay quiet at them").tag(false)
+                            Text("Are the only ones that play").tag(true)
+                        }
+                        PlacesList(state: state)
+                    }
+                } header: {
+                    Text(state.muteByPlace && state.playOnlyAtPlaces ? "Play Only at These Places" : "Mute at These Places")
+                } footer: {
+                    formFooter("Add a place while you're there, like the office or a library. macOS watches your places and tells ThockBox only when you arrive or leave, so it uses no extra battery. Your location stays on this Mac; naming a place looks up its address with Apple.")
+                }
+            }
+
             Section {
                 Picker("These apps", selection: $state.playOnlyInListedApps) {
                     Text("Stay quiet in them").tag(false)
