@@ -694,7 +694,10 @@ final class AppState: ObservableObject {
         engine.onFallbackToDefault = { [weak self] in
             self?.appliedOutputDevice = AudioDevices.defaultOutputDevice()
         }
-        MainActor.assumeIsolated { MenuVolumeItem.shared.install(state: self) }
+        MainActor.assumeIsolated {
+            MenuVolumeItem.shared.install(state: self)
+            MenuStatsItem.shared.install(state: self)
+        }
         listener.handler = { [weak self] event in
             self?.handle(event)
         }
