@@ -163,6 +163,15 @@ final class AppStateTests: XCTestCase {
         XCTAssertFalse(AppState(defaults: defaults).keyReleaseSounds)
     }
 
+    func testKeysTypedByOtherAppsPlayByDefaultAndTheChoiceReachesTheListener() {
+        let state = AppState(defaults: defaults)
+        XCTAssertTrue(state.generatedKeySounds)
+        XCTAssertFalse(state.listener.ignoresGeneratedKeys)
+        state.generatedKeySounds = false
+        XCTAssertTrue(state.listener.ignoresGeneratedKeys)
+        XCTAssertFalse(AppState(defaults: defaults).generatedKeySounds, "saved")
+    }
+
     func testStoredValuesAreClampedOnLoad() {
         defaults.set(5.0, forKey: "volume")
         defaults.set(-9.0, forKey: "toneX")

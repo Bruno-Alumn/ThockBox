@@ -17,6 +17,10 @@ final class KeyListener {
 
     var handler: ((Event) -> Void)?
 
+    /// Drop key presses another app posted (a text expander, a password
+    /// manager, remote control) instead of a keyboard.
+    var ignoresGeneratedKeys = false
+
     private var monitors: [Any] = []
     private(set) var mouseMonitors: [Any] = []
     private var isRunning = false
@@ -134,7 +138,20 @@ final class KeyListener {
         return !wasDown
     }
 
+    /// Posted by a process rather than coming from a keyboard: the system
+    /// stamps the poster's process ID on those and leaves 0 on hardware input
+    /// (keyboard remappers such as Karabiner go through a virtual keyboard,
+    /// so they still count as typing).
+    static func isGenerated(_ event: CGEvent?) -> Bool {
+        guard let event else { return false }
+        return event.getIntegerValueField(.eventSourceUnixProcessID) != 0
+    }
+
     private func process(_ event: NSEvent) {
+        if ignoresGeneratedKeys, [.keyDown, .keyUp, .flagsChanged].contains(event.type),
+           Self.isGenerated(event.cgEvent) {
+            return
+        }
         switch event.type {
         case .keyDown:
             handler?(.keyDown(keycode: event.keyCode, isRepeat: event.isARepeat,
