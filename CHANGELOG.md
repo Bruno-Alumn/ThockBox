@@ -3,11 +3,13 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## 1.11.1
+## Unreleased
 
 - **Simpler Settings:** shorter notes, shown only for the options you've
   turned on, sets for specific apps at the bottom of the Sound page, and
   menu bar options shown only while the menu bar icon is.
+
+## 1.11.1
 
 - The Welcome and What's New windows open fully on screen instead of
   running under the Dock on shorter displays.
