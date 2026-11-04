@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.8.0
 
 - **Today by hour** in Settings › Activity: a chart of when you typed today.
 - **Key releases** can be turned off (Settings › Keys) for just the press
