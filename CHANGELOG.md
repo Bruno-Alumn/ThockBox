@@ -8,6 +8,11 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - The Welcome and What's New windows open fully on screen instead of
   running under the Dock on shorter displays.
 
+- More polish: failed exports and imports explain what went wrong (a
+  failed daily counts export used to say nothing), buttons line up on the
+  right as in System Settings, the Places list keeps names aligned and tells
+  VoiceOver where you are, and clearer wording in a few places.
+
 ## 1.11.0
 
 - **Mute by place:** save places like the office or a library, and ThockBox

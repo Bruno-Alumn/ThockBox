@@ -78,6 +78,7 @@ private struct AttentionSection: View {
                 }
                 if status == .needsAccess {
                     Button("Open System Settings") { Permissions.openSystemSettings() }
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
         }
@@ -122,6 +123,7 @@ private struct SoundPage: View {
                         .fixedSize()
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .trailing)
             } footer: {
                 formFooter("Choosing a set plays a sample of it. Add a Mechvibes sound pack, a set exported from ThockBox, or a folder of your own recordings. You can also drop one on this window.")
             }
@@ -190,6 +192,7 @@ private struct SoundPage: View {
                     state.pitchVariation = 60
                 }
                 .disabled(state.toneX == 0 && state.toneY == 0 && state.pitchVariation == 60)
+                .frame(maxWidth: .infinity, alignment: .trailing)
             } header: {
                 Text("Tone")
             } footer: {
@@ -442,7 +445,7 @@ private struct MutingPage: View {
                 } header: {
                     Text(state.muteByPlace && state.playOnlyAtPlaces ? "Play Only at These Places" : "Mute at These Places")
                 } footer: {
-                    formFooter("Add a place while you're there, like the office or a library. macOS watches your places and tells ThockBox only when you arrive or leave, so it uses no extra battery. Your location stays on this Mac; naming a place looks up its address with Apple.")
+                    formFooter("Add a place while you're there, like the office or a library. macOS watches your places and tells ThockBox only when you arrive or leave, so it uses very little battery. Your location stays on this Mac. Adding a place looks up its address with Apple to name it.")
                 }
             }
 
@@ -516,9 +519,9 @@ private struct ActivityPage: View {
                     LabeledContent("Best day") {
                         let day = Self.dayName(best.date)
                         if day == "today" {
-                            Text("\(best.count.formatted()) today")
+                            Text("\(best.count.formatted()) today").monospacedDigit()
                         } else {
-                            Text("\(best.count.formatted()) on \(day)")
+                            Text("\(best.count.formatted()) on \(day)").monospacedDigit()
                         }
                     }
                     if let average = store.shown.dailyAverage {
@@ -544,9 +547,18 @@ private struct ActivityPage: View {
     private func exportCSV() {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = "ThockBox Keystrokes.csv"
+        panel.prompt = "Export"
         panel.allowedContentTypes = [.commaSeparatedText]
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        try? store.shown.csv().write(to: url, atomically: true, encoding: .utf8)
+        do {
+            try store.shown.csv().write(to: url, atomically: true, encoding: .utf8)
+        } catch {
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText = "Couldn't Export Daily Counts"
+            alert.informativeText = error.localizedDescription
+            alert.runModal()
+        }
     }
 }
 
@@ -581,16 +593,15 @@ private struct GeneralPage: View {
                         Text("Open ThockBox from Applications or Spotlight to get back here.")
                     }
                 }
-                if state.showMenuBarIcon {
-                    Picker(selection: $state.iconClickAction) {
-                        ForEach(IconClickAction.allCases) { Text($0.title).tag($0) }
-                    } label: {
-                        Text("Clicking the icon")
-                        if state.iconClickAction == .toggleSounds {
-                            Text("Control-click opens the menu.")
-                        }
+                Picker(selection: $state.iconClickAction) {
+                    ForEach(IconClickAction.allCases) { Text($0.title).tag($0) }
+                } label: {
+                    Text("Clicking the icon")
+                    if state.iconClickAction == .toggleSounds {
+                        Text("Control-click opens the menu.")
                     }
                 }
+                .disabled(!state.showMenuBarIcon)
                 Toggle("Show today's keystrokes", isOn: $state.showKeystrokesInMenuBar)
                     .disabled(!state.showMenuBarIcon)
                 Toggle("Show today's typing speed", isOn: $state.showSpeedInMenuBar)
@@ -629,8 +640,8 @@ private struct GeneralPage: View {
                 }
                 LabeledContent("Getting started") {
                     HStack {
-                        Button("Welcome…") { WelcomeWindow.shared.show() }
-                        Button("What's New…") { WhatsNewWindow.shared.show() }
+                        Button("Welcome") { WelcomeWindow.shared.show() }
+                        Button("What's New") { WhatsNewWindow.shared.show() }
                     }
                 }
                 LabeledContent("Settings") {
@@ -662,12 +673,17 @@ private struct GeneralPage: View {
     private func exportSettings() {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = "ThockBox Settings.plist"
+        panel.prompt = "Export"
         panel.allowedContentTypes = [.propertyList]
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try SettingsTransfer.export(from: .standard).write(to: url)
         } catch {
-            NSAlert(error: error).runModal()
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText = "Couldn't Export Settings"
+            alert.informativeText = error.localizedDescription
+            alert.runModal()
         }
     }
 
@@ -675,12 +691,17 @@ private struct GeneralPage: View {
     private func importSettings() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.propertyList]
+        panel.prompt = "Import"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try SettingsTransfer.importSettings(Data(contentsOf: url), into: .standard)
             SettingsTransfer.relaunch()
         } catch {
-            NSAlert(error: error).runModal()
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText = "Couldn't Import Settings"
+            alert.informativeText = error.localizedDescription
+            alert.runModal()
         }
     }
 }

@@ -308,11 +308,19 @@ final class Updater: ObservableObject {
             let apps = try FileManager.default.contentsOfDirectory(at: mount, includingPropertiesForKeys: nil)
                 .filter { $0.pathExtension == "app" }
             try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
-            for app in apps {
-                try run("/usr/bin/ditto", [app.path, out.appendingPathComponent(app.lastPathComponent).path])
+            do {
+                for app in apps {
+                    try run("/usr/bin/ditto", [app.path, out.appendingPathComponent(app.lastPathComponent).path])
+                }
+            } catch {
+                throw UpdateError("The download couldn't be unpacked.")
             }
         } else {
-            try run("/usr/bin/ditto", ["-x", "-k", download.path, out.path])
+            do {
+                try run("/usr/bin/ditto", ["-x", "-k", download.path, out.path])
+            } catch {
+                throw UpdateError("The download couldn't be unpacked.")
+            }
         }
         let apps = try FileManager.default.contentsOfDirectory(at: out, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "app" }

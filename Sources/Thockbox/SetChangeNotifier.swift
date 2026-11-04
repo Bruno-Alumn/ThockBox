@@ -12,7 +12,7 @@ enum SetChangeNotifier {
 
     static func post(setName: String) {
         let content = UNMutableNotificationContent()
-        content.title = "Switch set changed"
+        content.title = "Switch Set Changed"
         content.body = "ThockBox now plays \(setName)."
         // One notification at a time: a newer change replaces the last.
         let request = UNNotificationRequest(identifier: "setChanged", content: content, trigger: nil)

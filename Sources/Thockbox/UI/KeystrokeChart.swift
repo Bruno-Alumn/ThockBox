@@ -67,9 +67,9 @@ struct HourlyChart: View {
         .frame(height: 90)
     }
 
-    /// "6 AM" or "18:00", whichever the user's clock uses.
+    /// "6 AM" or "18", whichever the user's clock uses.
     static func hourName(_ hour: Int) -> String {
-        let date = Calendar.current.startOfDay(for: Date()).addingTimeInterval(Double(hour) * 3600)
+        let date = Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: Date()) ?? Date()
         return date.formatted(.dateTime.hour())
     }
 }
