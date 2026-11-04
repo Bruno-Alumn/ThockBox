@@ -77,7 +77,7 @@ private struct AttentionSection: View {
                         .foregroundStyle(.orange)
                 }
                 if status == .needsAccess {
-                    Button("Open Accessibility Settings…") { Permissions.openSystemSettings() }
+                    Button("Open System Settings") { Permissions.openSystemSettings() }
                 }
             }
         }
@@ -123,7 +123,7 @@ private struct SoundPage: View {
                     }
                 }
             } footer: {
-                formFooter("Choosing a set plays a sample of it. Add a Mechvibes sound pack, a set exported from ThockBox, or a folder of your own recordings, or drop one on this window.")
+                formFooter("Choosing a set plays a sample of it. Add a Mechvibes sound pack, a set exported from ThockBox, or a folder of your own recordings. You can also drop one on this window.")
             }
 
             Section {
@@ -150,7 +150,11 @@ private struct SoundPage: View {
                     Toggle("Follow head movement (AirPods)", isOn: $state.followHeadMovement)
                 }
             } footer: {
-                formFooter("Each output device keeps its own volume. Spatial audio places each key around you in 3D; it works through headphones only. Following head movement keeps the keys in place as you turn your head.")
+                if #available(macOS 14, *), state.spatialAudio {
+                    formFooter("Each output device keeps its own volume. Spatial audio places each key around you in 3D. Following head movement keeps the keys in place as you turn your head.")
+                } else {
+                    formFooter("Each output device keeps its own volume. Spatial audio places each key around you in 3D.")
+                }
             }
 
             Section {
@@ -246,7 +250,7 @@ private struct SoundPage: View {
         let alert = NSAlert()
         alert.messageText = "Remove \(pack.name)?"
         alert.informativeText = "Its sounds are moved to the Trash."
-        alert.addButton(withTitle: "Remove")
+        alert.addButton(withTitle: "Remove").hasDestructiveAction = true
         alert.addButton(withTitle: "Cancel")
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         do {
@@ -271,15 +275,15 @@ private struct KeysPage: View {
                 }
                 LabeledContent("Next switch set") {
                     ShortcutRecorder(state: state, rejected: $shortcutRejected,
-                                     shortcut: $state.nextSetShortcut, standard: nil)
+                                     shortcut: $state.nextSetShortcut, standard: nil, title: "Next switch set")
                 }
                 LabeledContent("Volume up") {
                     ShortcutRecorder(state: state, rejected: $shortcutRejected,
-                                     shortcut: $state.volumeUpShortcut, standard: nil)
+                                     shortcut: $state.volumeUpShortcut, standard: nil, title: "Volume up")
                 }
                 LabeledContent("Volume down") {
                     ShortcutRecorder(state: state, rejected: $shortcutRejected,
-                                     shortcut: $state.volumeDownShortcut, standard: nil)
+                                     shortcut: $state.volumeDownShortcut, standard: nil, title: "Volume down")
                 }
             } header: {
                 Text("Shortcuts")
@@ -294,7 +298,7 @@ private struct KeysPage: View {
             }
 
             Section {
-                Toggle("Modifier keys (⌘ ⌥ ⌃ ⇧)", isOn: Binding(
+                Toggle("Modifier keys (⌃ ⌥ ⇧ ⌘)", isOn: Binding(
                     get: { !state.muteModifiers },
                     set: { state.muteModifiers = !$0 }))
                 Toggle("Function keys", isOn: $state.functionKeysAudible)
@@ -360,14 +364,14 @@ private struct MutingPage: View {
                 if AudioActivityMonitor.isSupported {
                     Toggle("Calls and recordings", isOn: $state.muteDuringCalls)
                 }
-                Toggle("Calendar events", isOn: $state.muteDuringMeetings)
+                Toggle(isOn: $state.muteDuringMeetings) {
+                    Text("Calendar events")
+                    if state.muteDuringMeetings && state.calendarAccess == .denied {
+                        Text("ThockBox can't see your calendars. Allow it in System Settings › Privacy & Security › Calendars.")
+                    }
+                }
                 if state.muteDuringMeetings && !state.calendars.isEmpty {
                     CalendarChoice(state: state)
-                }
-                if state.muteDuringMeetings && state.calendarAccess == .denied {
-                    Text("ThockBox can't see your calendars. Allow it in System Settings › Privacy & Security › Calendars.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
                 }
                 if ScreenCapture.isAvailable {
                     Toggle("Screen sharing and recording", isOn: $state.muteWhileSharing)
@@ -383,9 +387,12 @@ private struct MutingPage: View {
                 Text("Mute During")
             } footer: {
                 formFooter((AudioActivityMonitor.isSupported
-                      ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts; some apps (call apps, a browser just after a video) keep their sound open while silent; uncheck them under Playing now. "
+                      ? "Calls and recordings means any app using the microphone; \"Hey Siri\" doesn't count. Other apps playing sound includes music and videos, but not alerts. Some apps, like call apps or a browser just after a video, keep their sound open while silent. Uncheck them under Playing now. "
                       : "")
-                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam. Screen sharing also counts screen mirroring and apps that watch the screen in the background.")
+                     + "Calendar events don't count when they last all day, are marked free, or you declined them. A game is an app filed under Games, or one installed by Steam."
+                     + (ScreenCapture.isAvailable
+                        ? " Screen sharing also counts screen mirroring and apps that watch the screen in the background."
+                        : ""))
             }
 
             Section {
@@ -402,7 +409,7 @@ private struct MutingPage: View {
                         .fixedSize()
                     }
                 }
-                Toggle("Playing on speakers (headphones only)", isOn: $state.headphonesOnly)
+                Toggle("Playing on speakers", isOn: $state.headphonesOnly)
                 Picker("No typing for", selection: $state.idleTimeoutMinutes) {
                     Text("Never").tag(0)
                     Text("1 minute").tag(1)
@@ -452,11 +459,11 @@ private struct ActivityPage: View {
     var body: some View {
         Form {
             Section {
-                LabeledContent("Today", value: store.shown.today.formatted())
-                LabeledContent("All time", value: store.shown.total.formatted())
+                LabeledContent("Today") { Text(store.shown.today.formatted()).monospacedDigit() }
+                LabeledContent("All time") { Text(store.shown.total.formatted()).monospacedDigit() }
                 LabeledContent("Typing speed today") {
                     if let wpm = store.shown.wordsPerMinute {
-                        Text("\(wpm) words per minute")
+                        Text("\(wpm) words per minute").monospacedDigit()
                     } else {
                         Text("Keep typing").foregroundStyle(.secondary)
                     }
@@ -465,21 +472,6 @@ private struct ActivityPage: View {
                 Text("Keystrokes")
             } footer: {
                 formFooter("Typing speed counts five keystrokes as a word and leaves out pauses longer than two seconds.")
-            }
-
-            if let best = store.shown.bestDay {
-                Section("Last 30 Days") {
-                    LabeledContent("Best day") {
-                        Text("\(best.count.formatted()) on \(Self.dayName(best.date))")
-                    }
-                    if let average = store.shown.dailyAverage {
-                        LabeledContent("Daily average", value: average.formatted())
-                    }
-                    let streak = store.shown.streak()
-                    if streak >= 2 {
-                        LabeledContent("Streak", value: "\(streak) days in a row")
-                    }
-                }
             }
 
             if store.shown.today > 0 {
@@ -494,6 +486,26 @@ private struct ActivityPage: View {
                         .foregroundStyle(.secondary)
                 } else {
                     KeystrokeChart(store: store)
+                }
+            }
+
+            if let best = store.shown.bestDay {
+                Section("Last 30 Days") {
+                    LabeledContent("Best day") {
+                        let day = Self.dayName(best.date)
+                        if day == "today" {
+                            Text("\(best.count.formatted()) today")
+                        } else {
+                            Text("\(best.count.formatted()) on \(day)")
+                        }
+                    }
+                    if let average = store.shown.dailyAverage {
+                        LabeledContent("Daily average", value: average.formatted())
+                    }
+                    let streak = store.shown.streak()
+                    if streak >= 2 {
+                        LabeledContent("Streak", value: "\(streak) days in a row")
+                    }
                 }
             }
 
@@ -551,7 +563,9 @@ private struct GeneralPage: View {
                     Text("Shown in the Dock and ThockBox's windows.")
                 }
                 Toggle("Show today's keystrokes in the menu bar", isOn: $state.showKeystrokesInMenuBar)
+                    .disabled(!state.showMenuBarIcon)
                 Toggle("Show today's typing speed in the menu bar", isOn: $state.showSpeedInMenuBar)
+                    .disabled(!state.showMenuBarIcon)
                 Toggle("Dim the icon while sounds are off", isOn: $state.dimIconWhenOff)
                     .disabled(!state.showMenuBarIcon)
                 Toggle(isOn: $state.notifySetChanges) {
@@ -611,9 +625,9 @@ private struct GeneralPage: View {
     /// back.
     private func confirmAccessibilityReset() {
         let alert = NSAlert()
-        alert.messageText = "Reset Accessibility access?"
+        alert.messageText = "Reset Accessibility Access?"
         alert.informativeText = "Use this when ThockBox is switched on in System Settings › Privacy & Security › Accessibility but still can't hear keys. ThockBox is removed from that list, then asks to be allowed again."
-        alert.addButton(withTitle: "Reset")
+        alert.addButton(withTitle: "Reset").hasDestructiveAction = true
         alert.addButton(withTitle: "Cancel")
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         Permissions.reset()

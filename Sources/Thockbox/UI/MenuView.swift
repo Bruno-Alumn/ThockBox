@@ -11,10 +11,10 @@ struct MenuView: View {
         let status = state.status
         Text(status.title)
         if status == .needsAccess {
-            Button("Open Accessibility Settings…") { Permissions.openSystemSettings() }
+            Button("Open System Settings") { Permissions.openSystemSettings() }
         }
         if case .blocked = status {
-            Button("Why Is Sound Paused?") { explain(status) }
+            Button("Why Are Sounds Paused?") { explain(status) }
         }
         if case .muted(let reason) = status, reason != .idle {
             Button("Play Anyway") { state.playAnyway() }
@@ -22,15 +22,16 @@ struct MenuView: View {
         Divider()
 
         Toggle("Sounds On", isOn: $state.enabled)
-        if state.enabled {
-            Menu("Turn Off For") {
-                Button("15 Minutes") { state.turnOff(for: 15 * 60) }
-                Button("1 Hour") { state.turnOff(for: 3600) }
-                Button("4 Hours") { state.turnOff(for: 4 * 3600) }
-                Button("Until 8 AM") { state.turnOff(for: AppState.untilMorning()) }
+        Menu("Turn Off For") {
+            Button("15 Minutes") { state.turnOff(for: 15 * 60) }
+            Button("1 Hour") { state.turnOff(for: 3600) }
+            Button("4 Hours") { state.turnOff(for: 4 * 3600) }
+            Button("Until \(Date(timeIntervalSinceNow: AppState.untilMorning()).formatted(date: .omitted, time: .shortened))") {
+                state.turnOff(for: AppState.untilMorning())
             }
         }
-        Picker("Switch", selection: Binding(
+        .disabled(!state.enabled)
+        Picker("Switch Set", selection: Binding(
             get: { state.currentPack?.id ?? "" },
             set: { state.selectedPackID = $0 }
         )) {
@@ -43,6 +44,7 @@ struct MenuView: View {
         // the menu opens; see MenuVolumeItem.
         Text(MenuVolumeItem.heading)
         if let app = state.frontApp {
+            Divider()
             if state.playOnlyInListedApps {
                 Toggle("Play in \(app.name)", isOn: Binding(
                     get: { state.mutedApps.contains(app.id) },

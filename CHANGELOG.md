@@ -3,6 +3,13 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- Polish across Settings, the menu and the welcome windows: clearer
+  wording, shortcut buttons that line up, an icon for every listed app,
+  Turn Off For dimmed rather than hidden while sounds are off, and better
+  VoiceOver labels.
+
 ## 1.10.0
 
 - **A Liquid Glass app icon** on macOS 26: the keycaps and sound waves
