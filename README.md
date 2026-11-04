@@ -29,7 +29,7 @@ quite the same, so typing on a laptop feels like typing on a board you built.
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/settings-dark.png">
-    <img src="docs/screenshots/settings-light.png" width="520" alt="ThockBox's Sound settings: the switch set list, a field to try it, volume, output device and tone controls">
+    <img src="docs/screenshots/settings-light.png" width="520" alt="ThockBox's Sound settings: the switch set, a set each day, a field to try it, sets for specific apps, volume, output device, spatial audio and tone controls">
   </picture>
 </div>
 
