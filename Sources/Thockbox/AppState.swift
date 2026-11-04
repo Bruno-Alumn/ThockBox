@@ -1186,9 +1186,19 @@ final class AppState: ObservableObject {
         updateAutomaticMute()
     }
 
+    /// The automatic mute the user chose to play through (menu › Play
+    /// Anyway), until that reason ends or changes.
+    private var overriddenMute: AutomaticMute?
+
+    func playAnyway() {
+        guard let mute = automaticMute, mute != .idle else { return }
+        overriddenMute = mute
+        updateAutomaticMute()
+    }
+
     /// `now` is a parameter so tests can check the idle timeout without waiting.
     func updateAutomaticMute(now: Date = Date()) {
-        let reason: AutomaticMute?
+        var reason: AutomaticMute?
         if muteDuringCalls && microphoneInUse {
             reason = .call
         } else if muteDuringMeetings && inCalendarEvent {
@@ -1211,6 +1221,10 @@ final class AppState: ObservableObject {
             reason = .idle
         } else {
             reason = nil
+        }
+        // Play Anyway holds while the same reason lasts; any change ends it.
+        if let overridden = overriddenMute {
+            if reason == overridden { reason = nil } else { overriddenMute = nil }
         }
         guard reason != automaticMute else { return }
         let wasMuted = isAutomaticallyMuted

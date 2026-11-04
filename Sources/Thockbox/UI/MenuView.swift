@@ -16,6 +16,9 @@ struct MenuView: View {
         if case .blocked = status {
             Button("Why Is Sound Paused?") { explain(status) }
         }
+        if case .muted(let reason) = status, reason != .idle {
+            Button("Play Anyway") { state.playAnyway() }
+        }
         Divider()
 
         Toggle("Sounds On", isOn: $state.enabled)
