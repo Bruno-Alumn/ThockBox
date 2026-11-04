@@ -281,6 +281,19 @@ final class AppState: ObservableObject {
             updateAutomaticMute()
         }
     }
+    /// Turns the app list around: play only while one of those apps is in
+    /// front, and stay quiet everywhere else.
+    @Published var playOnlyInListedApps: Bool {
+        didSet {
+            defaults.set(playOnlyInListedApps, forKey: "playOnlyInListedApps")
+            updateAutomaticMute()
+        }
+    }
+
+    /// Whether the app list keeps `appID` quiet, whichever way it's used.
+    func listMutes(_ appID: String) -> Bool {
+        mutedApps.contains(appID) != playOnlyInListedApps
+    }
     @Published var toggleShortcut: Shortcut {
         didSet {
             defaults.set(try? JSONEncoder().encode(toggleShortcut), forKey: "toggleShortcut")
@@ -606,6 +619,7 @@ final class AppState: ObservableObject {
         ignoredCalendarIDs = Set(defaults.stringArray(forKey: "ignoredCalendars") ?? [])
         headphonesOnly = defaults.bool(forKey: "headphonesOnly")
         mutedApps = defaults.stringArray(forKey: "mutedApps") ?? []
+        playOnlyInListedApps = defaults.bool(forKey: "playOnlyInListedApps")
         newSetEachDay = defaults.bool(forKey: "newSetEachDay")
         volumeUpShortcut = defaults.data(forKey: "volumeUpShortcut").flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) }
         volumeDownShortcut = defaults.data(forKey: "volumeDownShortcut").flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) }
@@ -1211,7 +1225,7 @@ final class AppState: ObservableObject {
             reason = .media(mediaAppName)
         } else if headphonesOnly && outputIsSpeaker {
             reason = .speakers
-        } else if let frontApp, mutedApps.contains(frontApp.id) {
+        } else if let frontApp, listMutes(frontApp.id) {
             reason = .app(frontApp.name)
         } else if muteWhileGaming, let frontApp, frontApp.isGame {
             reason = .game(frontApp.name)

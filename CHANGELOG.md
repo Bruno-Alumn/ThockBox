@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Play only in chosen apps** (Settings › Muting): turn the app list around
+  so ThockBox plays only in those apps and stays quiet everywhere else.
 - **Play Anyway** in the menu while ThockBox has muted itself: sounds play
   until that reason ends, and the next time it comes up it mutes again.
 
