@@ -39,6 +39,17 @@ final class KeystrokeStatsTests: XCTestCase {
         XCTAssertEqual(stats.wordsPerMinute ?? 0, 60, accuracy: 1)
     }
 
+    func testShortcutsStatsReadTheSameNumbers() {
+        let start = day("2026-11-01")
+        var stats = KeystrokeStats(defaults: defaults, now: start)
+        XCTAssertEqual(TypingStat.wordsPerMinute.value(in: stats, now: start), 0, "no speed yet: 0")
+        for i in 0..<300 { stats.record(now: start.addingTimeInterval(Double(i) * 0.2)) }
+        XCTAssertEqual(TypingStat.keystrokesToday.value(in: stats, now: start), 300)
+        XCTAssertEqual(TypingStat.keystrokesTotal.value(in: stats, now: start), 300)
+        XCTAssertEqual(TypingStat.wordsPerMinute.value(in: stats, now: start), 60, accuracy: 1)
+        XCTAssertEqual(TypingStat.streak.value(in: stats, now: start), 1)
+    }
+
     func testNoSpeedUntilThereIsEnoughTyping() {
         var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
         for i in 0..<20 { stats.record(now: day("2026-11-01").addingTimeInterval(Double(i) * 0.2)) }
