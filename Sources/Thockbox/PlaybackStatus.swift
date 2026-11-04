@@ -115,7 +115,7 @@ enum PlaybackStatus: Equatable {
         case .muted(.idle):
             "Press any key to wake it."
         case .muted(.speakers):
-            "Headphones only is on. Connect headphones to hear keys."
+            "It's set to mute on speakers (Settings › Muting). Connect headphones to hear keys."
         case .muted, .playing:
             nil
         }
