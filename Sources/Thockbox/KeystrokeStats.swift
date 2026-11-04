@@ -9,6 +9,8 @@ struct KeystrokeStats {
     /// Time spent typing today: the gaps between key presses, leaving out
     /// pauses (anything over `pauseSeconds`), for words per minute.
     private(set) var typingSeconds: Double
+    /// Today's keystrokes in each hour, midnight first.
+    private(set) var todayByHour: [Int]
     private var lastPress: Date?
     static let pauseSeconds = 2.0
     /// Finished days, "yyyy-MM-dd" → count. Kept for 30 days.
@@ -21,6 +23,8 @@ struct KeystrokeStats {
         total = defaults.integer(forKey: "statsTotal")
         stamp = defaults.string(forKey: "statsTodayStamp") ?? ""
         typingSeconds = defaults.double(forKey: "statsTypingSeconds")
+        let hours = defaults.array(forKey: "statsTodayByHour") as? [Int] ?? []
+        todayByHour = hours.count == 24 ? hours : Array(repeating: 0, count: 24)
         history = defaults.dictionary(forKey: "statsHistory") as? [String: Int] ?? [:]
         rollOver(now: now)
     }
@@ -40,7 +44,9 @@ struct KeystrokeStats {
         today = 0
         typingSeconds = 0
         lastPress = nil
+        todayByHour = Array(repeating: 0, count: 24)
         defaults.set(0.0, forKey: "statsTypingSeconds")
+        defaults.removeObject(forKey: "statsTodayByHour")
         defaults.set(day, forKey: "statsTodayStamp")
         defaults.set(0, forKey: "statsToday")
     }
@@ -49,6 +55,7 @@ struct KeystrokeStats {
         rollOver(now: now)
         today += 1
         total += 1
+        todayByHour[Calendar.current.component(.hour, from: now)] += 1
         if let lastPress {
             let gap = now.timeIntervalSince(lastPress)
             if gap > 0, gap <= Self.pauseSeconds { typingSeconds += gap }
@@ -70,6 +77,7 @@ struct KeystrokeStats {
     }
 
     func flush() {
+        defaults.set(todayByHour, forKey: "statsTodayByHour")
         defaults.set(typingSeconds, forKey: "statsTypingSeconds")
         defaults.set(today, forKey: "statsToday")
         defaults.set(total, forKey: "statsTotal")

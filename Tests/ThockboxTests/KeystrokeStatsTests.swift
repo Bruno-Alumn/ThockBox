@@ -79,6 +79,19 @@ final class KeystrokeStatsTests: XCTestCase {
         XCTAssertEqual(nextMorning.streak(now: day("2026-11-10")), 0, "a day missed")
     }
 
+    func testCountsByHourAndResetsAtMidnight() {
+        var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
+        for _ in 0..<3 { stats.record(now: day("2026-11-01", hour: 9)) }
+        stats.record(now: day("2026-11-01", hour: 14))
+        XCTAssertEqual(stats.todayByHour[9], 3)
+        XCTAssertEqual(stats.todayByHour[14], 1)
+        stats.flush()
+        XCTAssertEqual(KeystrokeStats(defaults: defaults, now: day("2026-11-01", hour: 15)).todayByHour[9], 3, "kept across a relaunch")
+        stats.record(now: day("2026-11-02", hour: 9))
+        XCTAssertEqual(stats.todayByHour[9], 1, "a new day starts over")
+        XCTAssertEqual(stats.todayByHour.reduce(0, +), 1)
+    }
+
     func testCountsTodayAndTotal() {
         var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
         for _ in 0..<3 { stats.record(now: day("2026-11-01")) }

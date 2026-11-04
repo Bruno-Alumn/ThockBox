@@ -35,3 +35,41 @@ struct KeystrokeChart: View {
         count == 1 ? "1 keystroke" : "\(count.formatted()) keystrokes"
     }
 }
+
+/// Today's keystrokes by hour, to see when you type most.
+struct HourlyChart: View {
+    @ObservedObject var store: StatsStore
+
+    var body: some View {
+        Chart(Array(store.shown.todayByHour.enumerated()), id: \.offset) { hour, count in
+            BarMark(x: .value("Hour", hour), y: .value("Keystrokes", count))
+                .foregroundStyle(Color.thockCoral)
+                .cornerRadius(2)
+                .accessibilityLabel(Self.hourName(hour))
+                .accessibilityValue(KeystrokeChart.spoken(count))
+        }
+        .chartXScale(domain: -0.5...23.5)
+        .chartXAxis {
+            AxisMarks(values: [0, 6, 12, 18]) { value in
+                AxisValueLabel {
+                    if let hour = value.as(Int.self) { Text(Self.hourName(hour)) }
+                }
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading) { value in
+                AxisGridLine()
+                AxisValueLabel {
+                    if let count = value.as(Int.self) { Text(count, format: .number.notation(.compactName)) }
+                }
+            }
+        }
+        .frame(height: 90)
+    }
+
+    /// "6 AM" or "18:00", whichever the user's clock uses.
+    static func hourName(_ hour: Int) -> String {
+        let date = Calendar.current.startOfDay(for: Date()).addingTimeInterval(Double(hour) * 3600)
+        return date.formatted(.dateTime.hour())
+    }
+}

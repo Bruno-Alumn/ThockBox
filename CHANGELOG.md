@@ -5,6 +5,7 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Today by hour** in Settings › Activity: a chart of when you typed today.
 - **Key releases** can be turned off (Settings › Keys) for just the press
   sound.
 

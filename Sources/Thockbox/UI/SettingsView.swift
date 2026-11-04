@@ -470,6 +470,12 @@ private struct ActivityPage: View {
                 }
             }
 
+            if store.shown.today > 0 {
+                Section("Today by Hour") {
+                    HourlyChart(store: store)
+                }
+            }
+
             Section("Last 7 Days") {
                 if store.shown.lastWeek().allSatisfy({ $0.count == 0 }) {
                     Text("Nothing yet. Start typing and this fills in day by day.")
