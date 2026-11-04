@@ -5,6 +5,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## 1.6.0
 
+- **Volume up and down shortcuts** (Settings › Keys, none by default): 10%
+  steps from anywhere.
 - **Streak** in Settings › Activity: how many days in a row you've typed.
 
 ## 1.5.0
