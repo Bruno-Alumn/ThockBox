@@ -31,18 +31,27 @@ struct Release: Decodable, Equatable {
         tagName.hasPrefix("v") ? String(tagName.dropFirst()) : tagName
     }
 
-    /// The notes as a few plain lines for Settings. GitHub's generated
-    /// notes are "* Title by @user in <PR link>" under a heading, with a
-    /// "Full Changelog" link at the end; this keeps just the titles.
+    /// The notes as a few plain lines for Settings, one per change. Release
+    /// notes are the version's CHANGELOG.md section: "- " bullets that wrap
+    /// onto indented lines, with **bold** lead-ins. Older releases have
+    /// GitHub's generated "* Title by @user in <PR link>" lines instead.
     var notesPreview: String? {
-        let lines = (notes ?? "").components(separatedBy: .newlines).compactMap { raw -> String? in
+        var items: [String] = []
+        for raw in (notes ?? "").components(separatedBy: .newlines) {
             var line = raw.trimmingCharacters(in: .whitespaces)
-            guard !line.isEmpty, !line.hasPrefix("#"), !line.hasPrefix("**Full Changelog**") else { return nil }
+            guard !line.isEmpty, !line.hasPrefix("#"), !line.hasPrefix("**Full Changelog**") else { continue }
             if let by = line.range(of: " by @", options: .backwards) { line = String(line[..<by.lowerBound]) }
-            if line.hasPrefix("* ") || line.hasPrefix("- ") { line = "• " + line.dropFirst(2) }
-            return line
+            line = line.replacingOccurrences(of: "**", with: "")
+            if line.hasPrefix("* ") || line.hasPrefix("- ") {
+                items.append("• " + line.dropFirst(2))
+            } else if let last = items.popLast() {
+                // A bullet that wraps onto the next lines.
+                items.append(last + " " + line)
+            } else {
+                items.append(line)
+            }
         }
-        return lines.isEmpty ? nil : lines.joined(separator: "\n")
+        return items.isEmpty ? nil : items.joined(separator: "\n")
     }
 
     /// The app's download: the disk image `make release` publishes

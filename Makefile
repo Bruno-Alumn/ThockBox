@@ -82,7 +82,8 @@ dmg: bundle
 # release's ThockBox-<version>.dmg.
 release: dmg cask
 	@if [ "$(CODESIGN_ID)" = "-" ]; then echo "refusing to release an ad-hoc build; run 'make signing-cert'"; exit 1; fi
-	gh release create v$(VERSION) $(DMG) --title "ThockBox $(VERSION)" --generate-notes
+	scripts/release_notes.sh $(VERSION) > dist/notes.md
+	gh release create v$(VERSION) $(DMG) --title "ThockBox $(VERSION)" --notes-file dist/notes.md
 	@echo "Now copy packaging/thockbox.rb to Casks/thockbox.rb in Bruno-Alumn/homebrew-thockbox."
 
 # Point the Homebrew cask (packaging/thockbox.rb) at this version's disk image.

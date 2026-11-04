@@ -12,6 +12,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - What's New marks every fix with the wrench icon, including the bold
   "Fixed on macOS 27" note.
 
+- The update preview in Settings › General lists the changes in plain
+  words, the same as What's New, instead of pull request titles.
+
 ## 1.11.1
 
 - The Welcome and What's New windows open fully on screen instead of

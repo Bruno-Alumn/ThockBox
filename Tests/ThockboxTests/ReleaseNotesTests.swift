@@ -17,6 +17,16 @@ final class ReleaseNotesTests: XCTestCase {
         XCTAssertEqual(try release(body: body).notesPreview, "• Mute during calls\n• Use no CPU when idle")
     }
 
+    /// The shape of a CHANGELOG.md section (scripts/release_notes.sh).
+    func testPreviewJoinsWrappedChangelogBullets() throws {
+        let body = "- **Mute by place:** save places, and ThockBox\n"
+            + "  stays quiet there.\n\n"
+            + "- The menu's volume slider no longer stays gray.\n"
+        XCTAssertEqual(try release(body: body).notesPreview,
+                       "• Mute by place: save places, and ThockBox stays quiet there.\n"
+                       + "• The menu's volume slider no longer stays gray.")
+    }
+
     func testNotesWithNothingButAHeadingHaveNoPreview() throws {
         XCTAssertNil(try release(body: "## What's Changed\n").notesPreview)
     }
