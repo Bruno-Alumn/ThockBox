@@ -50,10 +50,11 @@ struct WhatsNew: Equatable {
         return items.isEmpty ? nil : WhatsNew(version: current, items: items)
     }
 
-    /// Whether a note is a fix ("Fixed: …") rather than something new; the
-    /// window marks the two with different icons.
+    /// Whether a note is a fix ("Fixed: …", or in bold, "**Fixed on macOS
+    /// 27:** …") rather than something new; the window marks the two with
+    /// different icons.
     static func isFix(_ item: String) -> Bool {
-        item.hasPrefix("Fixed")
+        item.hasPrefix("Fixed") || item.hasPrefix("**Fixed")
     }
 
     /// Compares dotted version numbers ("1.10.0" is newer than "1.9.2").

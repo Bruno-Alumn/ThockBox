@@ -9,7 +9,8 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   turned on, sets for specific apps at the bottom of the Sound page, and
   menu bar options shown only while the menu bar icon is.
 
-## Unreleased
+- What's New marks every fix with the wrench icon, including the bold
+  "Fixed on macOS 27" note.
 
 - The update preview in Settings › General lists the changes in plain
   words, the same as What's New, instead of pull request titles.
