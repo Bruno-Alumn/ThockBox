@@ -27,6 +27,7 @@ bundle: build
 	cp Resources/Thockbox.sdef $(BUNDLE)/Contents/Resources/
 	cp -R Resources/Sounds $(BUNDLE)/Contents/Resources/Sounds
 	cp Resources/AppIcon.icns $(BUNDLE)/Contents/Resources/
+	scripts/build_icon_assets.sh $(BUNDLE)
 	cp CHANGELOG.md $(BUNDLE)/Contents/Resources/
 	scripts/build_intents_metadata.sh $(BUNDLE)
 	codesign --force --sign "$(CODESIGN_ID)" $(BUNDLE)
@@ -44,6 +45,8 @@ sounds:
 	uv run --with soundfile,numpy scripts/build_sounds.py
 
 # Rebuild Resources/AppIcon.icns (and docs/logo.png) from the logo artwork.
+# That's the icon for macOS 13 to 15; macOS 26 shows the Liquid Glass
+# Resources/AppIcon.icon (edit it in Icon Composer).
 icon:
 	swift scripts/make_icon.swift art/logo-source.png Resources/AppIcon.icns docs/logo.png
 
