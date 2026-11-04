@@ -89,4 +89,10 @@ final class WhatsNewTests: XCTestCase {
         XCTAssertFalse(WhatsNew.isNewer("1.2.0", than: "1.2"))
         XCTAssertFalse(WhatsNew.isNewer("Unreleased", than: "1.0"))
     }
+
+    func testFixesAreToldApartFromNewThings() {
+        XCTAssertTrue(WhatsNew.isFix("Fixed: quiet hours follow time zone changes."))
+        XCTAssertFalse(WhatsNew.isFix("**Today by hour** in Settings › Activity."))
+        XCTAssertFalse(WhatsNew.isFix("The menu's Until Tomorrow Morning is now Until 8 AM."))
+    }
 }
