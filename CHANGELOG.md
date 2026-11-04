@@ -9,6 +9,11 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   turned on, sets for specific apps at the bottom of the Sound page, and
   menu bar options shown only while the menu bar icon is.
 
+## Unreleased
+
+- The update preview in Settings › General lists the changes in plain
+  words, the same as What's New, instead of pull request titles.
+
 ## 1.11.1
 
 - The Welcome and What's New windows open fully on screen instead of
