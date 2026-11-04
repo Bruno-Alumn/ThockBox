@@ -445,6 +445,22 @@ final class AutoMuteTests: XCTestCase {
         XCTAssertEqual(AppState(defaults: defaults).quietStart, 22 * 60, "default 22:00 to 08:00")
     }
 
+    /// Play Anyway lasts while the same reason does; when it ends and comes
+    /// back, the mute does too.
+    func testPlayAnywayHoldsUntilTheReasonEnds() {
+        let state = AppState(defaults: defaults)
+        state.muteWhenLocked = true
+        state.setScreenLocked(true)
+        XCTAssertEqual(state.automaticMute, .screenLocked)
+        state.playAnyway()
+        XCTAssertNil(state.automaticMute)
+        state.setScreenLocked(true)
+        XCTAssertNil(state.automaticMute, "still the same lock")
+        state.setScreenLocked(false)
+        state.setScreenLocked(true)
+        XCTAssertEqual(state.automaticMute, .screenLocked, "a new lock mutes again")
+    }
+
     func testMutedAppMutesOnlyWhileInFront() {
         let state = AppState(defaults: defaults)
         state.setFrontApp(id: "com.example.game", name: "Game")
