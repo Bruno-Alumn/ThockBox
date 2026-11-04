@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.10.0
 
 - **A Liquid Glass app icon** on macOS 26: the keycaps and sound waves
   redrawn as layers that pick up the system's glass, tinted and clear
