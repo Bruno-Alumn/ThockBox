@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 /// The settings window, laid out like System Settings: a sidebar of pages
@@ -11,6 +12,7 @@ final class MainWindow: NSObject, NSWindowDelegate {
     static let shared = MainWindow()
 
     private var window: NSWindow?
+    private var titleUpdates: AnyCancellable?
     let navigation = SettingsNavigation()
 
     /// Brings up the window, on `page` if given.
@@ -46,6 +48,10 @@ final class MainWindow: NSObject, NSWindowDelegate {
         // Reopens where it was left (and at the size it was left); centered
         // the first time.
         window.setFrameAutosaveName("SettingsWindow")
+        // navigationTitle doesn't reach a window hosting the view through
+        // NSHostingController, which leaves it "Untitled" in the title bar,
+        // the Window menu and Mission Control.
+        titleUpdates = navigation.$page.sink { [weak window] page in window?.title = page.title }
         return window
     }
 

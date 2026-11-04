@@ -5,6 +5,12 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- **Fixed on macOS 27:** the volume slider and today's typing count are
+  back in the menu bar menu.
+
+- The Settings window's title shows the page you're on instead of
+  "Untitled".
+
 - Fixes from testing on macOS 27: the menu no longer offers to mute a
   system prompt (like "Mute in CoreLocationAgent") after one appears,
   Settings footers show in full instead of ending in "…", the Tone sliders
