@@ -122,6 +122,10 @@ final class WhatsNewWindow: NSObject, NSWindowDelegate {
         window.delegate = self
         self.window = window
         NSApp.setActivationPolicy(.regular)
+        // Its full size before centering: SwiftUI sizes the window later,
+        // and it would grow down from a spot picked for a smaller one,
+        // under the Dock on a short screen.
+        window.setContentSize(window.contentViewController?.view.fittingSize ?? window.frame.size)
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)

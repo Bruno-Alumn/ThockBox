@@ -5,6 +5,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- The Welcome and What's New windows open fully on screen instead of
+  running under the Dock on shorter displays.
+
 - More polish: failed exports and imports explain what went wrong (a
   failed daily counts export used to say nothing), buttons line up on the
   right as in System Settings, the Places list keeps names aligned and tells
