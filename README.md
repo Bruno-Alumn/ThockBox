@@ -100,7 +100,7 @@ brew install --cask bruno-alumn/thockbox/thockbox
 |:--|:--|
 | <kbd>⌃</kbd><kbd>⌘</kbd><kbd>K</kbd> | Turn sounds on or off (change it in Settings › Keys) |
 | <kbd>⌥</kbd>-click the menu bar icon | Turn sounds on or off |
-| Click the menu bar icon | Switch set, volume, mute in this app, turn off for a while |
+| Click the menu bar icon | Today's keystrokes, switch set, volume, mute in this app, turn off for a while |
 | <kbd>⌘</kbd><kbd>,</kbd> in the menu | Open Settings |
 
 The first line of the menu always says what ThockBox is doing: playing, off,

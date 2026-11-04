@@ -3,6 +3,11 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- **Today in the menu:** the menu bar menu shows today's keystrokes and
+  typing speed under the status line.
+
 ## 1.8.1
 
 - Fixed: Play Anyway no longer switches off other mutes (going idle still
