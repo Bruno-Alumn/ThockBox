@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 struct FrontApp: Equatable {
     let id: String
@@ -8,6 +8,12 @@ struct FrontApp: Equatable {
     /// Games say so in their Info.plist (the App Store's Games category or
     /// one of its subcategories). Steam games often leave it out, so a game
     /// installed by Steam counts too.
+    /// Only regular apps count as the one you're in; agents and background
+    /// helpers come forward only for a prompt.
+    static func counts(_ policy: NSApplication.ActivationPolicy) -> Bool {
+        policy == .regular
+    }
+
     static func isGame(category: String?, path: String?) -> Bool {
         if let category, category.hasPrefix("public.app-category."),
            category == "public.app-category.games" || category.hasSuffix("-games") {

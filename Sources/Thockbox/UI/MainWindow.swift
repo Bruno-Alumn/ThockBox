@@ -123,7 +123,8 @@ private struct SettingsSidebarHeader: View {
                 Text(state.status.title)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(.vertical, 6)

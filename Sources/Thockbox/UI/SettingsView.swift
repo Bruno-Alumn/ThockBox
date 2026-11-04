@@ -161,27 +161,27 @@ private struct SoundPage: View {
                 Slider(value: $state.toneX, in: -1...1) {
                     Text("Brightness")
                 } minimumValueLabel: {
-                    Text("Darker")
+                    Text("Darker").toneEnd(.trailing)
                 } maximumValueLabel: {
-                    Text("Brighter")
+                    Text("Brighter").toneEnd(.leading)
                 }
                 .accessibilityValue(SpokenValue.direction(state.toneX, up: "brighter", down: "darker"))
                 .sliderHaptics(state.toneX, in: -1...1, step: 1)
                 Slider(value: $state.toneY, in: -1...1) {
                     Text("Pitch")
                 } minimumValueLabel: {
-                    Text("Lower")
+                    Text("Lower").toneEnd(.trailing)
                 } maximumValueLabel: {
-                    Text("Higher")
+                    Text("Higher").toneEnd(.leading)
                 }
                 .accessibilityValue(SpokenValue.direction(state.toneY, up: "higher", down: "lower"))
                 .sliderHaptics(state.toneY, in: -1...1, step: 1)
                 Slider(value: $state.pitchVariation, in: 0...150) {
                     Text("Variation")
                 } minimumValueLabel: {
-                    Text("None")
+                    Text("None").toneEnd(.trailing)
                 } maximumValueLabel: {
-                    Text("More")
+                    Text("More").toneEnd(.leading)
                 }
                 .accessibilityValue(SpokenValue.percent(state.pitchVariation, of: 150))
                 Button("Reset Tone") {
@@ -657,5 +657,13 @@ private struct GeneralPage: View {
         } catch {
             NSAlert(error: error).runModal()
         }
+    }
+}
+
+private extension View {
+    /// The words at each end of a Tone slider, in a fixed width so the three
+    /// sliders line up.
+    func toneEnd(_ alignment: Alignment) -> some View {
+        frame(width: 52, alignment: alignment)
     }
 }

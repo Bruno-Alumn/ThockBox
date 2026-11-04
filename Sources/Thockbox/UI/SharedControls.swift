@@ -10,6 +10,8 @@ func formFooter(_ text: String) -> some View {
         .font(.footnote)
         .foregroundStyle(.secondary)
         .multilineTextAlignment(.leading)
+        // Grouped form footers stop at a few lines otherwise, ending in "…".
+        .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: .leading)
 }
 

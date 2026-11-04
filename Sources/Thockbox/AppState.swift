@@ -1155,6 +1155,9 @@ final class AppState: ObservableObject {
     }
 
     private func setFrontApp(_ app: NSRunningApplication?) {
+        // System helpers that come forward for a moment (the Location or
+        // Accessibility prompt) aren't the app you're using.
+        guard FrontApp.counts(app?.activationPolicy ?? .regular) else { return }
         let category = app?.bundleURL.flatMap { Bundle(url: $0) }?
             .object(forInfoDictionaryKey: "LSApplicationCategoryType") as? String
         setFrontApp(id: app?.bundleIdentifier, name: app?.localizedName,
