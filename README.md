@@ -123,7 +123,7 @@ loudness-matched like the built-in ones, and survive updates.
   specific apps, volume,
   output device, spatial audio on headphones (following your head with
   AirPods), and tone (brightness, pitch and variation).
-- **Keys:** shortcuts for on/off, the next switch set and volume, which keys play (and mouse clicks and scrolling), the
+- **Keys:** shortcuts for on/off, the next switch set and volume, which keys play (and key releases, mouse clicks and scrolling), the
   Return ding, and a trackpad tap with each key.
 - **Muting:** during calls and while other apps play sound (both macOS 14.2
   or later), during calendar events (from the calendars you pick), in games,

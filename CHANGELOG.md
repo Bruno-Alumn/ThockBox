@@ -3,6 +3,11 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- **Key releases** can be turned off (Settings › Keys) for just the press
+  sound.
+
 ## 1.7.0
 
 - **Play only in chosen apps** (Settings › Muting): turn the app list around

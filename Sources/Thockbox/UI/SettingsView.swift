@@ -287,6 +287,7 @@ private struct KeysPage: View {
                     get: { !state.muteModifiers },
                     set: { state.muteModifiers = !$0 }))
                 Toggle("Function keys", isOn: $state.functionKeysAudible)
+                Toggle("Key releases", isOn: $state.keyReleaseSounds)
                 Toggle("Mouse clicks", isOn: $state.mouseClicks)
                 Toggle("Scrolling", isOn: $state.scrollSounds)
             } header: {

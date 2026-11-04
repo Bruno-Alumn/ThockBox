@@ -166,6 +166,10 @@ final class AppState: ObservableObject {
             if returnDing && oldValue != returnDing { engine.playExtra(named: "ding") }
         }
     }
+    /// The softer sound of a key coming back up; some prefer only the press.
+    @Published var keyReleaseSounds: Bool {
+        didSet { defaults.set(keyReleaseSounds, forKey: "keyReleaseSounds") }
+    }
     @Published var mouseClicks: Bool {
         didSet {
             defaults.set(mouseClicks, forKey: "mouseClicks")
@@ -578,7 +582,7 @@ final class AppState: ObservableObject {
             "enabled": true, "volume": 0.55, "pack": "cream",
             "toneX": 0.0, "toneY": 0.0, "pitchVariation": 60.0,
             "muteModifiers": false, "functionKeysAudible": true,
-            "returnDing": false, "mouseClicks": false,
+            "returnDing": false, "mouseClicks": false, "keyReleaseSounds": true,
             "hapticFeedback": false, "scrollSounds": false,
             "launchAtLogin": false, "showMenuBarIcon": true, "dimIconWhenOff": true, "muteWhenLocked": false, "muteWhileSharing": false, "headphonesOnly": false, "muteDuringCalls": false,
             "muteDuringMeetings": false,
@@ -598,6 +602,7 @@ final class AppState: ObservableObject {
         functionKeysAudible = defaults.bool(forKey: "functionKeysAudible")
         returnDing = defaults.bool(forKey: "returnDing")
         mouseClicks = defaults.bool(forKey: "mouseClicks")
+        keyReleaseSounds = defaults.bool(forKey: "keyReleaseSounds")
         hapticFeedback = defaults.bool(forKey: "hapticFeedback")
         scrollSounds = defaults.bool(forKey: "scrollSounds")
         launchAtLogin = defaults.bool(forKey: "launchAtLogin")
@@ -976,8 +981,10 @@ final class AppState: ObservableObject {
         case let .keyUp(keycode):
             if suppressedKeyUps.remove(keycode) != nil { return }
             guard enabled, !isAutomaticallyMuted, audible(keycode) else { return }
+            let velocity = dynamics.release(keycode)
+            guard keyReleaseSounds else { return }
             let info = KeyMap.info(for: keycode)
-            engine.playKey(keyClass: info.keyClass, up: true, x: info.x, velocity: dynamics.release(keycode))
+            engine.playKey(keyClass: info.keyClass, up: true, x: info.x, velocity: velocity)
         case .mouseDown:
             guard enabled, !isAutomaticallyMuted, mouseClicks else { return }
             engine.playExtra(named: "click_down", gain: 0.9)
