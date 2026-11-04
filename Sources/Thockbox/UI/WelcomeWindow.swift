@@ -82,16 +82,16 @@ struct WelcomeView: View {
                             }
                         } else {
                             Button("Open System Settings") { Permissions.openSystemSettings() }
+                                .buttonStyle(.borderedProminent)
+                                .keyboardShortcut(.defaultAction)
                         }
                     } label: {
                         Label { Text("Accessibility access") } icon: {
                             SettingsIcon(symbol: "accessibility", color: .blue)
                         }
                     }
-                } header: {
-                    Text("1. Allow Accessibility Access")
                 } footer: {
-                    formFooter("macOS needs your permission for ThockBox to hear key presses in other apps. Nothing you type is stored or sent anywhere.")
+                    formFooter("ThockBox needs this to hear key presses in other apps. Nothing you type leaves your Mac.")
                 }
 
                 Section {
@@ -111,10 +111,6 @@ struct WelcomeView: View {
                             SettingsIcon(symbol: SettingsPage.keys.sidebarSymbol, color: SettingsPage.keys.color)
                         }
                     }
-                } header: {
-                    Text("2. Pick a Sound")
-                } footer: {
-                    formFooter("Change it anytime from the ThockBox icon in the menu bar.")
                 }
             }
             .formStyle(.grouped)
@@ -125,8 +121,13 @@ struct WelcomeView: View {
                 Text("ThockBox lives in the menu bar.")
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button("Done", action: done)
-                    .keyboardShortcut(.defaultAction)
+                // Until access is allowed, Return opens System Settings instead.
+                if state.accessibilityTrusted {
+                    Button("Done", action: done)
+                        .keyboardShortcut(.defaultAction)
+                } else {
+                    Button("Done", action: done)
+                }
             }
             .padding([.horizontal, .bottom], 20)
         }

@@ -93,7 +93,7 @@ struct OutputDevicePicker: View {
         } label: {
             Text("Play through")
             if latencyMs >= 40 {
-                Text("This output delays sound by about \(latencyMs) ms, which is typical for Bluetooth. Speakers and wired headphones respond instantly.")
+                Text("Delays sound by about \(latencyMs) ms, typical for Bluetooth.")
             }
         }
         .onAppear {

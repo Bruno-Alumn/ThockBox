@@ -119,10 +119,10 @@ loudness-matched like the built-in ones, and survive updates.
 <summary><strong>Settings, page by page</strong></summary>
 <br>
 
-- **Sound:** on and off, the switch set with a field to try it, sets for
-  specific apps, volume,
+- **Sound:** on and off, the switch set with a field to try it, volume,
   output device, spatial audio on headphones (following your head with
-  AirPods), and tone (brightness, pitch and variation).
+  AirPods), tone (brightness, pitch and variation) and sets for specific
+  apps.
 - **Keys:** shortcuts for on/off, the next switch set and volume, which keys play (and key releases, keys typed by other apps, mouse clicks and scrolling), the
   Return ding, and a trackpad tap with each key.
 - **Muting:** during calls and while other apps play sound (both macOS 14.2
@@ -191,9 +191,9 @@ is blocking key presses. Also check that sounds are on
 (<kbd>⌃</kbd><kbd>⌘</kbd><kbd>K</kbd>) and the volume isn’t at zero.
 
 If ThockBox is switched on in System Settings › Privacy & Security ›
-Accessibility but the menu still says access is needed, click **Reset…**
-next to Accessibility access in Settings › General › Help, then allow it
-again when asked.
+Accessibility but the menu still says access is needed, open Settings and
+click **Reset…** next to Open System Settings at the top of the page, then
+allow it again when asked.
 </details>
 
 <details>
