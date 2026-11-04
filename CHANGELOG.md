@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.11.1
 
 - The Welcome and What's New windows open fully on screen instead of
   running under the Dock on shorter displays.
@@ -15,8 +15,6 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 - Settings › General shows a green check mark when Accessibility access is
   allowed, like the Welcome window.
-
-## Unreleased
 
 - The menu's volume slider no longer stays gray after sounds are turned
   off and back on.
