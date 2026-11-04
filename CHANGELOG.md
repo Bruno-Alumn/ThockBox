@@ -16,6 +16,11 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - Settings › General shows a green check mark when Accessibility access is
   allowed, like the Welcome window.
 
+## Unreleased
+
+- The menu's volume slider no longer stays gray after sounds are turned
+  off and back on.
+
 ## 1.11.0
 
 - **Mute by place:** save places like the office or a library, and ThockBox
