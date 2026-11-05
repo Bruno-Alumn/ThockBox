@@ -834,25 +834,10 @@ final class AppState: ObservableObject {
         wasTrusted = trusted
         if trusted {
             klog.notice("accessibility granted — relaunching")
-            Self.relaunch()
+            Relaunch.now()
         } else {
             klog.notice("accessibility revoked")
             scheduleAccessibilityCheck()   // back to fast polling for the re-grant
-        }
-    }
-
-    private static func relaunch() {
-        let config = NSWorkspace.OpenConfiguration()
-        config.createsNewApplicationInstance = true
-        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL,
-                                           configuration: config) { _, error in
-            DispatchQueue.main.async {
-                if let error {
-                    klog.error("relaunch failed: \(error, privacy: .public)")
-                } else {
-                    NSApp.terminate(nil)
-                }
-            }
         }
     }
 

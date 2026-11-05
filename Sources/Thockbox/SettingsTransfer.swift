@@ -1,4 +1,3 @@
-import AppKit
 import Foundation
 
 /// Saves ThockBox's settings to a file and reads them back, to bring a
@@ -59,16 +58,5 @@ enum SettingsTransfer {
             defaults.set(KeystrokeStats.dayStamp(Date()), forKey: "setDay")
         }
         return applied.count
-    }
-
-    /// Starts a fresh copy once this one has quit, so every setting is read
-    /// anew rather than patched in place.
-    static func relaunch() {
-        let shell = Process()
-        shell.executableURL = URL(fileURLWithPath: "/bin/sh")
-        shell.arguments = ["-c", "while kill -0 \(getpid()) 2>/dev/null; do sleep 0.2; done; open \"$0\"",
-                           Bundle.main.bundlePath]
-        guard (try? shell.run()) != nil else { return }
-        NSApp.terminate(nil)
     }
 }

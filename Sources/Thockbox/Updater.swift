@@ -348,16 +348,10 @@ final class Updater: ObservableObject {
         return app
     }
 
-    /// Opens the new copy once this process has exited, then quits.
+    /// Opens the new copy, then quits.
     private func relaunch(_ app: URL) {
-        let shell = Process()
-        shell.executableURL = URL(fileURLWithPath: "/bin/sh")
-        shell.arguments = ["-c", "while kill -0 \(getpid()) 2>/dev/null; do sleep 0.2; done; open \"$0\"", app.path]
-        do {
-            try shell.run()
-            NSApp.terminate(nil)
-        } catch {
-            status = .failed("Updated. Quit and reopen ThockBox to finish.")
+        Relaunch.now(app) { [weak self] _ in
+            self?.status = .failed("Updated. Quit and reopen ThockBox to finish.")
         }
     }
 
