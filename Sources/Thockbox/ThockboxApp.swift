@@ -89,7 +89,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let isNew = WelcomeWindow.isNeeded()
         let notes = WhatsNew.afterLaunch(usedBefore: !isNew)
         if isNew {
-            WelcomeWindow.shared.show()
+            WelcomeWindow.shared.show(askingForAccess: true)
         } else if defaults.bool(forKey: "showSettingsAfterUpdate") {
             defaults.set(false, forKey: "showSettingsAfterUpdate")
             MainWindow.shared.show()

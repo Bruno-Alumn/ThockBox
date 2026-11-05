@@ -17,7 +17,9 @@ final class WelcomeWindow: NSObject, NSWindowDelegate {
         !defaults.bool(forKey: finishedKey) && !defaults.bool(forKey: "hasShownSettingsWindow")
     }
 
-    func show() {
+    /// `askingForAccess` on first launch only: macOS's Accessibility prompt
+    /// follows the window. Opened again from Settings, it just shows.
+    func show(askingForAccess: Bool = false) {
         let window = self.window ?? makeWindow()
         self.window = window
         NSApp.setActivationPolicy(.regular)
@@ -31,7 +33,7 @@ final class WelcomeWindow: NSObject, NSWindowDelegate {
         // macOS's Accessibility prompt, after the window: asked any earlier,
         // the window opens over it and hides its buttons. The prompt only
         // comes forward once ThockBox steps back from the front.
-        if !Permissions.isTrusted {
+        if askingForAccess && !Permissions.isTrusted {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 _ = Permissions.requestIfNeeded()
                 NSApp.deactivate()
@@ -81,9 +83,10 @@ struct WelcomeView: View {
                                     .foregroundStyle(.green)
                             }
                         } else {
+                            // Prominent but not the default button: Return in the
+                            // Try it field below would open System Settings.
                             Button("Open System Settings") { Permissions.openSystemSettings() }
                                 .buttonStyle(.borderedProminent)
-                                .keyboardShortcut(.defaultAction)
                         }
                     } label: {
                         Label { Text("Accessibility access") } icon: {
@@ -121,10 +124,11 @@ struct WelcomeView: View {
                 Text("ThockBox lives in the menu bar.")
                     .foregroundStyle(.secondary)
                 Spacer()
-                // Until access is allowed, Return opens System Settings instead.
+                // Not a Return default: Return belongs to the Try it field,
+                // where it plays the Return key's sound.
                 if state.accessibilityTrusted {
                     Button("Done", action: done)
-                        .keyboardShortcut(.defaultAction)
+                        .buttonStyle(.borderedProminent)
                 } else {
                     Button("Done", action: done)
                 }

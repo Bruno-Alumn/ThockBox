@@ -1196,7 +1196,7 @@ final class AppState: ObservableObject {
     private func setFrontApp(_ app: NSRunningApplication?) {
         // System helpers that come forward for a moment (the Location or
         // Accessibility prompt) aren't the app you're using.
-        guard FrontApp.counts(app?.activationPolicy ?? .regular) else { return }
+        guard FrontApp.counts(app?.activationPolicy ?? .regular, path: app?.bundleURL?.path) else { return }
         let category = app?.bundleURL.flatMap { Bundle(url: $0) }?
             .object(forInfoDictionaryKey: "LSApplicationCategoryType") as? String
         setFrontApp(id: app?.bundleIdentifier, name: app?.localizedName,
@@ -1316,11 +1316,13 @@ final class AppState: ObservableObject {
 
     /// The place reason that applies now, if any: the place the Mac is at,
     /// or, when sounds play only at places, being away from all of them.
-    /// Nothing until macOS has reported, so it never mutes by guesswork.
+    /// Only what macOS has reported, so it never mutes by guesswork.
     var placeMute: AutomaticMute? {
-        guard muteByPlace, placesKnown, !places.isEmpty else { return nil }
+        guard muteByPlace, !places.isEmpty else { return nil }
         let here = places.first { placesInside.contains($0.id) }
-        if playOnlyAtPlaces { return here == nil ? .place(nil) : nil }
+        // Away from every place only counts once macOS has answered for all
+        // of them; being at one counts as soon as it says so.
+        if playOnlyAtPlaces { return here == nil && placesKnown ? .place(nil) : nil }
         return here.map { .place($0.name) }
     }
 
@@ -1359,8 +1361,8 @@ final class AppState: ObservableObject {
         if idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes) { reasons.append(.idle) }
         // Play Anyway sets aside one reason while it lasts; the others still
         // count (going idle still mutes), and once it's gone, so is the override.
-        if let overridden = overriddenMute, !reasons.contains(overridden) { overriddenMute = nil }
-        let reason = reasons.first { $0 != overriddenMute }
+        if let overridden = overriddenMute, !reasons.contains(where: { $0.isSame(as: overridden) }) { overriddenMute = nil }
+        let reason = reasons.first { overriddenMute.map($0.isSame) != true }
         guard reason != automaticMute else { return }
         let wasMuted = isAutomaticallyMuted
         automaticMute = reason

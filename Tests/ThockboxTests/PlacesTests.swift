@@ -54,6 +54,22 @@ final class PlacesTests: XCTestCase {
         XCTAssertNil(state.automaticMute, "no answer yet, or no Location access")
     }
 
+    func testMutesAtAPlaceBeforeEveryPlaceHasAnAnswer() {
+        let state = makeState()
+        state.muteByPlace = true
+        state.setPlaces(inside: [office.id], known: false)
+        XCTAssertEqual(state.automaticMute, .place("Office"), "the library still has no answer")
+    }
+
+    func testRenamingAPlaceKeepsPlayAnyway() {
+        let state = makeState()
+        state.muteByPlace = true
+        state.setPlaces(inside: [office.id], known: true)
+        state.playAnyway()
+        state.places[0].name = "Work"
+        XCTAssertNil(state.automaticMute)
+    }
+
     func testNoPlacesNeverMutes() {
         let state = AppState(defaults: defaults)
         state.watchesPlaces = false
