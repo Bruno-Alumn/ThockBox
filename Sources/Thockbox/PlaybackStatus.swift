@@ -5,15 +5,17 @@ struct FrontApp: Equatable {
     let name: String
     var isGame = false
 
+    /// Whether an app that comes to the front is the one you're using. A
+    /// system helper that comes forward only to show a prompt (Location,
+    /// notifications) isn't; menu bar apps you type into, like Raycast or
+    /// Alfred, are.
+    static func counts(_ policy: NSApplication.ActivationPolicy, path: String?) -> Bool {
+        policy == .regular || !(path?.hasPrefix("/System/") ?? false)
+    }
+
     /// Games say so in their Info.plist (the App Store's Games category or
     /// one of its subcategories). Steam games often leave it out, so a game
     /// installed by Steam counts too.
-    /// Only regular apps count as the one you're in; agents and background
-    /// helpers come forward only for a prompt.
-    static func counts(_ policy: NSApplication.ActivationPolicy) -> Bool {
-        policy == .regular
-    }
-
     static func isGame(category: String?, path: String?) -> Bool {
         if let category, category.hasPrefix("public.app-category."),
            category == "public.app-category.games" || category.hasSuffix("-games") {
@@ -38,6 +40,13 @@ enum AutomaticMute: Equatable {
     /// The place's name, or nil when away from every place where sounds play.
     case place(String?)
     case idle
+
+    /// The same reason, for Play Anyway: a place stays the same place when
+    /// it's renamed.
+    func isSame(as other: AutomaticMute) -> Bool {
+        if case .place = self, case .place = other { return true }
+        return self == other
+    }
 
     var message: String {
         switch self {

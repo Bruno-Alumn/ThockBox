@@ -544,9 +544,11 @@ final class AutoMuteTests: XCTestCase {
     }
 
     func testOnlyRegularAppsCountAsTheFrontApp() {
-        XCTAssertTrue(FrontApp.counts(.regular))
-        XCTAssertFalse(FrontApp.counts(.accessory), "a prompt from an agent like CoreLocationAgent")
-        XCTAssertFalse(FrontApp.counts(.prohibited))
+        XCTAssertTrue(FrontApp.counts(.regular, path: "/Applications/Safari.app"))
+        XCTAssertTrue(FrontApp.counts(.regular, path: "/System/Applications/Notes.app"))
+        XCTAssertFalse(FrontApp.counts(.accessory, path: "/System/Library/CoreServices/CoreLocationAgent.app"),
+                       "a system prompt")
+        XCTAssertTrue(FrontApp.counts(.accessory, path: "/Applications/Raycast.app"), "a menu bar app you type into")
     }
 
     func testGamesAreRecognized() {

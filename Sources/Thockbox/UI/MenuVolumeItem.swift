@@ -44,8 +44,12 @@ final class MenuVolumeItem: NSObject {
             makeItem()
             menu.insertItem(item, at: heading + 1)
         }
-        slider.floatValue = state.volume
-        lastValue = slider.doubleValue
+        // Not while a drag is unsaved: items still arriving would snap the
+        // knob back to the saved volume.
+        if unsaved == nil {
+            slider.floatValue = state.volume
+            lastValue = slider.doubleValue
+        }
         slider.isEnabled = state.enabled
     }
 

@@ -5,6 +5,16 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
 ## Unreleased
 
+- Places keep working after ThockBox restarts (it used to wait until you
+  crossed a place's edge), a place that macOS can't check is tried again,
+  and adding a place gives up with a message instead of spinning forever.
+
+- Fixes from a code review: Return in the welcome window's Try it field no
+  longer opens System Settings, the welcome window no longer hides behind
+  other apps when opened from Settings, menu bar apps you type into (like
+  Raycast) count as the app you're in again, and renaming a place keeps
+  Play Anyway.
+
 - **Simpler Settings:** shorter notes, shown only for the options you've
   turned on, sets for specific apps at the bottom of the Sound page, and
   menu bar options shown only while the menu bar icon is.

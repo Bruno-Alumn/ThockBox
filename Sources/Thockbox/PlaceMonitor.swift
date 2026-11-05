@@ -32,6 +32,10 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
     private let onChange: (Set<UUID>, Bool) -> Void
     private let onAccess: (Access) -> Void
     private var pendingLocation: ((CLLocation?) -> Void)?
+    /// The location fix being waited for, so an old timeout can't end a newer one.
+    private var locationRequest: UUID?
+    /// Places whose state was asked for and not answered yet.
+    private var asked: Set<UUID> = []
 
     init(onChange: @escaping (_ inside: Set<UUID>, _ known: Bool) -> Void, onAccess: @escaping (Access) -> Void) {
         self.onChange = onChange
@@ -64,12 +68,15 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
         inside = inside.filter { id in self.places.contains { $0.id == id } }
         reported = reported.filter { id in self.places.contains { $0.id == id } }
         guard access == .granted else { report(); return }
-        // Only new places: renaming one changes nothing macOS watches.
+        // macOS keeps watching an app's regions across launches, so a place
+        // can be watched already and still have no state in this run: ask
+        // for every place without an answer (once), not only new ones.
+        // Renaming a place changes nothing here.
         let watched = Set(manager.monitoredRegions.map(\.identifier))
-        for place in self.places where !watched.contains(place.id.uuidString) {
+        for place in self.places where !reported.contains(place.id) && !asked.contains(place.id) {
             let region = Self.region(for: place)
-            manager.startMonitoring(for: region)
-            // The current state, so being inside already counts.
+            if !watched.contains(place.id.uuidString) { manager.startMonitoring(for: region) }
+            asked.insert(place.id)
             manager.requestState(for: region)
         }
         report()
@@ -87,7 +94,15 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
     /// One location fix, for adding the current place. Asks for access first
     /// if needed; nil if it's refused or the Mac can't tell where it is.
     func currentLocation(_ done: @escaping (CLLocation?) -> Void) {
+        guard CLLocationManager.locationServicesEnabled() else { return done(nil) }
         pendingLocation = done
+        let request = UUID()
+        locationRequest = request
+        // Without an answer (no prompt shown, no fix), give up rather than
+        // leave the spinner going.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in
+            if self?.locationRequest == request { self?.finishLocation(nil) }
+        }
         switch access {
         case .granted: manager.requestLocation()
         case .denied: finishLocation(nil)
@@ -98,17 +113,22 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
     private func finishLocation(_ location: CLLocation?) {
         let done = pendingLocation
         pendingLocation = nil
+        locationRequest = nil
         done?(location)
     }
 
+    /// `known` is whether every place has an answer; the places reported
+    /// inside count either way.
     private func report() {
+        guard access == .granted else { return onChange([], false) }
         let known = places.allSatisfy { reported.contains($0.id) }
-        onChange(inside, access == .granted && known)
+        onChange(inside, known)
     }
 
     private func set(_ state: CLRegionState, for region: CLRegion) {
         guard let id = UUID(uuidString: region.identifier), places.contains(where: { $0.id == id }) else { return }
         reported.insert(id)
+        asked.remove(id)
         switch state {
         case .inside: inside.insert(id)
         case .outside: inside.remove(id)
@@ -122,6 +142,9 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         onAccess(access)
+        // Granted again after a refusal: every place needs asking again.
+        asked = []
+        if access != .granted { reported = []; inside = [] }
         if pendingLocation != nil {
             switch access {
             case .granted: manager.requestLocation()
@@ -153,6 +176,15 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, monitoringDidFailFor region: CLRegion?, withError error: Error) {
-        if let region { set(.unknown, for: region) }
+        guard let region, let id = UUID(uuidString: region.identifier) else { return }
+        set(.unknown, for: region)
+        // Try again a minute later rather than leave the place unknown.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 60) { [weak self] in
+            guard let self, let place = self.places.first(where: { $0.id == id }) else { return }
+            self.asked.remove(id)
+            self.manager.stopMonitoring(for: region)
+            self.manager.startMonitoring(for: Self.region(for: place))
+            self.watch(self.places)
+        }
     }
 }
