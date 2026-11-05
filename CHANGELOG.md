@@ -8,6 +8,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - ThockBox opens again after importing settings or installing an update.
   It used to quit and stay closed until you opened it yourself.
 
+- With sounds off, Turn Off For and Switch Set are grayed out in the menu,
+  rather than opening lists of choices you can't pick.
+
 ## 1.11.2
 
 - Places keep working after ThockBox restarts (it used to wait until you
