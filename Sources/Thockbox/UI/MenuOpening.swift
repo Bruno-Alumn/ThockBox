@@ -47,5 +47,17 @@ final class MenuOpening: NSObject {
     @objc private func notify() {
         guard let menu else { return }
         for handler in handlers { handler(menu) }
+        Self.dimEmptySubmenus(in: menu)
+    }
+
+    /// SwiftUI disables a submenu's items but not the item that opens it, so
+    /// with sounds off "Turn Off For" looked usable and opened a list of
+    /// gray choices. Gray it out too, as a Mac menu would.
+    static func dimEmptySubmenus(in menu: NSMenu) {
+        for item in menu.items {
+            guard let submenu = item.submenu, !submenu.items.isEmpty else { continue }
+            let usable = submenu.items.contains { $0.isEnabled && !$0.isSeparatorItem }
+            if item.isEnabled != usable { item.isEnabled = usable }
+        }
     }
 }
