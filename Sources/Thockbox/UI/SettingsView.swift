@@ -280,31 +280,31 @@ private struct SoundPage: View {
 
 private struct KeysPage: View {
     @ObservedObject var state: AppState
-    @State private var shortcutRejected = false
+    @State private var shortcutRefusal: String?
 
     var body: some View {
         Form {
             Section {
                 LabeledContent("Turn sounds on or off") {
-                    ShortcutRecorder(state: state, rejected: $shortcutRejected)
+                    ShortcutRecorder(state: state, refusal: $shortcutRefusal)
                 }
                 LabeledContent("Next switch set") {
-                    ShortcutRecorder(state: state, rejected: $shortcutRejected,
+                    ShortcutRecorder(state: state, refusal: $shortcutRefusal,
                                      shortcut: $state.nextSetShortcut, standard: nil, title: "Next switch set")
                 }
                 LabeledContent("Volume up") {
-                    ShortcutRecorder(state: state, rejected: $shortcutRejected,
+                    ShortcutRecorder(state: state, refusal: $shortcutRefusal,
                                      shortcut: $state.volumeUpShortcut, standard: nil, title: "Volume up")
                 }
                 LabeledContent("Volume down") {
-                    ShortcutRecorder(state: state, rejected: $shortcutRejected,
+                    ShortcutRecorder(state: state, refusal: $shortcutRefusal,
                                      shortcut: $state.volumeDownShortcut, standard: nil, title: "Volume down")
                 }
             } header: {
                 Text("Shortcuts")
             } footer: {
-                if shortcutRejected {
-                    formFooter(Shortcut.requirement)
+                if let shortcutRefusal {
+                    formFooter(shortcutRefusal)
                 } else if !Shortcut.isAllowed(state.toggleShortcut.flags) {
                     // Saved before the current rule: it still works, but the
                     // app in front gets the key too.

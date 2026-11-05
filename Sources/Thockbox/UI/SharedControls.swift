@@ -232,8 +232,8 @@ struct MutedAppsList: View {
 /// Click, then press the new shortcut. Esc cancels.
 struct ShortcutRecorder: View {
     @ObservedObject var state: AppState
-    /// Set when a combination was refused, so the page can say what works.
-    @Binding var rejected: Bool
+    /// Why the last combination was refused, so the page can say what works.
+    @Binding var refusal: String?
     /// Which shortcut this records; the on/off one unless given.
     var shortcut: Binding<Shortcut?>? = nil
     /// What Reset goes back to; nil means the shortcut can be cleared.
@@ -279,18 +279,23 @@ struct ShortcutRecorder: View {
     }
 
     private func start() {
-        rejected = false
+        refusal = nil
         state.isRecordingShortcut = true
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             if event.keyCode == 53 { // Esc
                 stop()
-            } else if let recorded = Shortcut(event: event), !takenByTheOther(recorded) {
-                value.wrappedValue = recorded
-                stop()
+            } else if let recorded = Shortcut(event: event) {
+                if takenByTheOther(recorded) {
+                    NSSound.beep()
+                    refusal = "\(recorded.display) is already another ThockBox shortcut."
+                } else {
+                    value.wrappedValue = recorded
+                    stop()
+                }
             } else if !event.modifierFlags.intersection([.command, .control, .option]).isEmpty {
                 // A real attempt that would clash: say what works.
                 NSSound.beep()
-                rejected = true
+                refusal = Shortcut.requirement
             } else {
                 NSSound.beep()
             }
@@ -307,6 +312,7 @@ struct ShortcutRecorder: View {
         guard let monitor else { return } // not recording
         NSEvent.removeMonitor(monitor)
         self.monitor = nil
+        refusal = nil
         state.isRecordingShortcut = false
     }
 }
