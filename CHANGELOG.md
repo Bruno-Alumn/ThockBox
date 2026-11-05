@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.11.2
 
 - Places keep working after ThockBox restarts (it used to wait until you
   crossed a place's edge), a place that macOS can't check is tried again,
