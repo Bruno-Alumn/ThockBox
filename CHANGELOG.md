@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.11.3
 
 - ThockBox opens again after importing settings or installing an update.
   It used to quit and stay closed until you opened it yourself.
