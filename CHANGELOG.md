@@ -11,6 +11,10 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - With sounds off, Turn Off For and Switch Set are grayed out in the menu,
   rather than opening lists of choices you can't pick.
 
+- Recording a shortcut that another ThockBox shortcut already uses now
+  says so, instead of asking for different modifier keys. The message also
+  goes away once a shortcut is recorded or recording is cancelled.
+
 ## 1.11.2
 
 - Places keep working after ThockBox restarts (it used to wait until you
