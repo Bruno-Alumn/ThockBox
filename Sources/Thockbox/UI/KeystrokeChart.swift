@@ -51,7 +51,9 @@ struct HourlyChart: View {
         .chartXScale(domain: -0.5...23.5)
         .chartXAxis {
             AxisMarks(values: [0, 6, 12, 18]) { value in
-                AxisValueLabel {
+                // Centered under the hour's bar; by default a label starts at
+                // its tick, so "6" looked like it belonged to the bar after.
+                AxisValueLabel(anchor: .top) {
                     if let hour = value.as(Int.self) { Text(Self.hourName(hour)) }
                 }
             }

@@ -15,6 +15,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   says so, instead of asking for different modifier keys. The message also
   goes away once a shortcut is recorded or recording is cancelled.
 
+- Activity's Today by Hour chart centers each hour label under its bar.
+  The labels used to start at the bar, so 6 AM's typing looked like 5 AM's.
+
 ## 1.11.2
 
 - Places keep working after ThockBox restarts (it used to wait until you
