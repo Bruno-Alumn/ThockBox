@@ -696,7 +696,7 @@ private struct GeneralPage: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try SettingsTransfer.importSettings(Data(contentsOf: url), into: .standard)
-            SettingsTransfer.relaunch()
+            Relaunch.now()
         } catch {
             let alert = NSAlert()
             alert.alertStyle = .warning
