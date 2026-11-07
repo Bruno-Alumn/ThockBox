@@ -15,7 +15,10 @@ ln -s /Applications "$stage/Applications"
 
 rm -f "$DMG"
 hdiutil create -volname ThockBox -srcfolder "$stage" -fs HFS+ -format UDZO -ov -quiet "$DMG"
-if [ "$SIGN" != "-" ]; then
-    codesign --sign "$SIGN" "$DMG"
-fi
+case "$SIGN" in
+    -) ;;
+    # Notarization needs a secure timestamp on the disk image's signature too.
+    "Developer ID Application:"*) codesign --timestamp --sign "$SIGN" "$DMG" ;;
+    *) codesign --sign "$SIGN" "$DMG" ;;
+esac
 echo "$DMG"

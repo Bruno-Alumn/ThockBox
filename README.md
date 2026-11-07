@@ -290,6 +290,8 @@ make cask     # point the Homebrew cask at this version
 make release  # publish the disk image as a GitHub release (requires gh)
 ```
 
+How releases are signed, notarized and published: [docs/RELEASING.md](docs/RELEASING.md).
+
 </details>
 
 <details>

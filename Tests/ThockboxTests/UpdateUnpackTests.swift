@@ -130,4 +130,12 @@ final class UpdateUnpackTests: XCTestCase {
         XCTAssertFalse(Updater.satisfiesOwnRequirement(unpacked))
         XCTAssertFalse(Updater.accepts(signedByUs: Updater.satisfiesOwnRequirement(unpacked), runningAdHoc: false))
     }
+
+    /// An ad-hoc signature has no certificate, so it never counts as signed
+    /// by the running app's certificate (and the grant is reset).
+    func testAnAdHocDownloadHasADifferentCertificate() throws {
+        let folder = work.appendingPathComponent("src")
+        let app = try makeApp(id: ownID, version: "1.2.0", in: folder)
+        XCTAssertFalse(Updater.hasOwnCertificate(try unpack(zip(app))))
+    }
 }

@@ -5,10 +5,21 @@ BUNDLE := dist/$(NAME).app
 VERSION := $(shell /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Resources/Info.plist)
 ZIP := dist/$(NAME)-$(VERSION).zip
 DMG := dist/$(NAME)-$(VERSION).dmg
-# Signed with the "ThockBox Signing" identity when this Mac has it (see
-# `make signing-cert`), so the Accessibility grant survives rebuilds and
-# updates. Otherwise ad-hoc ("-"), where every rebuild needs a new grant.
+# How builds are signed (see docs/RELEASING.md):
+#   SIGNING=thockbox      the self-signed "ThockBox Signing" certificate
+#                         (`make signing-cert`), ad-hoc ("-") if this Mac
+#                         doesn't have it, where every rebuild needs a new grant
+#   SIGNING=developer-id  the maintainer's Developer ID; `make dmg` and
+#                         `make release` also notarize and staple
+# Both carry packaging/designated_requirement.txt, so permissions and updates
+# carry over from one to the other.
+SIGNING ?= thockbox
+DEVELOPER_ID := Developer ID Application: Bruno Cassina (22R95V8NA5)
+ifeq ($(SIGNING),developer-id)
+CODESIGN_ID ?= $(DEVELOPER_ID)
+else
 CODESIGN_ID ?= $(or $(shell security find-identity -p codesigning 2>/dev/null | awk -F'"' '/"ThockBox Signing"/ {split($$1, a, " "); print a[2]; exit}'),-)
+endif
 
 .PHONY: all build bundle zip dmg release cask signing-cert test bench sounds icon clean run
 
@@ -30,7 +41,7 @@ bundle: build
 	scripts/build_icon_assets.sh $(BUNDLE)
 	cp CHANGELOG.md $(BUNDLE)/Contents/Resources/
 	scripts/build_intents_metadata.sh $(BUNDLE)
-	codesign --force --sign "$(CODESIGN_ID)" $(BUNDLE)
+	scripts/sign_app.sh $(BUNDLE) "$(CODESIGN_ID)"
 	@du -sh $(BUNDLE)
 	@if [ "$(CODESIGN_ID)" = "-" ]; then \
 		echo "note: ad-hoc signed. Run 'make signing-cert' so the Accessibility grant survives rebuilds."; \
@@ -75,7 +86,9 @@ zip: bundle
 
 # The disk image people download: the app next to an Applications link.
 dmg: bundle
+	@if [ "$(SIGNING)" = developer-id ]; then scripts/notarize.sh $(BUNDLE); fi
 	scripts/make_dmg.sh $(BUNDLE) $(DMG) "$(CODESIGN_ID)"
+	@if [ "$(SIGNING)" = developer-id ]; then scripts/notarize.sh $(DMG); fi
 
 # Publish the disk image as GitHub release v<version>. GitHub adds the
 # source archives itself. The app's updater installs from the newest
