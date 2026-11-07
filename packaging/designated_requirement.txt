@@ -1,0 +1,1 @@
+identifier "io.github.bruno-alumn.thockbox" and (certificate leaf = H"bf187bb3b866c184ba8e8654d23d6f8fce17bff8" or (anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] and certificate leaf[field.1.2.840.113635.100.6.1.13] and certificate leaf[subject.OU] = "22R95V8NA5"))

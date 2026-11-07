@@ -251,11 +251,18 @@ final class Updater: ObservableObject {
             // hdiutil, ditto and codesign take seconds: off the main thread,
             // so typing keeps its sound and the menu stays responsive.
             let version = release.version
-            let (newApp, keepsGrant) = try await Task.detached {
+            let (newApp, signedByUs, sameCertificate) = try await Task.detached {
                 let app = try Self.unpack(file, in: work, expecting: version)
-                return (app, Self.satisfiesOwnRequirement(app))
+                return (app, Self.satisfiesOwnRequirement(app), Self.hasOwnCertificate(app))
             }.value
-            guard Self.accepts(signedByUs: keepsGrant, runningAdHoc: Self.isAdHocSigned) else {
+            // macOS keeps a grant only for builds that meet the requirement
+            // recorded when it was granted. Builds up to 1.11.3 recorded one
+            // naming only the "ThockBox Signing" certificate, so the first
+            // update to a Developer ID build loses Accessibility even though
+            // it meets today's requirement. Only an update signed by the same
+            // certificate is sure to keep it.
+            let keepsGrant = signedByUs && sameCertificate
+            guard Self.accepts(signedByUs: signedByUs, runningAdHoc: Self.isAdHocSigned) else {
                 throw UpdateError("The download isn't signed by ThockBox's release certificate.")
             }
 
@@ -265,10 +272,10 @@ final class Updater: ObservableObject {
                 throw UpdateError("ThockBox doesn't have permission to replace itself in \(target.deletingLastPathComponent().lastPathComponent).")
             }
             klog.notice("updated to \(release.version, privacy: .public), keeps grant: \(keepsGrant, privacy: .public)")
-            // macOS keeps the Accessibility grant when the new build is
-            // signed by the same identity. If it isn't (an ad-hoc build, or
-            // the first update after switching identities), the old grant
-            // would quietly do nothing, so clear it and let the new build ask.
+            // If the new build isn't signed by the same certificate (an ad-hoc
+            // build, or the first update to a Developer ID release), the old
+            // grant would quietly do nothing, so clear it and let the new
+            // build ask, with Settings open to explain why.
             if !keepsGrant, let id = Bundle.main.bundleIdentifier {
                 try? Self.run("/usr/bin/tccutil", ["reset", "Accessibility", id])
                 defaults.set(true, forKey: "showSettingsAfterUpdate")
@@ -361,7 +368,10 @@ final class Updater: ObservableObject {
     /// asset could ship code. Ad-hoc builds (made locally without the
     /// certificate) have no identity to compare against, so they accept any
     /// valid signature and the update asks for Accessibility access again.
-    /// Moving releases to a new certificate will need one manual download.
+    /// Releases carry one requirement that accepts both the old "ThockBox
+    /// Signing" certificate and the maintainer's Developer ID
+    /// (packaging/designated_requirement.txt), so updates move between the
+    /// two without a manual download.
     nonisolated static func accepts(signedByUs: Bool, runningAdHoc: Bool) -> Bool {
         signedByUs || runningAdHoc
     }
@@ -382,6 +392,31 @@ final class Updater: ObservableObject {
             return false
         }
         return SecStaticCodeCheckValidity(other, [], requirement) == errSecSuccess
+    }
+
+    /// Whether `app` is signed with the same leaf certificate as the
+    /// running app. False if either can't be read, or for ad-hoc signatures,
+    /// which have no certificate.
+    nonisolated static func hasOwnCertificate(_ app: URL) -> Bool {
+        var me: SecCode?
+        var staticMe: SecStaticCode?
+        var other: SecStaticCode?
+        guard SecCodeCopySelf([], &me) == errSecSuccess, let me,
+              SecCodeCopyStaticCode(me, [], &staticMe) == errSecSuccess, let staticMe,
+              SecStaticCodeCreateWithPath(app as CFURL, [], &other) == errSecSuccess, let other,
+              let mine = leafCertificate(staticMe), let theirs = leafCertificate(other) else {
+            return false
+        }
+        return mine == theirs
+    }
+
+    private nonisolated static func leafCertificate(_ code: SecStaticCode) -> Data? {
+        var info: CFDictionary?
+        guard SecCodeCopySigningInformation(code, SecCSFlags(rawValue: kSecCSSigningInformation),
+                                            &info) == errSecSuccess,
+              let certificates = (info as? [String: Any])?[kSecCodeInfoCertificates as String] as? [SecCertificate],
+              let leaf = certificates.first else { return nil }
+        return SecCertificateCopyData(leaf) as Data
     }
 
     /// Whether this build is ad-hoc signed, so an update will need the

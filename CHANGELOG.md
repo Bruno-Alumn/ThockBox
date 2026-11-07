@@ -3,6 +3,12 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- Groundwork for releases signed with Apple's Developer ID and notarized by
+  Apple, so later downloads open without the "Open Anyway" step in System
+  Settings. Nothing changes yet for this release.
+
 ## 1.11.3
 
 - ThockBox opens again after importing settings or installing an update.
