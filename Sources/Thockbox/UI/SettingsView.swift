@@ -458,8 +458,17 @@ private struct MutingPage: View {
                 Section {
                     Toggle(isOn: $state.muteByPlace) {
                         Text("Use your location")
-                        if state.muteByPlace && state.locationAccess == .denied {
+                        if state.muteByPlace && !PlaceMonitor.servicesEnabled {
+                            Text("Location Services is off for this Mac. Turn it on in System Settings › Privacy & Security › Location Services.")
+                        } else if state.muteByPlace && state.locationAccess == .denied {
                             Text("ThockBox can't use your location. Allow it in System Settings › Privacy & Security › Location Services.")
+                        }
+                    }
+                    if state.muteByPlace && (state.locationAccess == .denied || !PlaceMonitor.servicesEnabled) {
+                        LabeledContent("") {
+                            Button("Open Location Settings…") {
+                                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices")!)
+                            }
                         }
                     }
                     if state.muteByPlace {

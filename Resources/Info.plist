@@ -32,6 +32,10 @@
 	<string>ThockBox checks for events happening now so it can stay quiet during meetings. Nothing leaves your Mac.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>MIT License. Not affiliated with Klack or Henrik Ruscon.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>ThockBox mutes or plays keyboard sounds at places you save. macOS tells it only when you arrive or leave; your location stays on your Mac.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>ThockBox mutes or plays keyboard sounds at places you save. macOS tells it only when you arrive or leave; your location stays on your Mac.</string>
 	<key>NSLocationUsageDescription</key>
 	<string>ThockBox mutes or plays keyboard sounds at places you save. macOS tells it only when you arrive or leave; your location stays on your Mac.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

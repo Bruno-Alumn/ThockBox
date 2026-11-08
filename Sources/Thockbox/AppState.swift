@@ -1264,6 +1264,7 @@ final class AppState: ObservableObject {
             onAccess: { [weak self] access in self?.locationAccess = access })
         placeMonitor = monitor
         locationAccess = monitor.access
+        monitor.requestAccess()
         monitor.watch(places)
     }
 
