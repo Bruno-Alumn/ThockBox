@@ -3,15 +3,19 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.11.5
+
+- ThockBox is now signed with Apple's Developer ID and notarized by Apple,
+  so a download opens with one click instead of a trip to System Settings.
+  Updating from an earlier version asks once more for Accessibility access;
+  ThockBox opens Settings to help. If you're on 1.11.3 or earlier, download
+  this version from the website once; later updates install themselves.
 
 - Muting by place works again. Turning on Use your location asks for
   Location access right away, the places list shows its Add Current Location
   button again (it was cut off, so there was no way to add a place), and
   each place has its own remove button. If Location Services is off or
   ThockBox isn't allowed, Settings says so and opens the right page.
-
-- The download needs one "Open Anyway" in System Settings instead of two.
 
 ## 1.11.4
 
