@@ -6,8 +6,8 @@
    `Resources/Info.plist` and rename `## Unreleased` in `CHANGELOG.md` to
    `## <version>`. The What's New window shows the section whose heading
    matches the version. Merge it.
-2. On an up-to-date `main`, run `make release` (or
-   `make release SIGNING=developer-id`; see below). This builds and signs
+2. On an up-to-date `main`, run `make release` (Developer ID signing and
+   notarization; see below). This builds and signs
    the app, makes the disk image, updates `packaging/thockbox.rb`, and
    publishes `v<version>` on GitHub with that version's changelog section as
    the release notes.
@@ -22,11 +22,12 @@
 Two identities can sign a release:
 
 - **ThockBox Signing**, a self-signed certificate in the login keychain
-  (`make signing-cert`). Every release up to 1.11.3 was signed with it, and it
-  is still the default (`SIGNING=thockbox`).
+  (`make signing-cert`). Releases up to 1.11.4 were signed with it
+  (`SIGNING=thockbox`).
 - **Developer ID Application: Bruno Cassina (22R95V8NA5)**
-  (`SIGNING=developer-id`). These builds are also notarized by Apple and
-  stapled, so macOS opens them without the "Open Anyway" step.
+  (`SIGNING=developer-id`, the default since 1.11.5). These builds are also
+  notarized by Apple and stapled, so macOS opens them without the "Open
+  Anyway" step.
 
 Whichever identity signs the build, it carries the same designated requirement
 from `packaging/designated_requirement.txt`, and that requirement accepts
@@ -83,10 +84,11 @@ So the move takes two releases, in this order:
    carrying the combined requirement. Every installed copy accepts it (it's
    the same certificate), and from then on each copy runs with the combined
    requirement and can update to a Developer ID build.
-2. **Developer ID releases:** after the bridge release has been out long
-   enough for most people to update, `make release SIGNING=developer-id`.
-   Then change the Makefile's default to `SIGNING ?= developer-id`, and drop
-   the "releases aren't notarized yet" note from the README.
+2. **Developer ID releases,** from 1.11.5 on.
+
+Done: 1.11.4 was the bridge release (2026-11-07) and 1.11.5 the first
+Developer ID release (2026-11-08). Copies on 1.11.3 or older can't update to
+1.11.5 by themselves (their updater refuses it) and need one manual download.
 
 **One re-grant is unavoidable for older permissions.** macOS stores the
 requirement in force *when a permission was granted*, and running a newer

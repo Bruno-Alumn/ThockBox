@@ -6,17 +6,19 @@ VERSION := $(shell /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString
 ZIP := dist/$(NAME)-$(VERSION).zip
 DMG := dist/$(NAME)-$(VERSION).dmg
 # How builds are signed (see docs/RELEASING.md):
+#   SIGNING=developer-id  the maintainer's Developer ID (the default, and what
+#                         releases use); `make dmg` and `make release` also
+#                         notarize and staple
 #   SIGNING=thockbox      the self-signed "ThockBox Signing" certificate
 #                         (`make signing-cert`), ad-hoc ("-") if this Mac
 #                         doesn't have it, where every rebuild needs a new grant
-#   SIGNING=developer-id  the maintainer's Developer ID; `make dmg` and
-#                         `make release` also notarize and staple
 # Both carry packaging/designated_requirement.txt, so permissions and updates
 # carry over from one to the other.
-SIGNING ?= thockbox
+SIGNING ?= developer-id
 DEVELOPER_ID := Developer ID Application: Bruno Cassina (22R95V8NA5)
 ifeq ($(SIGNING),developer-id)
-CODESIGN_ID ?= $(DEVELOPER_ID)
+# Ad-hoc where the identity isn't installed (CI, contributors' Macs).
+CODESIGN_ID ?= $(if $(shell security find-identity -v -p codesigning 2>/dev/null | grep -F '"$(DEVELOPER_ID)"'),$(DEVELOPER_ID),-)
 else
 CODESIGN_ID ?= $(or $(shell security find-identity -p codesigning 2>/dev/null | awk -F'"' '/"ThockBox Signing"/ {split($$1, a, " "); print a[2]; exit}'),-)
 endif
@@ -86,15 +88,15 @@ zip: bundle
 
 # The disk image people download: the app next to an Applications link.
 dmg: bundle
-	@if [ "$(SIGNING)" = developer-id ]; then scripts/notarize.sh $(BUNDLE); fi
+	@if [ "$(CODESIGN_ID)" = "$(DEVELOPER_ID)" ]; then scripts/notarize.sh $(BUNDLE); fi
 	scripts/make_dmg.sh $(BUNDLE) $(DMG) "$(CODESIGN_ID)"
-	@if [ "$(SIGNING)" = developer-id ]; then scripts/notarize.sh $(DMG); fi
+	@if [ "$(CODESIGN_ID)" = "$(DEVELOPER_ID)" ]; then scripts/notarize.sh $(DMG); fi
 
 # Publish the disk image as GitHub release v<version>. GitHub adds the
 # source archives itself. The app's updater installs from the newest
 # release's ThockBox-<version>.dmg.
 release: dmg cask
-	@if [ "$(CODESIGN_ID)" = "-" ]; then echo "refusing to release an ad-hoc build; run 'make signing-cert'"; exit 1; fi
+	@if [ "$(CODESIGN_ID)" = "-" ]; then echo "refusing to release an ad-hoc build; the Developer ID isn't in this Mac's keychain (docs/RELEASING.md)"; exit 1; fi
 	scripts/release_notes.sh $(VERSION) > dist/notes.md
 	gh release create v$(VERSION) $(DMG) --title "ThockBox $(VERSION)" --notes-file dist/notes.md
 	@echo "Now copy packaging/thockbox.rb to Casks/thockbox.rb in Bruno-Alumn/homebrew-thockbox."

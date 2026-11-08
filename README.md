@@ -77,11 +77,8 @@ or endorsed by Klack or its developer.
 
 ThockBox runs on macOS 13 or later and updates itself from new releases.
 
-> **A note about signing:** releases aren’t notarized yet, so macOS asks
-> before opening ThockBox the first time. Choose **Open**, or go to System
-> Settings › Privacy & Security and click **Open Anyway**. Every release is
-> signed with the same certificate, so your permission carries over to new
-> versions.
+Releases are signed with a Developer ID and notarized by Apple, and your
+permissions carry over from one version to the next.
 
 With Homebrew:
 
