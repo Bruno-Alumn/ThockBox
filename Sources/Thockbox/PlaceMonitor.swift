@@ -48,6 +48,9 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
         for region in manager.monitoredRegions { manager.stopMonitoring(for: region) }
     }
 
+    /// Whether Location Services is on for the whole Mac.
+    static var servicesEnabled: Bool { CLLocationManager.locationServicesEnabled() }
+
     static func access(_ status: CLAuthorizationStatus) -> Access {
         switch status {
         case .authorizedAlways, .authorized: .granted
@@ -89,6 +92,13 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
         region.notifyOnEntry = true
         region.notifyOnExit = true
         return region
+    }
+
+    /// Asks for Location access if the user hasn't answered yet: as soon as
+    /// muting by place is turned on, so the prompt comes when it makes sense.
+    func requestAccess() {
+        guard access == .unknown, CLLocationManager.locationServicesEnabled() else { return }
+        manager.requestAlwaysAuthorization()
     }
 
     /// One location fix, for adding the current place. Asks for access first

@@ -15,10 +15,11 @@ ln -s /Applications "$stage/Applications"
 
 rm -f "$DMG"
 hdiutil create -volname ThockBox -srcfolder "$stage" -fs HFS+ -format UDZO -ov -quiet "$DMG"
+# Only a Developer ID signs the disk image (with the secure timestamp that
+# notarization needs). Gatekeeper doesn't trust the self-signed "ThockBox
+# Signing" certificate, and a disk image signed with it gets checked and
+# blocked on open, an extra "Open Anyway" that an unsigned one doesn't need.
 case "$SIGN" in
-    -) ;;
-    # Notarization needs a secure timestamp on the disk image's signature too.
     "Developer ID Application:"*) codesign --timestamp --sign "$SIGN" "$DMG" ;;
-    *) codesign --sign "$SIGN" "$DMG" ;;
 esac
 echo "$DMG"

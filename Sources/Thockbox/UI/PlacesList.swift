@@ -1,61 +1,52 @@
 import SwiftUI
 
-/// The saved places, each renamable, with + to add where the Mac is now.
+/// The saved places as rows of the settings form, each renamable and
+/// removable, then a button to add where the Mac is now.
+///
+/// Plain rows rather than a List: a scrolling List nested in the Form, shown
+/// only once "Use your location" is on, laid out wrong (its rows drew over
+/// the row above and its + and − buttons were cut off).
 struct PlacesList: View {
     @ObservedObject var state: AppState
-    @State private var selection: Set<UUID> = []
     @State private var adding = false
     @State private var problem: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            List(selection: $selection) {
-                ForEach($state.places) { $place in
-                    Label {
-                        TextField("Name", text: $place.name)
-                            .textFieldStyle(.plain)
-                            .accessibilityLabel("Place name")
-                    } icon: {
-                        Image(systemName: state.placesInside.contains(place.id) ? "location.fill" : "mappin")
-                            .foregroundStyle(state.placesInside.contains(place.id) ? Color.accentColor : .secondary)
-                            .frame(width: 16)
-                            .help(state.placesInside.contains(place.id) ? "You're here now" : "")
-                            .accessibilityLabel(state.placesInside.contains(place.id) ? "You're here now" : "")
-                            .accessibilityHidden(!state.placesInside.contains(place.id))
-                    }
-                    .tag(place.id)
+        ForEach($state.places) { $place in
+            let here = state.placesInside.contains(place.id)
+            HStack(spacing: 8) {
+                Image(systemName: here ? "location.fill" : "mappin")
+                    .foregroundStyle(here ? Color.accentColor : .secondary)
+                    .frame(width: 16)
+                    .help(here ? "You're here now" : "")
+                    .accessibilityLabel(here ? "You're here now" : "")
+                    .accessibilityHidden(!here)
+                TextField("Name", text: $place.name)
+                    .textFieldStyle(.plain)
+                    .labelsHidden()
+                    .accessibilityLabel("Place name")
+                Button {
+                    state.places.removeAll { $0.id == place.id }
+                } label: {
+                    Image(systemName: "minus.circle.fill").foregroundStyle(.secondary)
                 }
+                .buttonStyle(.borderless)
+                .help("Remove \(place.name)")
+                .accessibilityLabel("Remove \(place.name)")
             }
-            .listStyle(.bordered(alternatesRowBackgrounds: true))
-            .frame(height: 110)
-            .onDeleteCommand(perform: removeSelection)
-            .overlay {
-                if state.places.isEmpty {
-                    Text("No Places").foregroundStyle(.secondary)
-                }
-            }
-            HStack(spacing: 4) {
-                Button(action: addHere) {
-                    Image(systemName: "plus").frame(width: 20, height: 20).contentShape(Rectangle())
-                }
+        }
+        HStack(spacing: 8) {
+            Button("Add Current Location", action: addHere)
                 .disabled(adding || state.places.count >= 20)
-                .help("Add where this Mac is now")
-                .accessibilityLabel("Add Current Location")
-                Button(action: removeSelection) {
-                    Image(systemName: "minus").frame(width: 20, height: 20).contentShape(Rectangle())
-                }
-                .disabled(selection.isEmpty)
-                .help("Remove the selected places")
-                .accessibilityLabel("Remove Selected Places")
-                if adding {
-                    ProgressView().controlSize(.small).padding(.leading, 4)
-                    Text("Finding your location…").foregroundStyle(.secondary)
-                }
+                .help(state.places.count >= 20 ? "macOS watches at most 20 places" : "Save where this Mac is now")
+            if adding {
+                ProgressView().controlSize(.small)
+                Text("Finding your location…").foregroundStyle(.secondary)
             }
-            .buttonStyle(.borderless)
-            if let problem {
-                Text(problem).font(.footnote).foregroundStyle(.secondary)
-            }
+            Spacer()
+        }
+        if let problem {
+            Text(problem).font(.footnote).foregroundStyle(.secondary)
         }
     }
 
@@ -67,10 +58,5 @@ struct PlacesList: View {
             // A refusal is already explained under the toggle.
             problem = state.locationAccess == .denied ? nil : message
         }
-    }
-
-    private func removeSelection() {
-        state.places.removeAll { selection.contains($0.id) }
-        selection = []
     }
 }
