@@ -46,6 +46,9 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - Scrolling sounds play in ThockBox's own windows, and an app whose set
   was removed shows the set it now plays.
 
+- With Spatial audio on while sound goes to speakers, Settings now says
+  that keys play in stereo until headphones are connected.
+
 - The menu's volume slider keeps its blue fill every time the menu opens;
   it used to turn gray from the second opening on.
 
