@@ -128,11 +128,26 @@ final class PlacesTests: XCTestCase {
         XCTAssertTrue(region.notifyOnEntry && region.notifyOnExit)
     }
 
-    func testAFixIsInsidePlacesWithinTheirRadius() {
-        let far = Place(name: "Far", latitude: office.latitude + 0.01, longitude: office.longitude)
-        // About 110 m north of the office: inside its 200 m, a kilometer from Far.
-        let fix = CLLocation(latitude: office.latitude + 0.001, longitude: office.longitude)
-        XCTAssertEqual(PlaceMonitor.places([office, far], containing: fix), [office.id])
+    private func fix(metersNorth: Double, accuracy: Double) -> CLLocation {
+        CLLocation(coordinate: CLLocationCoordinate2D(latitude: office.latitude + metersNorth / 111_000,
+                                                      longitude: office.longitude),
+                   altitude: 0, horizontalAccuracy: accuracy, verticalAccuracy: -1, timestamp: Date())
+    }
+
+    func testASharpFixSettlesAPlace() {
+        XCTAssertEqual(PlaceMonitor.contains(office, fix(metersNorth: 110, accuracy: 40)), true)
+        XCTAssertEqual(PlaceMonitor.contains(office, fix(metersNorth: 1000, accuracy: 40)), false)
+        // Near the edge a sharp fix still decides.
+        XCTAssertEqual(PlaceMonitor.contains(office, fix(metersNorth: 180, accuracy: 40)), true)
+        XCTAssertEqual(PlaceMonitor.contains(office, fix(metersNorth: 220, accuracy: 40)), false)
+    }
+
+    /// A fix "within 300 m" that lands 250 m away doesn't show the Mac left.
+    func testAVagueFixNearAPlaceDecidesNothing() {
+        XCTAssertNil(PlaceMonitor.contains(office, fix(metersNorth: 250, accuracy: 300)))
+        XCTAssertNil(PlaceMonitor.contains(office, fix(metersNorth: 100, accuracy: 300)))
+        // Far enough away, even a vague fix is sure.
+        XCTAssertEqual(PlaceMonitor.contains(office, fix(metersNorth: 2000, accuracy: 300)), false)
     }
 
     func testVagueOrOldFixesAreIgnored() {
@@ -145,6 +160,12 @@ final class PlacesTests: XCTestCase {
         XCTAssertFalse(PlaceMonitor.isUsable(fix(accuracy: 3000, age: 5)))
         XCTAssertFalse(PlaceMonitor.isUsable(fix(accuracy: -1, age: 5)))
         XCTAssertFalse(PlaceMonitor.isUsable(fix(accuracy: 65, age: 600)))
+    }
+
+    /// Play Anyway through one app's music holds when another app chimes in.
+    func testMediaStaysTheSameReasonWhicheverAppsPlay() {
+        XCTAssertTrue(AutomaticMute.media("Spotify").isSame(as: .media(nil)))
+        XCTAssertFalse(AutomaticMute.media("Spotify").isSame(as: .call))
     }
 
     func testStatusNamesThePlace() {

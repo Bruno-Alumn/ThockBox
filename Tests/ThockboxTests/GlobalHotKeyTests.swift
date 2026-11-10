@@ -35,9 +35,9 @@ final class GlobalHotKeyTests: XCTestCase {
         // An unusual combination, so it can't clash with the installed app.
         state.toggleShortcut = Shortcut(keyCode: 111, flags: [.control, .option, .shift, .command], key: "F12")
         XCTAssertTrue(state.usesSystemHotKey)
-        state.isRecordingShortcut = true
+        state.recordingShortcut = "Turn sounds on or off"
         XCTAssertFalse(state.usesSystemHotKey, "released while recording")
-        state.isRecordingShortcut = false
+        state.recordingShortcut = nil
         XCTAssertTrue(state.usesSystemHotKey)
     }
 

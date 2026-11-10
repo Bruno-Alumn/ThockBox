@@ -252,6 +252,14 @@ struct ShortcutRecorder: View {
             // column whether or not it has something to clear.
             if monitor == nil && value.wrappedValue != standard {
                 Button {
+                    // Going back to the standard keys takes them from any
+                    // other shortcut recorded on them since; two the same
+                    // would leave that one dead.
+                    if let standard {
+                        if state.nextSetShortcut == standard { state.nextSetShortcut = nil }
+                        if state.volumeUpShortcut == standard { state.volumeUpShortcut = nil }
+                        if state.volumeDownShortcut == standard { state.volumeDownShortcut = nil }
+                    }
                     value.wrappedValue = standard
                 } label: {
                     Image(systemName: standard == nil ? "xmark.circle.fill" : "arrow.counterclockwise.circle.fill")
@@ -270,17 +278,22 @@ struct ShortcutRecorder: View {
             .accessibilityLabel(monitor == nil ? title : "Recording \(title)")
             .accessibilityValue(monitor == nil ? (value.wrappedValue?.spoken ?? "None") : "Press the new keys")
         }
-        .onDisappear(perform: stop)
+        .onDisappear { stop() }
         // Recording turns the shortcut off; don't leave it off while the
         // user is in another app, where key presses never reach the recorder.
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
             stop()
         }
+        // Another row started recording: this one is done, or it would go
+        // on swallowing every key press in the window.
+        .onReceive(state.$recordingShortcut) { owner in
+            if owner != title { stop(releasing: false) }
+        }
     }
 
     private func start() {
         refusal = nil
-        state.isRecordingShortcut = true
+        state.recordingShortcut = title
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             if event.keyCode == 53 { // Esc
                 stop()
@@ -308,11 +321,12 @@ struct ShortcutRecorder: View {
         recorded != value.wrappedValue && state.allShortcuts.contains(recorded)
     }
 
-    private func stop() {
+    /// `releasing` is false when another row took over the recording.
+    private func stop(releasing: Bool = true) {
         guard let monitor else { return } // not recording
         NSEvent.removeMonitor(monitor)
         self.monitor = nil
         refusal = nil
-        state.isRecordingShortcut = false
+        if releasing, state.recordingShortcut == title { state.recordingShortcut = nil }
     }
 }

@@ -11,6 +11,19 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
   seconds; it used to give up at the first failed attempt, which is
   common on a Mac.
 
+- A vague location reading no longer flips a place to "not here" while
+  you're still there, and Add Current Location waits for you to answer the
+  Location prompt before its 20 seconds start.
+
+- Shortcuts: starting to record a second shortcut ends the first recording
+  (it used to keep swallowing key presses), and resetting the on/off
+  shortcut clears another shortcut that had taken its keys.
+
+- Play Anyway while music plays now holds when a second app makes a sound.
+
+- "Paused by" a password field clears from the menu bar icon and Settings
+  as soon as you type again.
+
 ## 1.11.5
 
 - ThockBox is now signed with Apple's Developer ID and notarized by Apple,
