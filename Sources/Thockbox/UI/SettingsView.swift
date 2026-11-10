@@ -155,7 +155,13 @@ private struct SoundPage: View {
                 .accessibilityValue(SpokenValue.percent(state.volume))
                 .sliderHaptics(state.volume, in: 0...1, step: 0.1)
                 OutputDevicePicker(state: state)
-                Toggle("Spatial audio on headphones", isOn: $state.spatialAudio)
+                Toggle(isOn: $state.spatialAudio) {
+                    Text("Spatial audio on headphones")
+                    // Otherwise it looks broken: on, and nothing sounds 3D.
+                    if state.spatialAudio && state.outputIsSpeaker {
+                        Text("Sound is going to speakers now, so keys play in stereo. Connect headphones to hear them around you.")
+                    }
+                }
                 if #available(macOS 14, *), state.spatialAudio {
                     Toggle("Follow head movement (AirPods)", isOn: $state.followHeadMovement)
                 }

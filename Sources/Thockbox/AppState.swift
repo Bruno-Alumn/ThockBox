@@ -614,7 +614,7 @@ final class AppState: ObservableObject {
     private var outputListeners: [SystemAudioListener] = []
     private var dataSourceListener: SystemAudioListener?
     /// The active output plays out loud (see AudioDevices.isSpeaker).
-    private(set) var outputIsSpeaker = false
+    @Published private(set) var outputIsSpeaker = false
     /// The app in front, not counting ThockBox itself: opening the menu bar
     /// panel or settings window leaves it pointing at the app you came from.
     @Published private(set) var frontApp: FrontApp?
@@ -1413,7 +1413,8 @@ final class AppState: ObservableObject {
 
     /// Called when the output changes (and by tests).
     func setOutputIsSpeaker(_ isSpeaker: Bool) {
-        outputIsSpeaker = isSpeaker
+        // Only on a change: publishing rebuilds the menu and Settings.
+        if outputIsSpeaker != isSpeaker { outputIsSpeaker = isSpeaker }
         updateAutomaticMute()
         updateSpatial()
     }
