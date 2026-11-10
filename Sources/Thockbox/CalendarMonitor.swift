@@ -75,10 +75,38 @@ final class CalendarMonitor {
         }
     }
 
+    /// Whether macOS lets ThockBox read events right now.
+    private static var isAuthorized: Bool {
+        let status = EKEventStore.authorizationStatus(for: .event)
+        if #available(macOS 14, *) { return status == .fullAccess }
+        return status == .authorized
+    }
+
+    /// Picks up Calendars access switched on or off in System Settings
+    /// since it was first decided; nothing announces that change.
+    func refreshAccess() {
+        guard access != .unknown else { return }
+        let allowed = Self.isAuthorized
+        if allowed, access != .granted {
+            store.reset()
+            accessDecided(true)
+        } else if !allowed, access == .granted {
+            access = .denied
+            onAccess(.denied)
+            timer?.invalidate()
+            onCalendars([])
+            if inEvent {
+                inEvent = false
+                onChange(false)
+            }
+        }
+    }
+
     private func accessDecided(_ granted: Bool) {
         access = granted ? .granted : .denied
         onAccess(access)
         guard granted else { return }
+        guard observers.isEmpty else { return check() }
         observers.append(NotificationCenter.default.addObserver(
             forName: .EKEventStoreChanged, object: store, queue: .main
         ) { [weak self] _ in self?.check() })
@@ -89,6 +117,7 @@ final class CalendarMonitor {
     }
 
     private func check(now: Date = Date()) {
+        guard Self.isAuthorized else { return refreshAccess() }
         let all = store.calendars(for: .event)
         onCalendars(all.map {
             CalendarInfo(id: $0.calendarIdentifier, title: $0.title, account: $0.source?.title ?? "")

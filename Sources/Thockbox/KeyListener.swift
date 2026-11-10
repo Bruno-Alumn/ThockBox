@@ -1,8 +1,11 @@
 import AppKit
 
-/// Global keyboard/mouse observer built on NSEvent monitors (requires the
-/// Accessibility permission, same as Klack). Local monitors cover events while
-/// our own UI is frontmost.
+/// Global keyboard/mouse observer (requires the Accessibility permission,
+/// same as Klack). Keys come from a listen-only event tap: an NSEvent global
+/// monitor never sees keys the system takes for itself, so Tab in ⌘Tab and
+/// Esc in the app switcher made no sound. If the tap can't be made, NSEvent
+/// monitors stand in. Mouse events use NSEvent monitors, with local ones for
+/// our own UI.
 final class KeyListener {
     enum Event {
         case keyDown(keycode: UInt16, isRepeat: Bool, flags: NSEvent.ModifierFlags)
@@ -22,6 +25,8 @@ final class KeyListener {
     var ignoresGeneratedKeys = false
 
     private var monitors: [Any] = []
+    private var keyTap: CFMachPort?
+    private var keyTapSource: CFRunLoopSource?
     private(set) var mouseMonitors: [Any] = []
     private var isRunning = false
     private var downModifiers = Set<UInt16>()
@@ -52,10 +57,14 @@ final class KeyListener {
 
     func start() {
         stop()
-        monitors = addMonitors(for: [.keyDown, .keyUp, .flagsChanged])
-        // Always installed: it only sees clicks on our own UI, and it catches
-        // option-click on the menu bar icon (toggle sounds).
-        if let monitor = NSEvent.addLocalMonitorForEvents(matching: Self.mouseMask, handler: { [weak self] event in
+        // The tap hears our own windows' keys too, so it replaces both the
+        // global and the local key monitor.
+        if !startKeyTap() {
+            monitors = addMonitors(for: [.keyDown, .keyUp, .flagsChanged])
+        }
+        // Always installed: it only sees clicks and scrolling on our own UI,
+        // and it catches option-click on the menu bar icon (toggle sounds).
+        if let monitor = NSEvent.addLocalMonitorForEvents(matching: Self.mouseMask.union(.scrollWheel), handler: { [weak self] event in
             if event.type == .leftMouseUp, self?.suppressNextStatusItemMouseUp == true {
                 self?.suppressNextStatusItemMouseUp = false
                 return nil
@@ -74,15 +83,60 @@ final class KeyListener {
         }
         isRunning = true
         updateMouseMonitors()
+        klog.notice("keys from \(self.usesKeyTap ? "an event tap" : "NSEvent monitors", privacy: .public)")
     }
 
     func stop() {
         for m in monitors + mouseMonitors { NSEvent.removeMonitor(m) }
+        stopKeyTap()
         monitors.removeAll()
         mouseMonitors.removeAll()
         isRunning = false
         downModifiers.removeAll()
         suppressNextStatusItemMouseUp = false
+    }
+
+    /// Whether keys come from the event tap (false: from NSEvent monitors).
+    var usesKeyTap: Bool { keyTap != nil }
+
+    /// Listen-only, so it can't delay or change what's typed.
+    private func startKeyTap() -> Bool {
+        let mask = [CGEventType.keyDown, .keyUp, .flagsChanged].reduce(CGEventMask(0)) { $0 | (1 << $1.rawValue) }
+        let callback: CGEventTapCallBack = { _, type, event, info in
+            if let info {
+                Unmanaged<KeyListener>.fromOpaque(info).takeUnretainedValue().tapped(type, event)
+            }
+            return Unmanaged.passUnretained(event)
+        }
+        guard let tap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap,
+                                          options: .listenOnly, eventsOfInterest: mask, callback: callback,
+                                          userInfo: Unmanaged.passUnretained(self).toOpaque()),
+              let source = CFMachPortCreateRunLoopSource(nil, tap, 0) else { return false }
+        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+        keyTap = tap
+        keyTapSource = source
+        return true
+    }
+
+    private func stopKeyTap() {
+        if let keyTapSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), keyTapSource, .commonModes) }
+        if let keyTap {
+            CGEvent.tapEnable(tap: keyTap, enable: false)
+            CFMachPortInvalidate(keyTap)
+        }
+        keyTap = nil
+        keyTapSource = nil
+    }
+
+    private func tapped(_ type: CGEventType, _ event: CGEvent) {
+        // The system switches a tap off if it's ever slow, or while the user
+        // types a password: switch it back on.
+        if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+            if let keyTap { CGEvent.tapEnable(tap: keyTap, enable: true) }
+            return
+        }
+        guard let nsEvent = NSEvent(cgEvent: event) else { return }
+        process(nsEvent)
     }
 
     private static let mouseMask: NSEvent.EventTypeMask = [.leftMouseDown, .leftMouseUp,

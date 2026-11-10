@@ -490,6 +490,22 @@ final class AutoMuteTests: XCTestCase {
 
     /// Playing through one reason doesn't switch off the others: going
     /// idle still mutes.
+    /// With two reasons at once (say a call during a calendar event), Play Anyway on each one plays, rather than swapping them.
+    func testPlayAnywayTwiceClearsTwoReasons() {
+        let state = AppState(defaults: defaults)
+        state.muteWhenLocked = true
+        state.muteDuringMeetings = true
+        state.setScreenLocked(true)
+        state.setInCalendarEvent(true)
+        state.playAnyway()
+        XCTAssertNotNil(state.automaticMute, "the other reason still mutes")
+        state.playAnyway()
+        XCTAssertNil(state.automaticMute)
+        state.setInCalendarEvent(false)
+        state.setInCalendarEvent(true)
+        XCTAssertEqual(state.automaticMute, .meeting, "a new event mutes again")
+    }
+
     func testPlayAnywayLeavesOtherReasonsAlone() {
         let state = AppState(defaults: defaults)
         state.muteWhenLocked = true

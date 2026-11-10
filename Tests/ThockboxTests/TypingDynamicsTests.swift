@@ -19,6 +19,6 @@ final class TypingDynamicsTests: XCTestCase {
         XCTAssertEqual(fast, 0.8)
         XCTAssertEqual(dynamics.release(0), 1, "released at the strength it was pressed")
         XCTAssertEqual(dynamics.release(1), fast)
-        XCTAssertEqual(dynamics.release(1), 1, "a release without a press plays normally")
+        XCTAssertNil(dynamics.release(1), "a release without a press is silent")
     }
 }

@@ -24,6 +24,28 @@ on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 - "Paused by" a password field clears from the menu bar icon and Settings
   as soon as you type again.
 
+- Tab now sounds in ⌘Tab, and so do other keys macOS takes for itself
+  (Esc in the app switcher, Space in ⌘Space). ThockBox used to hear only
+  the keys that reached an app.
+
+- Spatial audio is now always rendered for headphones, rather than left
+  to macOS to guess from the output device.
+
+- A key release only sounds if its press did: no lone click after a
+  password field or when a mute lifts while a key is held.
+
+- Play Anyway works when two things mute at once (a call during a calendar
+  event); it used to swap between the two.
+
+- Calendar access switched on or off in System Settings is picked up
+  without restarting ThockBox.
+
+- A different set each day, and a Focus that picks a set, change it
+  silently; they used to play a sample click with nobody typing.
+
+- Scrolling sounds play in ThockBox's own windows, and an app whose set
+  was removed shows the set it now plays.
+
 ## 1.11.5
 
 - ThockBox is now signed with Apple's Developer ID and notarized by Apple,
