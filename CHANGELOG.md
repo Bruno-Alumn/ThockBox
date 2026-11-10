@@ -3,7 +3,7 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
-## Unreleased
+## 1.11.6
 
 - Places are more dependable. ThockBox checks where your Mac is when it
   starts and each time it wakes, so it knows you've moved even if macOS
