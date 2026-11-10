@@ -33,13 +33,13 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>MIT License. Not affiliated with Klack or Henrik Ruscon.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>ThockBox mutes or plays keyboard sounds at places you save. macOS tells it only when you arrive or leave; your location stays on your Mac.</string>
+	<string>ThockBox mutes or plays keyboard sounds at places you save. It checks where your Mac is when it wakes and when you arrive or leave; your location stays on your Mac.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>ThockBox mutes or plays keyboard sounds at places you save. macOS tells it only when you arrive or leave; your location stays on your Mac.</string>
+	<string>ThockBox mutes or plays keyboard sounds at places you save. It checks where your Mac is when it wakes and when you arrive or leave; your location stays on your Mac.</string>
 	<key>NSLocationUsageDescription</key>
-	<string>ThockBox mutes or plays keyboard sounds at places you save. macOS tells it only when you arrive or leave; your location stays on your Mac.</string>
+	<string>ThockBox mutes or plays keyboard sounds at places you save. It checks where your Mac is when it wakes and when you arrive or leave; your location stays on your Mac.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>ThockBox mutes or plays keyboard sounds at places you save. macOS tells it only when you arrive or leave; your location stays on your Mac.</string>
+	<string>ThockBox mutes or plays keyboard sounds at places you save. It checks where your Mac is when it wakes and when you arrive or leave; your location stays on your Mac.</string>
 	<key>NSMotionUsageDescription</key>
 	<string>ThockBox follows your head movement from AirPods so spatial keyboard sounds stay in place when you turn your head.</string>
 	<key>OSAScriptingDefinition</key>

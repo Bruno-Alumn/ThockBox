@@ -1,3 +1,4 @@
+import CoreLocation
 import XCTest
 @testable import Thockbox
 
@@ -125,6 +126,25 @@ final class PlacesTests: XCTestCase {
         XCTAssertEqual(region.identifier, office.id.uuidString)
         XCTAssertEqual(region.radius, 200)
         XCTAssertTrue(region.notifyOnEntry && region.notifyOnExit)
+    }
+
+    func testAFixIsInsidePlacesWithinTheirRadius() {
+        let far = Place(name: "Far", latitude: office.latitude + 0.01, longitude: office.longitude)
+        // About 110 m north of the office: inside its 200 m, a kilometer from Far.
+        let fix = CLLocation(latitude: office.latitude + 0.001, longitude: office.longitude)
+        XCTAssertEqual(PlaceMonitor.places([office, far], containing: fix), [office.id])
+    }
+
+    func testVagueOrOldFixesAreIgnored() {
+        let here = CLLocationCoordinate2D(latitude: 40, longitude: -3)
+        func fix(accuracy: Double, age: TimeInterval) -> CLLocation {
+            CLLocation(coordinate: here, altitude: 0, horizontalAccuracy: accuracy, verticalAccuracy: -1,
+                       timestamp: Date(timeIntervalSinceNow: -age))
+        }
+        XCTAssertTrue(PlaceMonitor.isUsable(fix(accuracy: 65, age: 5)))
+        XCTAssertFalse(PlaceMonitor.isUsable(fix(accuracy: 3000, age: 5)))
+        XCTAssertFalse(PlaceMonitor.isUsable(fix(accuracy: -1, age: 5)))
+        XCTAssertFalse(PlaceMonitor.isUsable(fix(accuracy: 65, age: 600)))
     }
 
     func testStatusNamesThePlace() {

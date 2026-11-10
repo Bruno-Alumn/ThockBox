@@ -784,6 +784,8 @@ final class AppState: ObservableObject {
             self?.resumeIfDue()
             self?.rotateSetIfNewDay()
             self?.updateQuietTimer()
+            // The Mac may have moved while asleep.
+            self?.placeMonitor?.refresh()
         }
         klog.notice("startup: trusted=\(self.accessibilityTrusted, privacy: .public) packs=\(self.packs.count, privacy: .public) device=\(self.outputDeviceUID ?? "default", privacy: .public)")
 
