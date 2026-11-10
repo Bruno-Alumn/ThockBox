@@ -3,6 +3,14 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- Places are more dependable. ThockBox checks where your Mac is when it
+  starts and each time it wakes, so it knows you've moved even if macOS
+  didn't report the arrival. Adding a place keeps trying for up to 20
+  seconds; it used to give up at the first failed attempt, which is
+  common on a Mac.
+
 ## 1.11.5
 
 - ThockBox is now signed with Apple's Developer ID and notarized by Apple,

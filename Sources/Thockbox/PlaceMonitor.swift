@@ -13,6 +13,9 @@ struct Place: Codable, Identifiable, Equatable {
 /// Reports which saved places the Mac is at, using macOS's own region
 /// monitoring: the system watches the places and wakes ThockBox only when
 /// the Mac arrives or leaves, so it never polls or keeps location running.
+/// A Mac has no low-power location hardware, so those arrivals can be late
+/// or missed while it sleeps in a bag; one location fix at launch and after
+/// each wake settles where it is.
 /// It exists only while muting by place is on and there are places, and
 /// asks for Location access only when the user adds a place.
 final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
@@ -76,13 +79,37 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
         // for every place without an answer (once), not only new ones.
         // Renaming a place changes nothing here.
         let watched = Set(manager.monitoredRegions.map(\.identifier))
+        var askedSome = false
         for place in self.places where !reported.contains(place.id) && !asked.contains(place.id) {
             let region = Self.region(for: place)
             if !watched.contains(place.id.uuidString) { manager.startMonitoring(for: region) }
             asked.insert(place.id)
             manager.requestState(for: region)
+            askedSome = true
         }
+        if askedSome { refresh() }
         report()
+    }
+
+    /// Checks where the Mac is with one location fix: at launch, when a
+    /// place is added, and after the Mac wakes, when region monitoring alone
+    /// may not have noticed a move.
+    func refresh() {
+        guard access == .granted, !places.isEmpty, pendingLocation == nil else { return }
+        manager.requestLocation()
+    }
+
+    /// The fixes worth trusting: recent, and no vaguer than a few blocks.
+    static func isUsable(_ location: CLLocation, now: Date = Date()) -> Bool {
+        location.horizontalAccuracy >= 0 && location.horizontalAccuracy <= 500
+            && now.timeIntervalSince(location.timestamp) < 120
+    }
+
+    /// The places a fix is inside, by distance from each place's center.
+    static func places(_ places: [Place], containing location: CLLocation) -> Set<UUID> {
+        Set(places.filter {
+            location.distance(from: CLLocation(latitude: $0.latitude, longitude: $0.longitude)) <= $0.radius
+        }.map(\.id))
     }
 
     static func region(for place: Place) -> CLCircularRegion {
@@ -114,16 +141,21 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
             if self?.locationRequest == request { self?.finishLocation(nil) }
         }
         switch access {
-        case .granted: manager.requestLocation()
+        // Keeps trying until a fix arrives or the timeout: a single request
+        // often fails at first on a Mac, while Wi-Fi is still being scanned.
+        case .granted: manager.startUpdatingLocation()
         case .denied: finishLocation(nil)
         case .unknown: manager.requestAlwaysAuthorization()
         }
     }
 
     private func finishLocation(_ location: CLLocation?) {
+        guard pendingLocation != nil else { return }
+        manager.stopUpdatingLocation()
         let done = pendingLocation
         pendingLocation = nil
         locationRequest = nil
+        klog.notice("location fix: \(location.map { "within \(Int($0.horizontalAccuracy)) m" } ?? "none", privacy: .public)")
         done?(location)
     }
 
@@ -151,13 +183,14 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
     // MARK: CLLocationManagerDelegate
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        klog.notice("location access: \(String(describing: self.access), privacy: .public)")
         onAccess(access)
         // Granted again after a refusal: every place needs asking again.
         asked = []
         if access != .granted { reported = []; inside = [] }
         if pendingLocation != nil {
             switch access {
-            case .granted: manager.requestLocation()
+            case .granted: manager.startUpdatingLocation()
             case .denied: finishLocation(nil)
             case .unknown: break
             }
@@ -178,15 +211,25 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        finishLocation(locations.last)
+        guard let location = locations.last, Self.isUsable(location) else { return }
+        // A fix says where the Mac is for every place at once.
+        inside = Self.places(places, containing: location)
+        reported = Set(places.map(\.id))
+        asked = []
+        if pendingLocation != nil { finishLocation(location) }
+        report()
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        klog.notice("location failed: \(error.localizedDescription, privacy: .public)")
+        // "Unknown" means not yet: keep waiting for the fix or the timeout.
+        if (error as? CLError)?.code == .locationUnknown { return }
         finishLocation(nil)
     }
 
     func locationManager(_ manager: CLLocationManager, monitoringDidFailFor region: CLRegion?, withError error: Error) {
         guard let region, let id = UUID(uuidString: region.identifier) else { return }
+        klog.notice("watching a place failed: \(error.localizedDescription, privacy: .public)")
         set(.unknown, for: region)
         // Try again a minute later rather than leave the place unknown.
         DispatchQueue.main.asyncAfter(deadline: .now() + 60) { [weak self] in
