@@ -14,10 +14,14 @@ final class MenuVolumeItem: NSObject {
     /// The SwiftUI menu item the slider goes under.
     static let heading = "Volume"
 
-    /// A new item and slider for each menu SwiftUI builds: one carried over
-    /// from a menu that was rebuilt (as turning sounds off and on does)
-    /// draws in its inactive gray until it's dragged.
+    /// A new item and slider each time the menu opens: one carried over,
+    /// whether from a menu that was rebuilt (as turning sounds off and on
+    /// does) or from the same menu's last opening, draws in its inactive
+    /// gray until it's dragged.
     private var item = NSMenuItem()
+    /// Whether this opening already has its new slider; the menu calls
+    /// back several times per opening, as its items arrive.
+    private var isFresh = false
     private var slider = NSSlider()
     private weak var state: AppState?
     private var unsaved: Float?
@@ -36,14 +40,28 @@ final class MenuVolumeItem: NSObject {
     }
 
     private func opened(_ menu: NSMenu) {
-        guard let state,
-              let heading = menu.items.firstIndex(where: { $0.title == Self.heading && $0 !== item })
-        else { return }
-        if item.menu !== menu {
-            item.menu?.removeItem(item)
-            makeItem()
-            menu.insertItem(item, at: heading + 1)
-        }
+        guard let state, menu.items.contains(where: { $0.title == Self.heading && $0 !== item }) else { return }
+        guard item.menu !== menu || !isFresh else { return sync(with: state) }
+        isFresh = true
+        item.menu?.removeItem(item)
+        // Added a moment after the menu is on screen: a slider already in
+        // the menu when it appears draws in its inactive gray.
+        openMenu = menu
+        perform(#selector(addSlider), with: nil, afterDelay: 0, inModes: [.common, .eventTracking])
+    }
+
+    private weak var openMenu: NSMenu?
+
+    @objc private func addSlider() {
+        guard let state, let menu = openMenu, isFresh,
+              let heading = menu.items.firstIndex(where: { $0.title == Self.heading }) else { return }
+        item.menu?.removeItem(item)
+        makeItem()
+        menu.insertItem(item, at: heading + 1)
+        sync(with: state)
+    }
+
+    private func sync(with state: AppState) {
         // Not while a drag is unsaved: items still arriving would snap the
         // knob back to the saved volume.
         if unsaved == nil {
@@ -79,7 +97,9 @@ final class MenuVolumeItem: NSObject {
     }
 
     private func closed(_ menu: NSMenu?) {
-        guard let menu, item.menu === menu, let value = unsaved else { return }
+        guard let menu, item.menu === menu || menu.items.contains(where: { $0.title == Self.heading }) else { return }
+        isFresh = false
+        guard let value = unsaved else { return }
         unsaved = nil
         state?.volume = value
     }
