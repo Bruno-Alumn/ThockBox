@@ -28,7 +28,10 @@ struct TypingDynamics {
         return velocity
     }
 
-    mutating func release(_ keycode: UInt16) -> Float {
-        held.removeValue(forKey: keycode) ?? 1
+    /// The velocity its press had, or nil if no press was heard (it went
+    /// down in a password field, or while muted): then the release is silent
+    /// too, not a lone click.
+    mutating func release(_ keycode: UInt16) -> Float? {
+        held.removeValue(forKey: keycode)
     }
 }

@@ -270,6 +270,10 @@ final class SoundEngine {
         if spatial {
             engine.attach(environment)
             environment.renderingAlgorithm = .HRTFHQ
+            // Spatial mode is only on with headphones, so say so, rather
+            // than leave the node to guess from the output device: rendered
+            // for speakers, the 3D effect is lost on headphones.
+            environment.outputType = .headphones
             environment.listenerPosition = AVAudio3DPoint(x: 0, y: 0, z: 0)
             environment.distanceAttenuationParameters.referenceDistance = 1
             engine.connect(environment, to: submix, fromBus: 0, toBus: submix.nextAvailableInputBus, format: format)

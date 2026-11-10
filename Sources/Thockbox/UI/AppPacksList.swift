@@ -25,7 +25,13 @@ struct AppPacksList: View {
                     }
                     Spacer()
                     Picker("Set for \(name(id))", selection: Binding(
-                        get: { state.appPacks[id] ?? state.selectedPackID },
+                        // A set that's gone (removed, or deleted in Finder)
+                        // shows the one that plays instead, not a blank.
+                        get: {
+                            let fallback = state.currentPack?.id ?? state.selectedPackID
+                            guard let chosen = state.appPacks[id] else { return fallback }
+                            return state.packs.contains { $0.id == chosen } ? chosen : fallback
+                        },
                         set: { state.appPacks[id] = $0 })) {
                         ForEach(state.packs) { Text($0.name).tag($0.id) }
                     }
@@ -76,7 +82,7 @@ struct AppPacksList: View {
         panel.prompt = "Add"
         guard panel.runModal() == .OK else { return }
         for id in panel.urls.compactMap({ Bundle(url: $0)?.bundleIdentifier }) where state.appPacks[id] == nil {
-            state.appPacks[id] = state.selectedPackID
+            state.appPacks[id] = state.currentPack?.id ?? state.selectedPackID
         }
     }
 }

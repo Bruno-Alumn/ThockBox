@@ -55,13 +55,13 @@ final class AppState: ObservableObject {
         guard !soundsOn || packID != nil else {
             if let before = beforeFocus {
                 beforeFocus = nil
-                selectPackFromElsewhere(before.packID)
+                selectPackFromElsewhere(before.packID, preview: false)
                 if before.turnedOff { enabled = before.enabled }
             }
             return
         }
         var before = beforeFocus ?? FocusBefore(enabled: enabled, packID: selectedPackID)
-        if let packID { selectPackFromElsewhere(packID) }
+        if let packID { selectPackFromElsewhere(packID, preview: false) }
         if !soundsOn {
             before.turnedOff = true
             enabled = false
@@ -125,9 +125,10 @@ final class AppState: ObservableObject {
     @Published var selectedPackID: String {
         didSet {
             defaults.set(selectedPackID, forKey: "pack")
-            applyPack(notify: oldValue != selectedPackID)
+            applyPack(notify: oldValue != selectedPackID && !silentPackChange)
         }
     }
+    private var silentPackChange = false
     /// Notify when Shortcuts or AppleScript changes the switch set.
     @Published var notifySetChanges: Bool {
         didSet {
@@ -386,13 +387,14 @@ final class AppState: ObservableObject {
         let today = KeystrokeStats.dayStamp(now)
         guard defaults.string(forKey: "setDay") != today else { return }
         defaults.set(today, forKey: "setDay")
-        switchToNextSet()
+        // Nobody asked for this change just now: no sample click at midnight.
+        switchToNextSet(preview: false)
     }
 
     /// The set after the selected one, wrapping around, as the shortcut picks.
-    func switchToNextSet() {
+    func switchToNextSet(preview: Bool = true) {
         guard let index = packs.firstIndex(where: { $0.id == currentPack?.id }), packs.count > 1 else { return }
-        selectPackFromElsewhere(packs[(index + 1) % packs.count].id)
+        selectPackFromElsewhere(packs[(index + 1) % packs.count].id, preview: preview)
     }
 
     /// Set while Settings records a new shortcut, so pressing the current
@@ -782,7 +784,7 @@ final class AppState: ObservableObject {
         ) { [weak self] _ in
             // A sleep can span a whole quiet night or a day change: start
             // fresh rather than carry an override or yesterday's counts over.
-            self?.overriddenMute = nil
+            self?.overriddenMutes = []
             self?.stats.rollOver()
             self?.resumeIfDue()
             self?.rotateSetIfNewDay()
@@ -884,6 +886,8 @@ final class AppState: ObservableObject {
         let wasSelected = currentPack?.id == pack.id
         try UserPacks.remove(pack)
         reloadPacks()
+        // Or a set added later under the same name would take these over.
+        appPacks = appPacks.filter { $0.value != pack.id }
         if wasSelected { selectedPackID = "cream" }
     }
 
@@ -937,9 +941,13 @@ final class AppState: ObservableObject {
     /// Shortcuts, AppleScript), with a notification if the user asked for one.
     /// Returns whether a notification was posted.
     @discardableResult
-    func selectPackFromElsewhere(_ id: String) -> Bool {
+    func selectPackFromElsewhere(_ id: String, preview: Bool = true) -> Bool {
         guard id != selectedPackID else { return false }
+        // A Focus starting or the day's new set changes it with nobody at
+        // the keyboard: those skip the sample click.
+        silentPackChange = !preview
         selectedPackID = id
+        silentPackChange = false
         guard notifySetChanges else { return false }
         let name = packs.first { $0.id == id }?.name ?? id
         if postsNotifications { SetChangeNotifier.post(setName: name) }
@@ -1037,8 +1045,7 @@ final class AppState: ObservableObject {
         case let .keyUp(keycode):
             if suppressedKeyUps.remove(keycode) != nil { return }
             guard enabled, !isAutomaticallyMuted, audible(keycode) else { return }
-            let velocity = dynamics.release(keycode)
-            guard keyReleaseSounds else { return }
+            guard let velocity = dynamics.release(keycode), keyReleaseSounds else { return }
             let info = KeyMap.info(for: keycode)
             engine.playKey(keyClass: info.keyClass, up: true, x: info.x, velocity: velocity)
         case .mouseDown:
@@ -1082,6 +1089,7 @@ final class AppState: ObservableObject {
     /// What the menu and the settings windows refresh when they open.
     func refreshOnOpen() {
         refreshAccessibilityStatus()
+        calendarMonitor?.refreshAccess()
         refreshPacks()
         resumeIfDue()
         // Picks up "Open at login" changed in System Settings meanwhile.
@@ -1326,13 +1334,15 @@ final class AppState: ObservableObject {
         updateAutomaticMute()
     }
 
-    /// The automatic mute the user chose to play through (menu › Play
-    /// Anyway), until that reason ends or changes.
-    private var overriddenMute: AutomaticMute?
+    /// The automatic mutes the user chose to play through (menu › Play
+    /// Anyway), each until its reason ends. A list, since several reasons
+    /// often apply at once (a call during a calendar event): with only one
+    /// set aside, Play Anyway just swapped which of the two was shown.
+    private var overriddenMutes: [AutomaticMute] = []
 
     func playAnyway() {
         guard let mute = automaticMute, mute != .idle else { return }
-        overriddenMute = mute
+        overriddenMutes.append(mute)
         updateAutomaticMute()
     }
 
@@ -1353,10 +1363,10 @@ final class AppState: ObservableObject {
             reasons.append(.quietHours)
         }
         if idleMode.isIdle(at: now, timeoutMinutes: idleTimeoutMinutes) { reasons.append(.idle) }
-        // Play Anyway sets aside one reason while it lasts; the others still
+        // Play Anyway sets a reason aside while it lasts; the others still
         // count (going idle still mutes), and once it's gone, so is the override.
-        if let overridden = overriddenMute, !reasons.contains(where: { $0.isSame(as: overridden) }) { overriddenMute = nil }
-        let reason = reasons.first { overriddenMute.map($0.isSame) != true }
+        overriddenMutes.removeAll { old in !reasons.contains { $0.isSame(as: old) } }
+        let reason = reasons.first { reason in !overriddenMutes.contains { reason.isSame(as: $0) } }
         guard reason != automaticMute else { return }
         let wasMuted = isAutomaticallyMuted
         automaticMute = reason
