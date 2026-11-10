@@ -105,11 +105,17 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
             && now.timeIntervalSince(location.timestamp) < 120
     }
 
-    /// The places a fix is inside, by distance from each place's center.
-    static func places(_ places: [Place], containing location: CLLocation) -> Set<UUID> {
-        Set(places.filter {
-            location.distance(from: CLLocation(latitude: $0.latitude, longitude: $0.longitude)) <= $0.radius
-        }.map(\.id))
+    /// What a fix says about a place: inside or outside when the fix's
+    /// uncertainty leaves no doubt, otherwise nil, and region monitoring's
+    /// answer stands. A fix "within 300 m" that lands 250 m from a place
+    /// with a 200 m radius doesn't show the Mac has left it.
+    static func contains(_ place: Place, _ location: CLLocation) -> Bool? {
+        let distance = location.distance(from: CLLocation(latitude: place.latitude, longitude: place.longitude))
+        let doubt = max(location.horizontalAccuracy, 0)
+        if distance + doubt <= place.radius { return true }
+        if distance - doubt > place.radius { return false }
+        // A sharp fix near the edge still counts: the edge isn't that exact.
+        return doubt <= 50 ? distance <= place.radius : nil
     }
 
     static func region(for place: Place) -> CLCircularRegion {
@@ -133,20 +139,24 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
     func currentLocation(_ done: @escaping (CLLocation?) -> Void) {
         guard CLLocationManager.locationServicesEnabled() else { return done(nil) }
         pendingLocation = done
+        switch access {
+        case .granted: startFix()
+        case .denied: finishLocation(nil)
+        // The fix (and its timeout) starts once the prompt is answered, so
+        // taking a while over it doesn't end in "couldn't find your location".
+        case .unknown: manager.requestAlwaysAuthorization()
+        }
+    }
+
+    /// Keeps trying until a fix arrives or 20 seconds pass: a single request
+    /// often fails at first on a Mac, while Wi-Fi is still being scanned.
+    private func startFix() {
         let request = UUID()
         locationRequest = request
-        // Without an answer (no prompt shown, no fix), give up rather than
-        // leave the spinner going.
         DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in
             if self?.locationRequest == request { self?.finishLocation(nil) }
         }
-        switch access {
-        // Keeps trying until a fix arrives or the timeout: a single request
-        // often fails at first on a Mac, while Wi-Fi is still being scanned.
-        case .granted: manager.startUpdatingLocation()
-        case .denied: finishLocation(nil)
-        case .unknown: manager.requestAlwaysAuthorization()
-        }
+        manager.startUpdatingLocation()
     }
 
     private func finishLocation(_ location: CLLocation?) {
@@ -190,7 +200,7 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
         if access != .granted { reported = []; inside = [] }
         if pendingLocation != nil {
             switch access {
-            case .granted: manager.startUpdatingLocation()
+            case .granted: startFix()
             case .denied: finishLocation(nil)
             case .unknown: break
             }
@@ -212,10 +222,14 @@ final class PlaceMonitor: NSObject, CLLocationManagerDelegate {
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last, Self.isUsable(location) else { return }
-        // A fix says where the Mac is for every place at once.
-        inside = Self.places(places, containing: location)
-        reported = Set(places.map(\.id))
-        asked = []
+        // A fix can settle every place at once; where it's too vague to say,
+        // what region monitoring reported stands.
+        for place in places {
+            guard let isInside = Self.contains(place, location) else { continue }
+            if isInside { inside.insert(place.id) } else { inside.remove(place.id) }
+            reported.insert(place.id)
+            asked.remove(place.id)
+        }
         if pendingLocation != nil { finishLocation(location) }
         report()
     }

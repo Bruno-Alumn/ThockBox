@@ -397,7 +397,10 @@ final class AppState: ObservableObject {
 
     /// Set while Settings records a new shortcut, so pressing the current
     /// one there doesn't also toggle sounds.
-    var isRecordingShortcut = false {
+    var isRecordingShortcut: Bool { recordingShortcut != nil }
+    /// Which shortcut is being recorded (its row's title). Only one at a
+    /// time: starting another row's recorder ends this one.
+    @Published var recordingShortcut: String? {
         didSet { registerHotKey() }
     }
     /// The shortcut as a system hotkey. While it's nil (recording, or macOS
@@ -1004,6 +1007,9 @@ final class AppState: ObservableObject {
         case let .keyDown(keycode, isRepeat, flags):
             idleMode.recordActivity()
             if isAutomaticallyMuted { updateAutomaticMute() }
+            // A key arriving means secure input (a password field) is over:
+            // don't leave "Paused by Safari" and the off icon up.
+            if secureInputApp != nil { refreshAccessibilityStatus() }
             // The shortcut (⌃⌘K by default) toggles, even while disabled.
             // Swallow the key-ups that follow too, or enabling would emit
             // orphan releases.

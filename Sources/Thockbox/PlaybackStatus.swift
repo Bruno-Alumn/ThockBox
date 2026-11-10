@@ -42,9 +42,11 @@ enum AutomaticMute: Equatable {
     case idle
 
     /// The same reason, for Play Anyway: a place stays the same place when
-    /// it's renamed.
+    /// it's renamed, and media stays media whichever apps are playing, so a
+    /// second app chiming in doesn't undo the choice.
     func isSame(as other: AutomaticMute) -> Bool {
         if case .place = self, case .place = other { return true }
+        if case .media = self, case .media = other { return true }
         return self == other
     }
 
