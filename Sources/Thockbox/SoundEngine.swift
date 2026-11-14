@@ -65,6 +65,17 @@ final class SoundEngine {
     private var shouldRun = false
     private var isSleeping = false
 
+    /// A start time already in the past, so a voice starts on the next
+    /// render. Plain play(), and a start given only as a host time, first
+    /// wait for the voice's next rendered cycle: 5 s when rendering is
+    /// failing, and an uncatchable exception when no cycle arrives at all.
+    /// That wait once froze the app for 80 s.
+    private static let startNow = AVAudioTime(sampleTime: 0, atRate: 48_000)
+    /// A voice's render clock at the watchdog's previous look, and when.
+    private var renderCheck: (sample: AVAudioFramePosition, uptime: TimeInterval)?
+    /// Restarts in a row the watchdog asked for; it gives up after three.
+    private var stallRestarts = 0
+
     /// A running engine wakes the CPU every I/O cycle (~2.7 ms) even when
     /// silent: ~0.6% of a core, around the clock. After this long without a
     /// sound it pauses (0% CPU) and the next sound resumes it, which adds
@@ -160,6 +171,7 @@ final class SoundEngine {
         restartRetry = nil
         guard shouldRun, !isSleeping else { return }
         isIdlePaused = false
+        renderCheck = nil
         engine.stop()
         let hwFormat = engine.outputNode.outputFormat(forBus: 0)
         if hwFormat.sampleRate > 0 {
@@ -196,7 +208,11 @@ final class SoundEngine {
         startIdleTimer()
         guard !engine.isRunning else { return }
         isIdlePaused = false
+        // init() already prepared the graph; without a stop and a new
+        // prepare the render size set below doesn't reach the nodes.
+        engine.stop()
         requestLowLatencyIO()
+        engine.prepare()
         try engine.start()
         reviveVoices()
         lastSound = Date()
@@ -207,7 +223,10 @@ final class SoundEngine {
     /// nothing extra.
     private func startIdleTimer() {
         guard idleTimer == nil else { return }
-        let timer = Timer(timeInterval: 10, repeats: true) { [weak self] _ in self?.pauseIfIdle() }
+        let timer = Timer(timeInterval: 10, repeats: true) { [weak self] _ in
+            self?.pauseIfIdle()
+            self?.restartIfStalled()
+        }
         timer.tolerance = 5
         RunLoop.main.add(timer, forMode: .common)
         idleTimer = timer
@@ -219,6 +238,23 @@ final class SoundEngine {
               outputLatency < 0.05 else { return }
         engine.pause()
         isIdlePaused = true
+    }
+
+    /// The engine can report running while no voice is rendered. The output
+    /// node's clock advances even then (and reading it can wait 5 s), so
+    /// this watches a voice's clock.
+    func restartIfStalled(uptime: TimeInterval = ProcessInfo.processInfo.systemUptime) {
+        guard engine.isRunning else { renderCheck = nil; return }
+        let sample = voices[0].player.lastRenderTime?.sampleTime ?? -1
+        guard let last = renderCheck else { renderCheck = (sample, uptime); return }
+        // Two timer fires can land together after the main thread was busy.
+        guard uptime - last.uptime >= 2 else { return }
+        renderCheck = (sample, uptime)
+        guard sample == last.sample else { stallRestarts = 0; return }
+        guard stallRestarts < 3 else { return }
+        stallRestarts += 1
+        klog.error("voices are not being rendered; restarting the engine")
+        restart()
     }
 
     private func resumeFromIdle() {
@@ -238,19 +274,36 @@ final class SoundEngine {
     /// 128 frames brings that to ~5 ms and is still trivial for this graph.
     private static let ioBufferFrames: UInt32 = 128
 
+    /// Longest I/O cycle the graph can render. prepare() otherwise sizes
+    /// every node for the cycle in force right then, and a device that
+    /// lengthens its cycle afterwards (AirPods just after connecting: 128
+    /// to 256) makes every render fail while the engine still reports
+    /// running. Every node keeps buffers this long: 1024 costs about
+    /// 0.3 MB (3 MB with spatial audio); 4096 cost 6 MB and 11 MB.
+    private static let maxRenderFrames: UInt32 = 1024
+
     /// Applies to this process's I/O only; the device keeps serving other
-    /// apps at their own sizes. Must run before the engine starts.
+    /// apps at their own sizes. Must run before engine.prepare().
     private func requestLowLatencyIO() {
         guard let unit = engine.outputNode.audioUnit else { return }
+        let size = UInt32(MemoryLayout<UInt32>.size)
         var frames = Self.ioBufferFrames
-        let err = AudioUnitSetProperty(unit,
-                                       kAudioDevicePropertyBufferFrameSize,
-                                       kAudioUnitScope_Global,
-                                       0,
-                                       &frames,
-                                       UInt32(MemoryLayout<UInt32>.size))
+        var err = AudioUnitSetProperty(unit, kAudioDevicePropertyBufferFrameSize,
+                                       kAudioUnitScope_Global, 0, &frames, size)
         if err != noErr {
             klog.error("could not set I/O buffer to \(frames, privacy: .public) frames: \(err, privacy: .public)")
+        }
+        // After the I/O size, which resets it, and again on every restart.
+        // A device whose cycle is already longer gets its own size.
+        var granted: UInt32 = 0
+        var grantedSize = size
+        AudioUnitGetProperty(unit, kAudioDevicePropertyBufferFrameSize,
+                             kAudioUnitScope_Global, 0, &granted, &grantedSize)
+        var maxFrames = max(Self.maxRenderFrames, granted)
+        err = AudioUnitSetProperty(unit, kAudioUnitProperty_MaximumFramesPerSlice,
+                                   kAudioUnitScope_Global, 0, &maxFrames, size)
+        if err != noErr {
+            klog.error("could not set render size to \(maxFrames, privacy: .public) frames: \(err, privacy: .public)")
         }
     }
 
@@ -326,13 +379,9 @@ final class SoundEngine {
     }
 
     private func reviveVoices() {
-        for v in spatialVoices {
+        for v in spatialVoices + voices {
             v.player.stop()
-            v.player.play()
-        }
-        for v in voices {
-            v.player.stop()
-            v.player.play()
+            v.player.play(at: Self.startNow)
         }
     }
 
@@ -621,6 +670,10 @@ final class SoundEngine {
         engine.outputNode.lastRenderTime.map { Double($0.sampleTime) }
     }
 
+    /// The output's audio unit. Tests lengthen its I/O cycle under a running
+    /// engine, the way a device does when it changes mode.
+    var outputUnit: AudioUnit? { engine.outputNode.audioUnit }
+
     static func voiceIndex(next: Int, count: Int, isBusy: (Int) -> Bool) -> Int {
         (0..<count).lazy.map { (next + $0) % count }.first { !isBusy($0) } ?? next
     }
@@ -651,7 +704,7 @@ final class SoundEngine {
                 voice.player.pan = 0
             }
         }
-        if !voice.player.isPlaying { voice.player.play() }
+        if !voice.player.isPlaying { voice.player.play(at: Self.startNow) }
     }
 
     private func playSpatial(buffer: AVAudioPCMBuffer, cents: Float, x: Float, gain: Float) {
@@ -677,7 +730,7 @@ final class SoundEngine {
                 voice.isSounding = false
             }
         }
-        if !voice.player.isPlaying { voice.player.play() }
+        if !voice.player.isPlaying { voice.player.play(at: Self.startNow) }
     }
 
     // MARK: - Output device
