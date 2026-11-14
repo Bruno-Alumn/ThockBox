@@ -3,6 +3,12 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## Unreleased
+
+- ThockBox no longer freezes when headphones connect while it's running.
+  With spatial audio on, connecting AirPods could lock the app for over a
+  minute and then for 5 seconds on every key.
+
 ## 2.0.0
 
 - ThockBox is now signed with an Apple Developer ID and notarized by

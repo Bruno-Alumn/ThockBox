@@ -278,8 +278,9 @@ final class SoundEngine {
     /// every node for the cycle in force right then, and a device that
     /// lengthens its cycle afterwards (AirPods just after connecting: 128
     /// to 256) makes every render fail while the engine still reports
-    /// running.
-    private static let maxRenderFrames: UInt32 = 4096
+    /// running. Every node keeps buffers this long: 1024 costs about
+    /// 0.3 MB (3 MB with spatial audio); 4096 cost 6 MB and 11 MB.
+    private static let maxRenderFrames: UInt32 = 1024
 
     /// Applies to this process's I/O only; the device keeps serving other
     /// apps at their own sizes. Must run before engine.prepare().
@@ -293,7 +294,12 @@ final class SoundEngine {
             klog.error("could not set I/O buffer to \(frames, privacy: .public) frames: \(err, privacy: .public)")
         }
         // After the I/O size, which resets it, and again on every restart.
-        var maxFrames = Self.maxRenderFrames
+        // A device whose cycle is already longer gets its own size.
+        var granted: UInt32 = 0
+        var grantedSize = size
+        AudioUnitGetProperty(unit, kAudioDevicePropertyBufferFrameSize,
+                             kAudioUnitScope_Global, 0, &granted, &grantedSize)
+        var maxFrames = max(Self.maxRenderFrames, granted)
         err = AudioUnitSetProperty(unit, kAudioUnitProperty_MaximumFramesPerSlice,
                                    kAudioUnitScope_Global, 0, &maxFrames, size)
         if err != noErr {
@@ -663,6 +669,10 @@ final class SoundEngine {
     var renderedSamples: Double? {
         engine.outputNode.lastRenderTime.map { Double($0.sampleTime) }
     }
+
+    /// The output's audio unit. Tests lengthen its I/O cycle under a running
+    /// engine, the way a device does when it changes mode.
+    var outputUnit: AudioUnit? { engine.outputNode.audioUnit }
 
     static func voiceIndex(next: Int, count: Int, isBusy: (Int) -> Bool) -> Int {
         (0..<count).lazy.map { (next + $0) % count }.first { !isBusy($0) } ?? next
