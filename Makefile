@@ -5,6 +5,7 @@ BUNDLE := dist/$(NAME).app
 VERSION := $(shell /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Resources/Info.plist)
 ZIP := dist/$(NAME)-$(VERSION).zip
 DMG := dist/$(NAME)-$(VERSION).dmg
+SDK_VERSION := $(shell xcrun --sdk macosx --show-sdk-version)
 # How builds are signed (see docs/RELEASING.md):
 #   SIGNING=developer-id  the maintainer's Developer ID (the default, and what
 #                         releases use); `make dmg` and `make release` also
@@ -36,6 +37,12 @@ bundle: build
 	cp $(BUILD)/$(APP) $(BUNDLE)/Contents/MacOS/
 	# Local symbols are only for debugging; dropping them halves the binary.
 	strip -x $(BUNDLE)/Contents/MacOS/$(APP)
+	# SwiftPM records the deployment target (13.0) as the SDK version, and
+	# macOS gives an app the current design (Liquid Glass window controls,
+	# title bars and controls) only when it was built against the macOS 26
+	# SDK or later. Record the SDK it was really built with.
+	xcrun vtool -set-build-version macos 13.0 $(SDK_VERSION) -replace \
+		-output $(BUNDLE)/Contents/MacOS/$(APP) $(BUNDLE)/Contents/MacOS/$(APP)
 	cp Resources/Info.plist $(BUNDLE)/Contents/
 	cp Resources/Thockbox.sdef $(BUNDLE)/Contents/Resources/
 	cp -R Resources/Sounds $(BUNDLE)/Contents/Resources/Sounds
