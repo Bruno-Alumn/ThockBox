@@ -3,6 +3,17 @@
 What changed for people using ThockBox. The full list of pull requests is
 on each [release](https://github.com/Bruno-Alumn/ThockBox/releases).
 
+## 2.0.0
+
+- ThockBox is now signed with an Apple Developer ID and notarized by
+  Apple, both the app and the disk image it comes in. macOS opens it
+  like any other trusted app: no "Open Anyway" in Privacy & Security,
+  on your Mac or on one you install it on for someone else.
+
+- Updates from 1.11.4 or later install by themselves and keep your
+  Accessibility permission. From 1.11.3 or earlier, download this
+  version once by hand.
+
 ## 1.11.6
 
 - Places are more dependable. ThockBox checks where your Mac is when it
