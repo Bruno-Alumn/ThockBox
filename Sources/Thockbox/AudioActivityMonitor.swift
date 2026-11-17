@@ -43,36 +43,46 @@ final class AudioActivityMonitor {
     private(set) var apps: Set<String> = []
     var inUse: Bool { !apps.isEmpty }
     private let onChange: (Set<String>) -> Void
-    private var watched: [SystemAudioListener] = []
+    private var processList: SystemAudioListener?
+    /// Listeners per audio process, kept while the process is listed.
+    private var watched: [AudioObjectID: [SystemAudioListener]] = [:]
 
     init(_ activity: Activity, onChange: @escaping (Set<String>) -> Void) {
         self.activity = activity
         self.onChange = onChange
-        rewatch()
-    }
-
-    /// Re-registers listeners for the current set of audio processes (or the
-    /// current default input device), then re-reads the state.
-    private func rewatch() {
-        watched.removeAll()
         if #available(macOS 14.2, *) {
-            // Any process starting or stopping audio changes this list; each
-            // process then reports its own input or output state.
-            let system = AudioObjectID(kAudioObjectSystemObject)
-            watch(system, kAudioHardwarePropertyProcessObjectList)
-            for process in Self.objects(system, kAudioHardwarePropertyProcessObjectList) {
-                watch(process, Self.selector(activity))
+            processList = SystemAudioListener(kAudioHardwarePropertyProcessObjectList) { [weak self] in
+                self?.processesChanged()
             }
         }
+        processesChanged()
+    }
+
+    /// Watches processes that started using audio, drops ones that quit,
+    /// then re-reads the state.
+    private func processesChanged() {
+        if #available(macOS 14.2, *) {
+            let processes = Set(Self.objects(AudioObjectID(kAudioObjectSystemObject),
+                                             kAudioHardwarePropertyProcessObjectList))
+            watched = watched.filter { processes.contains($0.key) }
+            for process in processes where watched[process] == nil {
+                // macOS doesn't report a change to a process's input or
+                // output state on its own, only that it started or stopped
+                // running or changed devices, so watch those and re-read.
+                watched[process] = [kAudioProcessPropertyIsRunning, kAudioProcessPropertyDevices,
+                                    Self.selector(activity)].map {
+                    SystemAudioListener($0, on: process) { [weak self] in self?.refresh() }
+                }
+            }
+        }
+        refresh()
+    }
+
+    private func refresh() {
         let now = Self.others(activity)
         guard now != apps else { return }
         apps = now
         onChange(now)
-    }
-
-    private func watch(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector) {
-        guard object != kAudioObjectUnknown else { return }
-        watched.append(SystemAudioListener(selector, on: object) { [weak self] in self?.rewatch() })
     }
 
     @available(macOS 14.2, *)
