@@ -50,6 +50,17 @@ final class KeystrokeStatsTests: XCTestCase {
         XCTAssertEqual(TypingStat.streak.value(in: stats, now: start), 1)
     }
 
+    func testCountsAreSavedEveryHundredKeys() {
+        var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
+        for _ in 0..<(KeystrokeStats.saveEvery - 1) { stats.record(now: day("2026-11-01")) }
+        XCTAssertEqual(defaults.integer(forKey: "statsTotal"), 0)
+        stats.record(now: day("2026-11-01"))
+        XCTAssertEqual(defaults.integer(forKey: "statsTotal"), KeystrokeStats.saveEvery)
+        stats.record(now: day("2026-11-01"))
+        stats.flush()
+        XCTAssertEqual(defaults.integer(forKey: "statsTotal"), KeystrokeStats.saveEvery + 1)
+    }
+
     func testNoSpeedUntilThereIsEnoughTyping() {
         var stats = KeystrokeStats(defaults: defaults, now: day("2026-11-01"))
         for i in 0..<20 { stats.record(now: day("2026-11-01").addingTimeInterval(Double(i) * 0.2)) }

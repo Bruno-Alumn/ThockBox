@@ -13,6 +13,7 @@ struct KeystrokeStats {
     private(set) var todayByHour: [Int]
     private var lastPress: Date?
     static let pauseSeconds = 2.0
+    static let saveEvery = 100
     /// Finished days, "yyyy-MM-dd" → count. Kept for 30 days.
     private var history: [String: Int]
     private let defaults: UserDefaults
@@ -61,10 +62,9 @@ struct KeystrokeStats {
             if gap > 0, gap <= Self.pauseSeconds { typingSeconds += gap }
         }
         lastPress = now
-        // UserDefaults writes hit an in-memory cache; persist every N strokes
-        // to avoid two change notifications per keypress. flush() covers the
-        // remainder at quit.
-        if today % 20 == 0 {
+        // Each save is a round trip to the defaults service, so save every
+        // `saveEvery` strokes; flush() covers the remainder at quit.
+        if today % Self.saveEvery == 0 {
             flush()
         }
     }

@@ -43,10 +43,7 @@ final class AudioActivityMonitor {
     private(set) var apps: Set<String> = []
     var inUse: Bool { !apps.isEmpty }
     private let onChange: (Set<String>) -> Void
-    private var watched: [(AudioObjectID, AudioObjectPropertyAddress)] = []
-    private lazy var listener: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
-        self?.rewatch()
-    }
+    private var watched: [SystemAudioListener] = []
 
     init(_ activity: Activity, onChange: @escaping (Set<String>) -> Void) {
         self.activity = activity
@@ -54,14 +51,10 @@ final class AudioActivityMonitor {
         rewatch()
     }
 
-    deinit {
-        unwatchAll()
-    }
-
     /// Re-registers listeners for the current set of audio processes (or the
     /// current default input device), then re-reads the state.
     private func rewatch() {
-        unwatchAll()
+        watched.removeAll()
         if #available(macOS 14.2, *) {
             // Any process starting or stopping audio changes this list; each
             // process then reports its own input or output state.
@@ -79,18 +72,7 @@ final class AudioActivityMonitor {
 
     private func watch(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector) {
         guard object != kAudioObjectUnknown else { return }
-        var address = Self.address(selector)
-        if AudioObjectAddPropertyListenerBlock(object, &address, .main, listener) == noErr {
-            watched.append((object, address))
-        }
-    }
-
-    private func unwatchAll() {
-        for (object, address) in watched {
-            var address = address
-            AudioObjectRemovePropertyListenerBlock(object, &address, .main, listener)
-        }
-        watched.removeAll()
+        watched.append(SystemAudioListener(selector, on: object) { [weak self] in self?.rewatch() })
     }
 
     @available(macOS 14.2, *)

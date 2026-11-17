@@ -74,7 +74,7 @@ struct OutputDevicePicker: View {
     // Cached: enumerating CoreAudio devices inside body is slow, and body
     // re-runs on every AppState change.
     @State private var devices: [AudioDevices.Device] = []
-    @State private var deviceMonitor: AudioDeviceMonitor?
+    @State private var deviceMonitor: SystemAudioListener?
 
     var body: some View {
         Picker(selection: Binding(
@@ -98,8 +98,8 @@ struct OutputDevicePicker: View {
         }
         .onAppear {
             devices = AudioDevices.outputDevices()
-            deviceMonitor = AudioDeviceMonitor {
-                DispatchQueue.main.async { devices = AudioDevices.outputDevices() }
+            deviceMonitor = SystemAudioListener.devices {
+                devices = AudioDevices.outputDevices()
             }
         }
         .onDisappear { deviceMonitor = nil }
