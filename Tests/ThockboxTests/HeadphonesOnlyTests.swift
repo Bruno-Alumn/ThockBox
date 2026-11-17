@@ -72,6 +72,20 @@ final class HeadphonesOnlyTests: XCTestCase {
         XCTAssertEqual(state.outputDeviceName, "AirPods Pro")
     }
 
+    /// Picking a device restarts the engine once, not twice.
+    func testPickingADeviceRestartsTheEngineOnce() throws {
+        guard let device = AudioDevices.outputDevices().first else { throw XCTSkip("no output device") }
+        let state = AppState(defaults: defaults)
+        state.enabled = true
+        try XCTSkipIf(state.isAutomaticallyMuted, "muted here, so nothing is applied")
+        var before = state.engine.outputDeviceChanges
+        state.outputDeviceUID = device.uid
+        XCTAssertEqual(state.engine.outputDeviceChanges - before, 1)
+        before = state.engine.outputDeviceChanges
+        state.outputDeviceUID = nil
+        XCTAssertEqual(state.engine.outputDeviceChanges - before, 1)
+    }
+
     func testSpatialAudioOnlyOnHeadphones() {
         XCTAssertTrue(AppState.usesSpatial(setting: true, outputIsSpeaker: false))
         XCTAssertFalse(AppState.usesSpatial(setting: true, outputIsSpeaker: true), "speakers stay 2D")

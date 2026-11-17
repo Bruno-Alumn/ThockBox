@@ -113,54 +113,52 @@ enum AudioDevices {
     }
 }
 
-final class AudioDeviceMonitor {
-    private let onChange: () -> Void
-    private var address = AudioObjectPropertyAddress(
-        mSelector: kAudioHardwarePropertyDevices,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMain)
-
-    init?(onChange: @escaping () -> Void) {
-        self.onChange = onChange
-        let status = AudioObjectAddPropertyListener(
-            AudioObjectID(kAudioObjectSystemObject), &address, Self.callback,
-            Unmanaged.passUnretained(self).toOpaque())
-        guard status == noErr else { return nil }
-    }
-
-    deinit {
-        AudioObjectRemovePropertyListener(
-            AudioObjectID(kAudioObjectSystemObject), &address, Self.callback,
-            Unmanaged.passUnretained(self).toOpaque())
-    }
-
-    private static let callback: AudioObjectPropertyListenerProc = { _, _, _, context in
-        guard let context else { return noErr }
-        Unmanaged<AudioDeviceMonitor>.fromOpaque(context)
-            .takeUnretainedValue().onChange()
-        return noErr
-    }
-}
-
-/// Calls back on the main queue when a system-wide audio property changes,
-/// such as the default output device.
+/// Calls back on the main queue when an audio property changes, such as
+/// the default output device, until it's released.
+///
+/// Uses the function-pointer listener API: CoreAudio never removed a Swift
+/// closure passed as a listener block (it doesn't see the same block twice),
+/// so block listeners piled up and kept firing.
 final class SystemAudioListener {
-    private var address: AudioObjectPropertyAddress
-    private let block: AudioObjectPropertyListenerBlock
+    /// What CoreAudio holds on to. It outlives the listener briefly, since a
+    /// callback may already be on its way when the listener is removed.
+    private final class Target {
+        var onChange: (() -> Void)?
+        init(_ onChange: @escaping () -> Void) { self.onChange = onChange }
+    }
 
     private let object: AudioObjectID
+    private var address: AudioObjectPropertyAddress
+    private let target: Target
+    private let context: UnsafeMutableRawPointer
+    private let added: Bool
 
     init(_ selector: AudioObjectPropertySelector, on object: AudioObjectID = AudioObjectID(kAudioObjectSystemObject),
          scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal, onChange: @escaping () -> Void) {
         self.object = object
         address = AudioObjectPropertyAddress(mSelector: selector, mScope: scope,
                                              mElement: kAudioObjectPropertyElementMain)
-        block = { _, _ in onChange() }
-        AudioObjectAddPropertyListenerBlock(object, &address, .main, block)
+        target = Target(onChange)
+        context = Unmanaged.passRetained(target).toOpaque()
+        added = AudioObjectAddPropertyListener(object, &address, Self.callback, context) == noErr
     }
 
     deinit {
-        AudioObjectRemovePropertyListenerBlock(object, &address, .main, block)
+        target.onChange = nil
+        if added {
+            AudioObjectRemovePropertyListener(object, &address, Self.callback, context)
+        }
+        let context = context
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            Unmanaged<Target>.fromOpaque(context).release()
+        }
+    }
+
+    private static let callback: AudioObjectPropertyListenerProc = { _, _, _, context in
+        guard let context else { return noErr }
+        let target = Unmanaged<Target>.fromOpaque(context).takeUnretainedValue()
+        DispatchQueue.main.async { target.onChange?() }
+        return noErr
     }
 
     /// Fires when a device switches between speakers and the headphone jack
@@ -168,6 +166,11 @@ final class SystemAudioListener {
     static func dataSource(of device: AudioDeviceID, onChange: @escaping () -> Void) -> SystemAudioListener {
         SystemAudioListener(kAudioDevicePropertyDataSource, on: device,
                             scope: kAudioDevicePropertyScopeOutput, onChange: onChange)
+    }
+
+    /// Fires when a device is connected or disconnected.
+    static func devices(onChange: @escaping () -> Void) -> SystemAudioListener {
+        SystemAudioListener(kAudioHardwarePropertyDevices, onChange: onChange)
     }
 
     /// Fires when the default output changes or a device comes or goes.

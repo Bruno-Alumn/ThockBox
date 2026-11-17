@@ -534,8 +534,10 @@ final class AppState: ObservableObject {
                let device = AudioDevices.outputDevices().first(where: { $0.uid == uid }) {
                 defaults.set(device.name, forKey: "outputDeviceName")
             }
-            outputRouteChanged()
+            // Point the engine first: outputRouteChanged() then sees it's
+            // already there instead of restarting the engine a second time.
             applyOutputDevice()
+            outputRouteChanged()
         }
     }
     /// The picked device's name as last seen connected.
@@ -1408,12 +1410,18 @@ final class AppState: ObservableObject {
         let current = picked ?? devices.first { $0.id == AudioDevices.defaultOutputDevice() }
         setActiveOutput(uid: current?.uid)
         if let current {
-            dataSourceListener = SystemAudioListener.dataSource(of: current.id) { [weak self] in
-                self?.outputRouteChanged()
+            if current.id != dataSourceDevice {
+                dataSourceDevice = current.id
+                dataSourceListener = SystemAudioListener.dataSource(of: current.id) { [weak self] in
+                    self?.outputRouteChanged()
+                }
             }
             setOutputIsSpeaker(AudioDevices.isSpeaker(current.id))
         }
     }
+
+    /// The device `dataSourceListener` watches.
+    private var dataSourceDevice: AudioDeviceID?
 
     /// Called when the output changes (and by tests).
     func setOutputIsSpeaker(_ isSpeaker: Bool) {
