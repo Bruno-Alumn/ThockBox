@@ -48,4 +48,32 @@ final class SystemAudioListenerTests: XCTestCase {
         XCTAssertTrue(apps.contains(AudioActivityMonitor.processPrefix + "afplay"), "\(apps)")
         XCTAssertFalse(apps.contains(""))
     }
+
+    /// The media monitor notices another app start and stop playing even
+    /// when its output starts after it registered with CoreAudio, which
+    /// macOS doesn't report as a change of output state.
+    func testMonitorSeesAnotherAppPlaying() throws {
+        try XCTSkipUnless(AudioActivityMonitor.isSupported)
+        let afplay = AudioActivityMonitor.processPrefix + "afplay"
+        let monitor = AudioActivityMonitor(.playing) { _ in }
+        let player = Process()
+        player.executableURL = URL(fileURLWithPath: "/usr/bin/afplay")
+        player.arguments = ["-v", "0.01", "-t", "2", "/System/Library/Sounds/Submarine.aiff"]
+        try player.run()
+        defer { player.terminate() }
+        var directSaw = false
+        var deadline = Date().addingTimeInterval(1.5)
+        while !monitor.apps.contains(afplay), Date() < deadline {
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+            directSaw = directSaw || AudioActivityMonitor.others(.playing).contains(afplay)
+        }
+        try XCTSkipIf(!directSaw && !monitor.apps.contains(afplay), "no audio output here")
+        XCTAssertTrue(monitor.apps.contains(afplay), "\(monitor.apps)")
+        player.waitUntilExit()
+        deadline = Date().addingTimeInterval(3)
+        while monitor.apps.contains(afplay), Date() < deadline {
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        }
+        XCTAssertFalse(monitor.apps.contains(afplay), "\(monitor.apps)")
+    }
 }
