@@ -8,7 +8,9 @@ struct AppPacksList: View {
     @State private var selection: Set<String> = []
 
     private var apps: [String] {
-        state.appPacks.keys.sorted { name($0).localizedCaseInsensitiveCompare(name($1)) == .orderedAscending }
+        state.appPacks.keys.map { (id: $0, name: name($0)) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            .map(\.id)
     }
 
     var body: some View {
@@ -16,15 +18,16 @@ struct AppPacksList: View {
             List(apps, id: \.self, selection: $selection) { id in
                 HStack {
                     let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)
+                    let appName = url.map(MutedAppsList.appName) ?? id
                     Label {
-                        Text(name(id))
+                        Text(appName)
                     } icon: {
                         Image(nsImage: url.map { NSWorkspace.shared.icon(forFile: $0.path) } ?? NSWorkspace.shared.icon(for: .applicationBundle))
                             .resizable()
                             .frame(width: 16, height: 16)
                     }
                     Spacer()
-                    Picker("Set for \(name(id))", selection: Binding(
+                    Picker("Set for \(appName)", selection: Binding(
                         // A set that's gone (removed, or deleted in Finder)
                         // shows the one that plays instead, not a blank.
                         get: {

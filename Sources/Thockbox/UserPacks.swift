@@ -6,10 +6,9 @@ import Foundation
 /// a generated pack.json, so it survives app updates and loads like any
 /// bundled set (trimming and loudness matching included).
 enum UserPacks {
-    static var directory: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("ThockBox/Sounds")
-    }
+    static let directory: URL = FileManager.default
+        .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("ThockBox/Sounds")
 
     static let audioExtensions: Set<String> = ["wav", "mp3", "caf", "aif", "aiff", "m4a"]
 

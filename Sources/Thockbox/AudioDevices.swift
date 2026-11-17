@@ -99,8 +99,8 @@ enum AudioDevices {
         return buffers.reduce(0) { $0 + Int($1.mNumberChannels) }
     }
 
-    private static func stringProperty(_ id: AudioDeviceID,
-                                       _ selector: AudioObjectPropertySelector) -> String? {
+    static func stringProperty(_ id: AudioObjectID,
+                               _ selector: AudioObjectPropertySelector) -> String? {
         var address = AudioObjectPropertyAddress(
             mSelector: selector,
             mScope: kAudioObjectPropertyScopeGlobal,

@@ -552,8 +552,12 @@ final class AppState: ObservableObject {
     /// Checked when the menu or settings window opens; see SecureInput.
     @Published private(set) var secureInputApp: String?
     /// Why sounds are automatically muted right now, if they are.
-    @Published private(set) var automaticMute: AutomaticMute?
-    var isAutomaticallyMuted: Bool { automaticMute != nil }
+    @Published private(set) var automaticMute: AutomaticMute? {
+        didSet { isAutomaticallyMuted = automaticMute != nil }
+    }
+    /// A plain copy of "automaticMute != nil": every key press asks, and a
+    /// stored Bool is far cheaper to read than a @Published value.
+    private(set) var isAutomaticallyMuted = false
     /// Another app is recording (only tracked while muteDuringCalls is on).
     @Published private(set) var microphoneInUse = false
     /// Another app is playing sound (only tracked while muteWhileMedia is on).
