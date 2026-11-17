@@ -43,7 +43,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 
 struct SettingsPageView: View {
     let page: SettingsPage
-    @ObservedObject var state: AppState
+    let state: AppState
 
     var body: some View {
         Group {
@@ -99,6 +99,16 @@ private struct AttentionSection: View {
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         Permissions.reset()
     }
+}
+
+/// A short title saying what failed, with the reason under it.
+@MainActor
+private func showError(_ title: String, _ error: Error) {
+    let alert = NSAlert()
+    alert.alertStyle = .warning
+    alert.messageText = title
+    alert.informativeText = error.localizedDescription
+    alert.runModal()
 }
 
 // MARK: - Sound
@@ -256,15 +266,6 @@ private struct SoundPage: View {
         } catch {
             showError("Couldn't Export \(pack.name)", error)
         }
-    }
-
-    /// A short title saying what failed, with the reason under it.
-    private func showError(_ title: String, _ error: Error) {
-        let alert = NSAlert()
-        alert.alertStyle = .warning
-        alert.messageText = title
-        alert.informativeText = error.localizedDescription
-        alert.runModal()
     }
 
     private func remove(_ pack: SoundPack) {
@@ -595,11 +596,7 @@ private struct ActivityPage: View {
         do {
             try store.shown.csv().write(to: url, atomically: true, encoding: .utf8)
         } catch {
-            let alert = NSAlert()
-            alert.alertStyle = .warning
-            alert.messageText = "Couldn't Export Daily Counts"
-            alert.informativeText = error.localizedDescription
-            alert.runModal()
+            showError("Couldn't Export Daily Counts", error)
         }
     }
 }
@@ -695,11 +692,7 @@ private struct GeneralPage: View {
         do {
             try SettingsTransfer.export(from: .standard).write(to: url)
         } catch {
-            let alert = NSAlert()
-            alert.alertStyle = .warning
-            alert.messageText = "Couldn't Export Settings"
-            alert.informativeText = error.localizedDescription
-            alert.runModal()
+            showError("Couldn't Export Settings", error)
         }
     }
 
@@ -713,11 +706,7 @@ private struct GeneralPage: View {
             try SettingsTransfer.importSettings(Data(contentsOf: url), into: .standard)
             Relaunch.now()
         } catch {
-            let alert = NSAlert()
-            alert.alertStyle = .warning
-            alert.messageText = "Couldn't Import Settings"
-            alert.informativeText = error.localizedDescription
-            alert.runModal()
+            showError("Couldn't Import Settings", error)
         }
     }
 }

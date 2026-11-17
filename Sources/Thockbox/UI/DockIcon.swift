@@ -22,11 +22,12 @@ enum DockIconStyle: String, CaseIterable, Identifiable {
         }
     }
 
-    func isGraphite(soundsPlaying: Bool) -> Bool {
+    /// `soundsPlaying` is only worked out for followsSounds.
+    func isGraphite(soundsPlaying: @autoclosure () -> Bool) -> Bool {
         switch self {
         case .color: false
         case .graphite: true
-        case .followsSounds: !soundsPlaying
+        case .followsSounds: !soundsPlaying()
         }
     }
 }

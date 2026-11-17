@@ -101,10 +101,6 @@ final class AudioActivityMonitor {
         }
     }
 
-    static func someoneElseIs(_ activity: Activity) -> Bool {
-        !others(activity).isEmpty
-    }
-
     /// Bundle IDs of the other apps recording or playing right now.
     static func others(_ activity: Activity) -> Set<String> {
         guard #available(macOS 14.2, *) else { return [] }
@@ -114,7 +110,7 @@ final class AudioActivityMonitor {
             let running: UInt32 = value(process, selector(activity)) ?? 0
             guard running != 0 else { continue }
             let pid: pid_t = value(process, kAudioProcessPropertyPID) ?? me
-            let id = bundleID(process)
+            let id = AudioDevices.stringProperty(process, kAudioProcessPropertyBundleID)
             let counts = switch activity {
             case .recording: countsAsCall(recording: true, pid: pid, ownPID: me, bundleID: id)
             case .playing: countsAsMedia(playing: true, pid: pid, ownPID: me, bundleID: id)
@@ -151,16 +147,6 @@ final class AudioActivityMonitor {
         // Without a readable name it's still listed (and can be ignored).
         guard proc_name(pid, &buffer, UInt32(buffer.count)) > 0 else { return processPrefix + "process \(pid)" }
         return processPrefix + String(cString: buffer)
-    }
-
-    @available(macOS 14.2, *)
-    private static func bundleID(_ process: AudioObjectID) -> String? {
-        var address = address(kAudioProcessPropertyBundleID)
-        var id: Unmanaged<CFString>?
-        var size = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
-        guard AudioObjectGetPropertyData(process, &address, 0, nil, &size, &id) == noErr,
-              let id else { return nil }
-        return id.takeRetainedValue() as String
     }
 
     private static func address(_ selector: AudioObjectPropertySelector) -> AudioObjectPropertyAddress {

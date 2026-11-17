@@ -144,7 +144,7 @@ struct WelcomeView: View {
 /// like a key) over a title and a line under it, centered, as in Apple's
 /// own first-run and what's-new screens.
 struct WindowHeader: View {
-    @ObservedObject var state: AppState
+    let state: AppState
     let title: String
     let subtitle: String
 

@@ -95,7 +95,7 @@ struct SettingsWindowView: View {
     static let idealSize = NSSize(width: 720, height: 560)
 
     @ObservedObject var navigation: SettingsNavigation
-    @ObservedObject var state: AppState
+    let state: AppState
 
     var body: some View {
         NavigationSplitView {
