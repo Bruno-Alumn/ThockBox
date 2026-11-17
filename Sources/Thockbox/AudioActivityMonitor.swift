@@ -92,7 +92,9 @@ final class AudioActivityMonitor {
             let running: UInt32 = value(process, selector(activity)) ?? 0
             guard running != 0 else { continue }
             let pid: pid_t = value(process, kAudioProcessPropertyPID) ?? me
+            // Command-line players report an empty bundle ID, not none.
             let id = AudioDevices.stringProperty(process, kAudioProcessPropertyBundleID)
+                .flatMap { $0.isEmpty ? nil : $0 }
             let counts = switch activity {
             case .recording: countsAsCall(recording: true, pid: pid, ownPID: me, bundleID: id)
             case .playing: countsAsMedia(playing: true, pid: pid, ownPID: me, bundleID: id)

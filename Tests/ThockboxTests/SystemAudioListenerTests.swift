@@ -28,4 +28,24 @@ final class SystemAudioListenerTests: XCTestCase {
         try XCTSkipIf(kept == 0, "CoreAudio reported no process change here")
         XCTAssertEqual(released, 0)
     }
+
+    /// A command-line player has an empty bundle ID; it's listed by its
+    /// process name so it can be shown and ignored.
+    func testCommandLinePlayerIsListedByName() throws {
+        try XCTSkipUnless(AudioActivityMonitor.isSupported)
+        let player = Process()
+        player.executableURL = URL(fileURLWithPath: "/usr/bin/afplay")
+        player.arguments = ["-v", "0.01", "-t", "2", "/System/Library/Sounds/Submarine.aiff"]
+        try player.run()
+        defer { player.terminate() }
+        var apps: Set<String> = []
+        let deadline = Date().addingTimeInterval(1.5)
+        while !apps.contains(AudioActivityMonitor.processPrefix + "afplay"), Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.1)
+            apps = AudioActivityMonitor.others(.playing)
+        }
+        try XCTSkipIf(apps.isEmpty, "no audio output here")
+        XCTAssertTrue(apps.contains(AudioActivityMonitor.processPrefix + "afplay"), "\(apps)")
+        XCTAssertFalse(apps.contains(""))
+    }
 }

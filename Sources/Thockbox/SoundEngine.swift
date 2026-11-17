@@ -55,6 +55,9 @@ final class SoundEngine {
     /// few voices busy; idle voices still cost CPU (8: ~0.8%, 20: ~1.2%).
     private let voiceCount = 8
     private var outputDeviceID: AudioDeviceID?
+    /// How often the engine was pointed at a device (each one restarts it),
+    /// for tests.
+    private(set) var outputDeviceChanges = 0
     /// A restart that failed (say, Bluetooth audio not ready after wake) is
     /// tried again a few times before giving up on the device.
     private var restartAttempts = 0
@@ -737,6 +740,7 @@ final class SoundEngine {
 
     /// Route audio to a specific output device (nil = system default).
     func setOutputDevice(_ deviceID: AudioDeviceID?) {
+        outputDeviceChanges += 1
         outputDeviceID = deviceID
         shouldRun = true
         engine.stop()
